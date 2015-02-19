@@ -7,7 +7,7 @@ Usage:
 Options
  <project_key>   environment variable name to find
                  REDCap API key for target project
- --data          export data in CSV format to stdout [default: False]
+ --export        export data in CSV format to stdout [default: False]
  --fetch         fetch data files [default: False]
  --url URL       REDCap API URL
                  [default: https://redcap.kumc.edu/api/]
@@ -44,18 +44,9 @@ def main(argv, stdout, saveFile, projectAccess, checkDB, unzip):
         if cli['--export']:
             export_csv(records, stdout)
         if cli['--fetch']:
-            get_files(project, records, dd, saveFile)
+            get_files(project, records, saveFile)
     elif cli['normalize']:
         normalize(checkDB, unzip, cli['<dbfile>'])
-
-
-def choices(dd, field_name):
-    descs = [f['select_choices_or_calculations'] for f in dd
-          if f['field_name'] == field_name]
-    if not descs:
-        raise KeyError(field_name)
-    lines = descs[0].replace('\\n', '\n').split('\n')
-    return dict(line.strip().split(', ', 1) for line in lines)
 
 
 def export_csv(records, outfp):
@@ -201,14 +192,18 @@ if __name__ == '__main__':
         from os.path import exists, splitext, join
         from zipfile import ZipFile
         from sqlite3 import connect
+        import warnings
+
         from redcap import Project
 
         open_wr = lambda n: open(n, 'w')
-        main(argv, stdout,
-             checkDB=mkCheckDB(exists, connect),
-             unzip=mkUnzip(lambda f: ZipFile(f, 'r'), splitext, join, rename, rmdir),
-             saveFile=mkSaveFile(open_wr),
-             projectAccess=mkProjectAccess(Project, environ))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("once")
+            main(argv, stdout,
+                 checkDB=mkCheckDB(exists, connect),
+                 unzip=mkUnzip(lambda f: ZipFile(f, 'r'), splitext, join, rename, rmdir),
+                 saveFile=mkSaveFile(open_wr),
+                 projectAccess=mkProjectAccess(Project, environ))
 
     _configure_logging()
     _privileged_main()
