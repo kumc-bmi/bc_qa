@@ -153,6 +153,7 @@ def mkUnzip(mkZipFileRd, splitext, path_join, rename, rmdir):
         if len(names) != 1:
             raise IOError('more than one item in zip file; which to use? %s' % names)
         member = names[0]
+        log.info('extracting %s from %s', f, member)
         # x.zip    -> x    -> x
         # x.db.zip -> x.db -> x
         destdir = splitext(splitext(f)[0])[0]
