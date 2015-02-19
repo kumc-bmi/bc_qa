@@ -2,14 +2,17 @@
 
 Usage:
   bc_access [options] <api_key>
+  bc_access [options] normalize <dbfile>...
 
 Options
  <project_key>   environment variable name to find
                  REDCap API key for target project
+ --data          export data in CSV format to stdout [default: False]
  --fetch         fetch data files [default: False]
  --url URL       REDCap API URL
                  [default: https://redcap.kumc.edu/api/]
  --verify-ssl    verify SSL certs [default: False]
+ normalize       ensure sqlite3 format; unzip if necessary
  --debug         verbose logging [default: False]
  -h, --help      show this help message and exit
  --version       show version and exit
@@ -21,6 +24,7 @@ Project data is written in CSV to stdout.
 import csv
 import logging
 import re
+from sqlite3 import DatabaseError
 
 from docopt import docopt
 
@@ -29,18 +33,20 @@ from version import version
 log = logging.getLogger(__name__)
 
 
-def main(argv, stdout, saveFile, projectAccess):
-    usage = __doc__.split('..')[0]
+def main(argv, stdout, saveFile, projectAccess, checkDB, unzip):
+    usage = __doc__.split('\n..')[0]
     cli = docopt(usage, argv=argv[1:], version=version)
     log.debug('cli args: %s', cli)
 
-    project = projectAccess(cli)
-    records = project.export_records()
-    export_csv(records, stdout)
-
-    if cli['--fetch']:
-        dd = project.export_metadata()
-        get_files(project, records, dd, saveFile)
+    if cli['<api_key>']:
+        project = projectAccess(cli)
+        records = project.export_records()
+        if cli['--export']:
+            export_csv(records, stdout)
+        if cli['--fetch']:
+            get_files(project, records, dd, saveFile)
+    elif cli['normalize']:
+        normalize(checkDB, unzip, cli['<dbfile>'])
 
 
 def choices(dd, field_name):
@@ -90,7 +96,7 @@ class DevTeams(object):
                     for m in [re.match(cls.pattern, line)])
 
 
-def get_files(project, records, dd, saveFile):
+def get_files(project, records, saveFile):
     current = [r for r in records if not r['obsolete']]
     log.info('%d current submissions; %d total',
              len(current), len(records))
@@ -111,6 +117,63 @@ def mkProjectAccess(mkProject, env):
     return projectAccess
 
 
+def normalize(checkDB, unzip, dbfiles):
+    def dberr(f):
+        try:
+            qty = checkDB(f)
+            log.info('%s has %d patients.', f, qty)
+            return None
+        except IOError as ex:
+            log.error('cannot access %s', f, exc_info=ex)
+            return ex
+        except DatabaseError as ex:
+            return ex
+
+    for f in dbfiles:
+        if dberr(f) is None:
+            continue
+        try:
+            f = unzip(f)
+        except IOError as ex:
+            log.error('cannot unzip %s', f, exc_info=ex)
+        ex = dberr(f)
+        if ex is not None:
+            log.error('cannot query %s', f, exc_info=ex)
+
+
+def mkCheckDB(exists, connect,
+              testq='select count(*) from patient_dimension'):
+    def checkDB(filename):
+        if not exists(filename):
+            raise IOError
+        conn = connect(filename)
+        q = conn.cursor()
+        q.execute(testq)
+        return q.fetchone()[0]
+
+    return checkDB
+
+
+def mkUnzip(mkZipFileRd, splitext, path_join, rename, rmdir):
+
+    def unzip(f):
+        z = mkZipFileRd(f)
+        names = z.namelist()
+        if len(names) != 1:
+            raise IOError('more than one item in zip file; which to use? %s' % names)
+        member = names[0]
+        # x.zip    -> x    -> x
+        # x.db.zip -> x.db -> x
+        destdir = splitext(splitext(f)[0])[0]
+        dest = destdir + '.db'
+        z.extract(member, destdir)
+        rename(path_join(destdir, member), dest)
+        rmdir(destdir)
+        return dest
+
+    return unzip
+
+
 def mkSaveFile(open_wr):
     def saveFile(category, name, content):
         log.info('saveFile(%s, %s, [%d])',
@@ -127,17 +190,23 @@ if __name__ == '__main__':
     def _configure_logging():
         from sys import argv
 
+        logging.basicConfig(level=logging.WARN)  # for requests etc.
         level = logging.DEBUG if '--debug' in argv else logging.INFO
-        logging.basicConfig(level=level)
+        log.setLevel(level)
 
     def _privileged_main():
         from __builtin__ import open
         from sys import argv, stdout
-        from os import environ
+        from os import environ, rename, rmdir
+        from os.path import exists, splitext, join
+        from zipfile import ZipFile
+        from sqlite3 import connect
         from redcap import Project
 
         open_wr = lambda n: open(n, 'w')
         main(argv, stdout,
+             checkDB=mkCheckDB(exists, connect),
+             unzip=mkUnzip(lambda f: ZipFile(f, 'r'), splitext, join, rename, rmdir),
              saveFile=mkSaveFile(open_wr),
              projectAccess=mkProjectAccess(Project, environ))
 
