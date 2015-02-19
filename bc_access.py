@@ -6,6 +6,7 @@ Usage:
 Options
  <project_key>   environment variable name to find
                  REDCap API key for target project
+ --fetch         fetch data files [default: False]
  --url URL       REDCap API URL
                  [default: https://redcap.kumc.edu/api/]
  --verify-ssl    verify SSL certs [default: False]
@@ -13,8 +14,11 @@ Options
  -h, --help      show this help message and exit
  --version       show version and exit
 
+Project data is written in CSV to stdout.
+
 '''
 
+import csv
 import logging
 
 from docopt import docopt
@@ -24,13 +28,40 @@ from version import version
 log = logging.getLogger(__name__)
 
 
-def main(argv, projectAccess):
+def main(argv, stdout, saveFile, projectAccess):
     usage = __doc__.split('..')[0]
     cli = docopt(usage, argv=argv[1:], version=version)
     log.debug('cli args: %s', cli)
+
     project = projectAccess(cli)
-    import pdb; pdb.set_trace()
-    raise NotImplementedError
+    records = get_data(project, stdout)
+
+    if cli['--fetch']:
+        get_files(project, records, saveFile)
+
+
+def get_data(project, stdout):
+    records = project.export_records()
+    if not records:
+        return
+    columns = records[0].keys()
+    out = csv.DictWriter(stdout, columns)
+    log.info('saving %d records with %d columns...',
+             len(records), len(columns))
+    out.writerow(dict(zip(columns, columns)))
+    out.writerows(records)
+    log.info('saved.')
+    return records
+
+
+def get_files(project, records, saveFile):
+    current = [r for r in records if not r['obsolete']]
+    log.info('%d current submissions; %d total',
+             len(current), len(records))
+    for r in current:
+        content, headers = project.export_file(
+            record=r['record_id'], field='bc_file')
+        saveFile(r['institution'], headers['name'], content)
 
 
 def mkProjectAccess(mkProject, env):
@@ -41,6 +72,22 @@ def mkProjectAccess(mkProject, env):
     return projectAccess
 
 
+def mkSaveFile(open_wr, mkdir, path_join):
+    def saveFile(category, name, content):
+        log.info('saveFile(%s, %s, [%d])',
+                 category, name, len(content))
+        try:
+            mkdir(category)
+        except OSError:  # already exists
+            pass
+
+        path = path_join(category, name)
+        with open_wr(path) as out:
+            out.write(content)
+        log.info('saved %s', path)
+    return saveFile
+
+
 if __name__ == '__main__':
     def _configure_logging():
         from sys import argv
@@ -49,10 +96,15 @@ if __name__ == '__main__':
         logging.basicConfig(level=level)
 
     def _privileged_main():
-        from sys import argv
-        from os import environ
+        from __builtin__ import open
+        from sys import argv, stdout
+        from os import environ, mkdir
+        from os.path import join as path_join
         from redcap import Project
-        main(argv,
+
+        open_wr = lambda n: open(n, 'w')
+        main(argv, stdout,
+             saveFile=mkSaveFile(open_wr, mkdir, path_join),
              projectAccess=mkProjectAccess(Project, environ))
 
     _configure_logging()
