@@ -1,0 +1,9 @@
+syntax: glob
+
+# emacs back-up files
+*~
+
+# generated stuff
+*.pyc
+dist
+wheelhouse

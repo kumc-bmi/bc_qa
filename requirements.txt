@@ -1,0 +1,12 @@
+# Orinary usage:
+#   pip install -r requirements.txt
+#
+# To go offline, first deal with funky SSL on SUSE issue:
+#   cat /etc/ssl/certs/DigiCert_* >pypi.certs
+# Then:
+#   pip --cert pypi.certs wheel -r requirements.txt 
+# Now take wheelhouse wherever you need to install offline:
+#   pip install --find-links wheelhouse/ -r requirements.txt 
+
+PyCap
+docopt
