@@ -34,34 +34,46 @@ def main(argv, stdout, saveFile, projectAccess):
     log.debug('cli args: %s', cli)
 
     project = projectAccess(cli)
-    records = get_data(project, stdout)
+    records = project.export_records()
+    export_csv(records, stdout)
 
     if cli['--fetch']:
-        get_files(project, records, saveFile)
+        dd = project.export_metadata()
+        get_files(project, records, dd, saveFile)
 
 
-def get_data(project, stdout):
-    records = project.export_records()
+def choices(dd, field_name):
+    descs = [f['select_choices_or_calculations'] for f in dd
+          if f['field_name'] == field_name]
+    if not descs:
+        raise KeyError(field_name)
+    lines = descs[0].replace('\\n', '\n').split('\n')
+    return dict(line.strip().split(', ', 1) for line in lines)
+
+
+def export_csv(records, outfp):
     if not records:
         return
     columns = records[0].keys()
-    out = csv.DictWriter(stdout, columns)
+    out = csv.DictWriter(outfp, columns)
     log.info('saving %d records with %d columns...',
              len(records), len(columns))
     out.writerow(dict(zip(columns, columns)))
     out.writerows(records)
     log.info('saved.')
-    return records
 
 
-def get_files(project, records, saveFile):
+def get_files(project, records, dd, saveFile):
     current = [r for r in records if not r['obsolete']]
     log.info('%d current submissions; %d total',
              len(current), len(records))
+    institutions = choices(dd, 'institution')
     for r in current:
+        which = r['institution']
+        category = '%s-%s' % (which, institutions[which].replace(' ', '_'))
         content, headers = project.export_file(
             record=r['record_id'], field='bc_file')
-        saveFile(r['institution'], headers['name'], content)
+        saveFile(category, headers['name'], content)
 
 
 def mkProjectAccess(mkProject, env):
