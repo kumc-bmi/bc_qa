@@ -103,7 +103,7 @@ length(var.exclusion)
 
 
 ```{r}
-var.sex <- var204[grep('Sex', var204$name), ]
+var.sex <- var204[grep('0220 Sex', var204$name), ]
 stopifnot(nrow(var.sex) == 1)
 var.sex
 ```
@@ -131,9 +131,119 @@ v.enc.nominal <- function(conn, var.path, var.name) {
 ```
 
 ```{r}
-tumor.kumc <- merge(tumor.kumc, v.enc.nominal(conn.kumc, var.sex$concept_path, 'sex'),
-                    by=c('encounter_num'))
+with.var <- function(data, conn, path, name,
+                  get.var=v.enc.nominal) {
+  merge(data, get.var(conn, path, name),
+        by=c('encounter_num'))
+}
+```
+
+```{r}
+enum.sum <- function(data, v,
+                     key='patient_num') {
+  summary(unique(data[, c(key, v)])[[v]])
+}
+```
+
+```{r}
+tumor.kumc <- with.var(tumor.kumc, conn.kumc, var.sex$concept_path, 'sex')
 
 head(tumor.kumc)
-summary(unique(tumor.kumc[, c('patient_num', 'sex')])$sex)
+
+prop <- enum.sum(tumor.kumc, 'sex')
+pie(prop)
+prop
+
+```
+
+
+### Sequence Number
+
+```{r}
+var.seq <- var204[grep('0380 Sequence Number', var204$name), ]
+stopifnot(nrow(var.seq) == 1)
+var.seq
+```
+
+
+```{r}
+tumor.kumc <- with.var(tumor.kumc, conn.kumc, var.seq$concept_path, 'seq.no')
+head(tumor.kumc)
+
+prop <- enum.sum(tumor.kumc, 'seq.no')
+pie(prop)
+prop
+
+```
+
+### Diagnostic Confirmation
+
+```{r}
+var.confirm <- var204[grep('0490 Diagnostic Confirmation', var204$name), ]
+stopifnot(nrow(var.confirm) == 1)
+var.confirm
+```
+
+
+```{r}
+tumor.kumc <- with.var(tumor.kumc, conn.kumc, var.confirm$concept_path, 'confirm')
+
+head(tumor.kumc)
+
+prop <- enum.sum(tumor.kumc, 'confirm')
+pie(prop)
+prop
+```
+
+### Morphology Code
+
+```{r}
+var.morph <- var204[grep('0521 Morph', var204$name), ]
+stopifnot(nrow(var.morph) == 1)
+var.morph
+```
+
+
+```{r}
+tumor.kumc <- with.var(tumor.kumc, conn.kumc, var.morph$concept_path, 'morphology')
+
+head(tumor.kumc)
+
+prop <- enum.sum(tumor.kumc, 'morphology')
+pie(prop)
+prop
+```
+
+### Stage
+
+Derived AJCC-7 Grp and/or SS2000
+
+```{r}
+var.stage.ss <- var204[grep('3020 Derived SS2000', var204$name), ]
+var.stage.ajcc <- var204[grep('AJCC-7', var204$name), ]
+
+stopifnot(nrow(var.stage.ss) == 1)
+stopifnot(nrow(var.stage.ajcc) == 1)
+var.stage.ajcc
+var.stage.ss
+```
+
+
+```{r}
+tumor.kumc <- with.var(tumor.kumc, conn.kumc, var.stage.ss$concept_path, 'stage.ss')
+tumor.kumc <- with.var(tumor.kumc, conn.kumc, var.stage.ajcc$concept_path, 'stage.ajcc')
+tumor.kumc$stage <- as.factor(paste(as.character(tumor.kumc$stage.ss),
+                                    as.character(tumor.kumc$stage.ajcc)))
+  
+head(tumor.kumc)
+
+prop <- enum.sum(tumor.kumc, 'stage.ss')
+pie(prop)
+prop
+prop <- enum.sum(tumor.kumc, 'stage.ajcc')
+pie(prop)
+prop
+prop <- enum.sum(tumor.kumc, 'stage')
+pie(prop)
+prop
 ```
