@@ -8,6 +8,7 @@ bc_access <- function(getKey, pyenv, src,
                       # TODO: document this least authority idiom
                       .system=system) {
   fetchTemplate <- 'bc_access --fetch <api_key> logstdout'
+  normalizeTemplate <- 'bc_access normalize *-*-* logstdout'
   exportTemplate <- 'bc_access --export <api_key>'
   
   api_key <- getKey$value()
@@ -23,9 +24,10 @@ bc_access <- function(getKey, pyenv, src,
        
   formdata <- .system(expand(exportTemplate), intern=TRUE)
   fetchlog <- .system(expand(fetchTemplate), intern=TRUE)
+  normalizelog <- .system(expand(normalizeTemplate), intern=TRUE)
   
   # TODO: least-authority access to open data files
-  list(formdata=formdata, fetchlog=fetchlog)
+  list(formdata=formdata, fetchlog=fetchlog, normalizelog=normalizelog)
 }
 ```
 
@@ -43,11 +45,32 @@ getKey <- source('bcread_api_key.R')
 runDir <- getwd()
 
 setwd("~/projects/bc_qa/data-files")
+# get rid of existing data files
+system("rm *")
 dataDir <- getwd()
-submissions <- bc_access(getKey, src=runDir, pyenv='/home/dconnolly/pyenv/bcqa')
-names(submissions)
+got <- bc_access(getKey, src=runDir, pyenv='/home/dconnolly/pyenv/bcqa')
 
 setwd(runDir)
+```
 
-save(dataDir, submissions, file="bc_download.RData")
+We have data on submitter and (index of) institution, as well as which submissions are obsolete:
+
+```{r}
+submission <- read.csv(textConnection(got$formdata), row.names='record_id')
+submission[,c('name', 'institution', 'obsolete')]
+```
+
+
+And we have basic info about the data files:
+
+```{r}
+grep('patients', got$normalizelog, value=TRUE)
+```
+
+*TODO: save file sizes?*
+
+Save our work for use in later articles:
+
+```{r}
+save(dataDir, got, submission, file="bc_download.RData")
 ```
