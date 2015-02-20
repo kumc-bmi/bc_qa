@@ -1,0 +1,139 @@
+Breast Cancer QA: Query Terms and Exclusion Criteria
+====================================================
+
+```{r, ECHO=FALSE}
+load("bc_data_summary.RData")
+```
+
+## Query Terms
+
+ Query sent to GPC sites 12/23/2014:
+
+  - [GPC Honest Brokers: Time to run the breast cancer survey query][23dec]
+    Tamara McMahon
+    Tue Dec 23 16:17:23 CST 2014 
+
+[23dec]: http://listserv.kumc.edu/pipermail/gpc-honest-brokers/2014-December/000002.html
+
+cf. [ticket:204][204]
+
+[204]: https://informatics.gpcnetwork.org/trac/Project/ticket/204
+
+From a KUMC data file, we extracted the variable table in [bc-variable.csv][222b] on Feb 9 using:
+
+    sqlite3 -header -csv kumcBC.db 'select * from variable' >bc-variable.csv 
+
+[222b]:  https://informatics.gpcnetwork.org/trac/Project/attachment/ticket/222/bc-variable.csv
+
+*Note: R doubles backslashes when it displays strings.*
+
+```{r}
+var204 <- read.csv('bc-variable.csv',
+                   stringsAsFactors=FALSE)
+
+var204$name <- strip.counts(var204$name_char)
+var204 <- var204[, c('id', 'concept_path', 'name')]
+head(var204, n=10)
+
+```
+
+## Analytic Dataset is based on Breast Cancer Diagnosis
+
+### Encounter variable
+
+For present/absent variables, we can capture the observation fact start date while we're at it using this query:
+
+```{r}
+v.enc <- function(conn, var.path, var.name) {
+  sql.summary <- '
+  select f.encounter_num, f.patient_num, f.start_date
+  from observation_fact f
+  join concept_dimension cd
+  on cd.concept_cd = f.concept_cd
+  join variable v
+  on cd.concept_path like (v.concept_path || \'%\')
+  where v.concept_path = ?
+  '
+  per.enc <- dbGetPreparedQuery(conn, sql.summary, bind.data=data.frame(path=var.path))
+  per.enc$start_date <- as.POSIXct(per.enc$start_date)
+
+  names(per.enc)[3] <- var.name
+  per.enc
+  }
+```
+
+Let's pick out the breast cancer term; oddly, it seems to occur in the query twice, so we use `unique()`:
+
+```{r}
+var.dx <- unique(var204[grep('Breast', var204$name), c('concept_path', 'name')])
+stopifnot(nrow(var.dx) == 1)
+var.dx[, c('name', 'concept_path')]
+```
+
+### Breast Cancer Diagnoses at a site
+
+```{r}
+conn.kumc <- site.data('KUMC', dataDir, current)
+
+tumor.kumc <- v.enc(conn.kumc, var.dx$concept_path, 'bc.dx')
+head(tumor.kumc)
+```
+
+
+## Exclusion Criteria
+
+From Tamara McMahon's message of Thursday, February 19, 2015 9:03 AM:
+
+> Here are the variables needed for exclusion (e.g., minimum variables required by all institutions)
+ 
+```{r}
+var.exclusion <- c(
+       'Sex',
+       'Sequence Number',
+       'Diagnostic Confirmation',
+       'Morphology Code',
+       'Derived AJCC-7 Grp and/or SS2000',
+       'Vital Status'
+)
+length(var.exclusion)
+```
+
+
+### Sex
+
+
+```{r}
+var.sex <- var204[grep('Sex', var204$name), ]
+stopifnot(nrow(var.sex) == 1)
+var.sex
+```
+
+For nominal variables, we focus on segments of the concept path that distinguish it from the variable.
+
+```{r}
+v.enc.nominal <- function(conn, var.path, var.name) {
+  sql.summary <- '
+  select f.encounter_num, substr(cd.concept_path, length(v.concept_path)) tail
+  from observation_fact f
+  join concept_dimension cd
+  on cd.concept_cd = f.concept_cd
+  join variable v
+  on cd.concept_path like (v.concept_path || \'%\')
+  where v.concept_path = ?
+  '
+  per.enc <- dbGetPreparedQuery(conn, sql.summary, bind.data=data.frame(path=var.path))
+  per.enc$tail <- as.factor(per.enc$tail)
+  
+  names(per.enc)[2] <- var.name
+  per.enc
+  }
+
+```
+
+```{r}
+tumor.kumc <- merge(tumor.kumc, v.enc.nominal(conn.kumc, var.sex$concept_path, 'sex'),
+                    by=c('encounter_num'))
+
+head(tumor.kumc)
+summary(unique(tumor.kumc[, c('patient_num', 'sex')])$sex)
+```

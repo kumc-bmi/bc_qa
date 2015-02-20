@@ -1,5 +1,5 @@
-Breast Cancer QA Part 2: ???
-============================
+Breast Cancer QA Part 2: Site Data Summary
+==========================================
 
 Recall the results of fetching the files:
 
@@ -18,6 +18,8 @@ The following `r nrow(current)` records are current:
 ```{r}
 current[c('record_id', 'name', 'institution')]
 ```
+
+## Connecting File Info with CRF Info
 
 ```{r}
 fileinfo <- (function() {
@@ -42,21 +44,65 @@ current$n.patient <- fileinfo$n.patient
 current[, c('site', 'n.patient', 'filename')]
 ```
 
-## Exclusion Criteria
 
-From Tamara McMahon's message of Thursday, February 19, 2015 9:03 AM:
+### SQL Queryies on Site Data
 
-> Here are the variables needed for exclusion (e.g., minimum variables required by all institutions)
- 
-```{r}
-var.exclusion <- c(
-       'Sex',
-       'Sequence Number',
-       'Diagnostic Confirmation',
-       'Morphology Code',
-       'Derived AJCC-7 Grp and/or SS2000',
-       'Vital Status'
-)
-length(var.exclusion)
+```{r echo=FALSE}
+site.data <- function(target, dataDir, current) {
+  library(RSQLite)
+
+  f <- file.path(dataDir, subset(current, site == target)$filename)
+  dbConnect(SQLite(), dbname=f)
+}
 ```
 
+For example:
+
+```{r}
+conn.kumc <- site.data('KUMC', dataDir, current)
+dbGetQuery(conn.kumc, 'select count(*) from patient_dimension')
+```
+
+
+### Site Data Summary
+
+This is the [data summary query from BuilderSaga][sqlsum], tweaked to add encounter qty:
+
+[sqlsum]: https://informatics.gpcnetwork.org/trac/Project/wiki/BuilderSaga#DataSummary
+
+```{r}
+builder.summary <- function(conn) {
+  sql.summary <- '
+  select v.concept_path, v.name_char,
+  count(distinct patient_num) pat_qty, count(distinct encounter_num) enc_qty, count(*) fact_qty
+  from observation_fact f
+  join concept_dimension cd
+  on cd.concept_cd = f.concept_cd
+  join variable v
+  on cd.concept_path like (v.concept_path || \'%\')
+  group by v.concept_path, v.name_char
+  '
+  per.var <- dbGetQuery(conn, sql.summary)
+  per.var$variable <- strip.counts(per.var$name_char)
+  per.var
+  }
+
+strip.counts <- function(text) {
+  gsub('\\[.*', '', text)
+}
+```
+
+```{r}
+conn.kumc <- site.data('KUMC', dataDir, current)
+
+builder.summary(conn.kumc)[, c('variable', 'pat_qty', 'enc_qty', 'fact_qty')]
+```
+
+
+## Save For Next Section
+
+```{r}
+save(dataDir, got, submission,
+     current, site.data, builder.summary, strip.counts,
+     file="bc_data_summary.RData")
+```
