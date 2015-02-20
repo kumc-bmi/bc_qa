@@ -41,3 +41,22 @@ current$site <- fileinfo$site
 current$n.patient <- fileinfo$n.patient
 current[, c('site', 'n.patient', 'filename')]
 ```
+
+## Exclusion Criteria
+
+From Tamara McMahon's message of Thursday, February 19, 2015 9:03 AM:
+
+> Here are the variables needed for exclusion (e.g., minimum variables required by all institutions)
+ 
+```{r}
+var.exclusion <- c(
+       'Sex',
+       'Sequence Number',
+       'Diagnostic Confirmation',
+       'Morphology Code',
+       'Derived AJCC-7 Grp and/or SS2000',
+       'Vital Status'
+)
+length(var.exclusion)
+```
+
