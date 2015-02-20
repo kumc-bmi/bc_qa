@@ -1,0 +1,43 @@
+Breast Cancer QA Part 2: ???
+============================
+
+Recall the results of fetching the files:
+
+```{r}
+load("bc_download.RData")
+dataDir
+names(got)
+
+submission$record_id <- as.numeric(row.names(submission))
+current <- submission[submission$obsolete == '', ]
+nrow(current)
+```
+
+The following `r nrow(current)` records are current:
+
+```{r}
+current[c('record_id', 'name', 'institution')]
+```
+
+```{r}
+fileinfo <- (function() {
+  filedesc <- grep('patients', got$normalizelog, value=TRUE)
+  m <- regexec('[^:]+:[^:]+:(([^-]+)-([0-9]+)[^ ]+) has ([0-9]+) patients.', filedesc)
+  lm <- regmatches(filedesc, m)
+  df <- do.call(rbind.data.frame, lm)
+  names(df) <- c('line', 'filename', 'site', 'record_id', 'n.patient')
+  row.names(df) <- df$record_id
+  df$record_id <- as.numeric(as.character(df$record_id))
+  df[order(df$record_id), -1]
+  })()
+fileinfo
+```
+
+Now we can merge the file info with the redcap data:
+
+```{r}
+current$filename <- fileinfo$filename
+current$site <- fileinfo$site
+current$n.patient <- fileinfo$n.patient
+current[, c('site', 'n.patient', 'filename')]
+```

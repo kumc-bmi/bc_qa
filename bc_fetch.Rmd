@@ -56,7 +56,9 @@ setwd(runDir)
 We have data on submitter and (index of) institution, as well as which submissions are obsolete:
 
 ```{r}
-submission <- read.csv(textConnection(got$formdata), row.names='record_id')
+submission <- read.csv(textConnection(got$formdata),
+                       row.names='record_id',
+                       stringsAsFactors=FALSE)
 submission[,c('name', 'institution', 'obsolete')]
 ```
 
