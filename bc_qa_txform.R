@@ -57,13 +57,11 @@ strip.counts <- function(text) {
 
 v.enc.nominal <- function(conn, var.path, var.name) {
   sql.summary <- '
-  select f.encounter_num, f.patient_num, substr(cd.concept_path, length(v.concept_path)) tail
+  select f.encounter_num, f.patient_num, substr(cd.concept_path, length(:path)) tail
   from observation_fact f
   join concept_dimension cd
   on cd.concept_cd = f.concept_cd
-  join variable v
-  on cd.concept_path like (v.concept_path || \'%\')
-  where v.concept_path = ?
+  where cd.concept_path like (:path || \'%\')
   '
   per.enc <- dbGetPreparedQuery(conn, sql.summary, bind.data=data.frame(path=var.path))
   per.enc$tail <- as.factor(per.enc$tail)
@@ -107,9 +105,7 @@ v.enc <- function(conn, var.path, var.name) {
   from observation_fact f
   join concept_dimension cd
   on cd.concept_cd = f.concept_cd
-  join variable v
-  on cd.concept_path like (v.concept_path || \'%\')
-  where v.concept_path = ?
+  where cd.concept_path like (? || \'%\')
   '
   per.enc <- dbGetPreparedQuery(conn, sql.summary, bind.data=data.frame(path=var.path))
   # per.enc$start_date <- as.POSIXct(per.enc$start_date)
