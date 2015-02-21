@@ -104,22 +104,18 @@ bad.concept.path
 
 ## Analytic Dataset is based on Breast Cancer Diagnosis
 
-### Encounter variable
-
-For present/absent variables, we can capture the observation fact start date while we're at it using this query:
-
-Let's pick out the breast cancer term; as noted above, it seems to occur in the query twice, so we use `unique()`:
-
 ```{r}
-var.dx <- unique(var204[grep('Breast', var204$name), c('concept_path', 'name')])
-stopifnot(nrow(var.dx) == 1)
-var.dx[, c('name', 'concept_path')]
+tumor.site <- v.enc(
+  conn.site,
+  grep('\\SEER Site\\Breast\\',
+     bcterm$term204$concept_path,
+     value=TRUE, fixed=TRUE),
+  'bc.dx')
 ```
 
-### Breast Cancer Diagnoses at `r SITE`
+We find `r nrow(tumor.site)` diagnoses; let's look at the first few:
 
 ```{r}
-tumor.site <- v.enc(conn.site, var.dx$concept_path, 'bc.dx')
 head(tumor.site)
 ```
 
@@ -127,27 +123,29 @@ head(tumor.site)
 
 ### Sex
 
+Let's be careful to continue to rely only on paths. For nominal variables, we focus on segments of the concept path that distinguish it from the variable:
 
 ```{r}
-var.sex <- var.excl['sex', ]
-var.sex
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl['sex', 'concept_path'], 'sex')
+
+head(tumor.site)
 ```
 
-For nominal variables, we focus on segments of the concept path that distinguish it from the variable.
-
+This function summarizes a nominal (enumerated) variable:
 
 ```{r}
 enum.sum <- function(data, v,
                      key='patient_num') {
   summary(unique(data[, c(key, v)])[[v]])
 }
+
+enum.sum(tumor.site, 'sex')
 ```
 
+Let's visualize the breakdown:
+
 ```{r}
-tumor.site <- with.var(tumor.site, conn.site, var.sex$concept_path, 'sex')
-
-head(tumor.site)
-
 prop <- enum.sum(tumor.site, 'sex')
 pie(prop)
 data.frame(qty=prop, row.names=names(prop))
@@ -156,14 +154,11 @@ data.frame(qty=prop, row.names=names(prop))
 
 ### Sequence Number
 
-```{r}
-var.seq <- var.excl['seq.no', ]
-```
-
 
 ```{r}
-tumor.site <- with.var(tumor.site, conn.site, var.seq$concept_path, 'seq.no')
-head(tumor.site)
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl['seq.no', 'concept_path'], 'seq.no')
+head(tumor.site[, c(-3)])
 
 prop <- enum.sum(tumor.site, 'seq.no')
 pie(prop)
@@ -174,15 +169,10 @@ data.frame(qty=prop, row.names=names(prop))
 ### Diagnostic Confirmation
 
 ```{r}
-var.confirm <- var.excl['confirm', ]
-var.confirm
-```
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl['confirm', 'concept_path'], 'confirm')
 
-
-```{r}
-tumor.site <- with.var(tumor.site, conn.site, var.confirm$concept_path, 'confirm')
-
-head(tumor.site)
+head(tumor.site[, c(-3, -4)])
 
 prop <- enum.sum(tumor.site, 'confirm')
 pie(prop)
@@ -192,19 +182,40 @@ data.frame(qty=prop, row.names=names(prop))
 ### Morphology Code
 
 ```{r}
-var.morph <- var.excl['morphology', ]
-var.morph
-```
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl['morphology', 'concept_path'], 'morphology')
 
-
-```{r}
-tumor.site <- with.var(tumor.site, conn.site, var.morph$concept_path, 'morphology')
-
-head(tumor.site)
+head(tumor.site[, c(-3, -4, -5)])
 
 prop <- enum.sum(tumor.site, 'morphology')
 pie(prop)
-data.frame(qty=prop, row.names=names(prop))
+```
+
+Those codes aren't very satisfying; let's put the names back on:
+
+```{r echo=FALSE}
+# Put the names back on
+enum.name <- function(x, path.var) {
+  df <- data.frame(
+    concept_path=paste0(path.var,
+                        # chop off 1st character
+                        substr(x, 2, length(x))))
+  
+  df <- merge(df,
+              dbGetQuery(conn.site,
+                         'select name_char, concept_path from concept_dimension'),
+              by='concept_path',
+              all.x=TRUE)
+  df$name_char
+}
+```
+
+```{r}
+prop <- data.frame(qty=prop, row.names=names(prop))
+prop$name <- enum.name(row.names(prop), bcterm$excl['morphology', 'concept_path'])
+prop <- prop[prop$qty> 0]
+pie(prop$qty, labels=prop$name)
+prop[, c('name', 'qty')]
 ```
 
 ### Stage
