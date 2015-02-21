@@ -140,6 +140,7 @@ bc.exclusions <- function(conn.site,
   tumor.site <- with.var(tumor.site, conn.site, var.excl['confirm',]$concept_path, 'confirm')
   tumor.site <- with.var(tumor.site, conn.site, var.excl['morphology',]$concept_path, 'morphology')
   
+  # TODO: factor out paths
   tumor.site <- with.var(
     tumor.site, conn.site,
     '\\i2b2\\naaccr\\S:11 Stage/Prognostic Factors\\3020 Derived SS2000\\', 'stage.ss')
