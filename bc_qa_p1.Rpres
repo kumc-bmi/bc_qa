@@ -14,11 +14,12 @@ Generated 20 Feb 2015
 Modelled after Graphs by Elizabeth A. Chrischilles, PhD 18 Feb 2015
 
 ```{r echo=FALSE}
-opts_chunk$set(fig.width=8,fig.height=4.5,dpi=300,out.width="1536px",height="864px")
+opts_chunk$set(fig.width=8,fig.height=4.5,dpi=300,out.width="1920px",height="1080px")
 
 source('bc_qa_txform.R')
 
-load("bc_data_excl.RData")
+load("bc_fetch_results.RData")
+load("bc_terms_results.RData")
 
 library(ggplot2)
 library(grid)
@@ -40,18 +41,18 @@ Patients
 ========
 
 ```{r echo=FALSE}
-# TODO: move this to where current is defined
-current <- current[order(current$site),]
-site.code <- factor(current$site)
+current <- fetch$dataset  # anachronism
+site.code <- factor(fetch$dataset$site)
 ```
 
 ```{r echo=FALSE}
 query.site <- function(q, site) {
-  conn <- site.data(site, dataDir, current)
+  conn <- site.data(site)
   dbGetQuery(conn, q)
 }
 
-query.each.site <- function(key, q) {
+query.each.site <- function(key, q,
+                            current=fetch$dataset) {
   data.frame(
     site=site.code,
     key=key,
@@ -86,7 +87,7 @@ tumor.sites <- function() {
   for (ix in 1:nrow(current)) {
     site <- current$site[ix]
     message('working on site: ', ix, ' ', site)
-    tumor.site <- bc.exclusions(site.data(site, dataDir, current))
+    tumor.site <- bc.exclusions(site.data(site))
     if (nrow(tumor.site) > 0) {
       tumor.site$site <- site.code[ix]
       names <- names(tumor.site)
@@ -132,7 +133,7 @@ patients.vital <- rbind(
 
 var.site <- function(naaccr.name, var.name) {
   function(site) {
-    conn <- site.data(site, dataDir, current)
+    conn <- site.data(site)
     v.enc(conn, var204$concept_path[grep(naaccr.name, var204$name)], var.name)
     }
   }
@@ -203,9 +204,11 @@ Tumors
 ======
 
 ```{r echo=FALSE}
+var204 <- bcterm$term204  # anachonism
+
 site.tumor.var <- function(naaccr.name) {
   function(s) {
-    df <- v.enc.nominal(site.data(s, dataDir, current),
+    df <- v.enc.nominal(site.data(s),
                         unique(var204$concept_path[grep(naaccr.name, var204$name)]),
                         'x')
     nrow(df)
