@@ -213,7 +213,7 @@ enum.name <- function(x, path.var) {
 ```{r}
 prop <- data.frame(qty=prop, row.names=names(prop))
 prop$name <- enum.name(row.names(prop), bcterm$excl['morphology', 'concept_path'])
-prop <- prop[prop$qty> 0]
+prop <- prop[prop$qty> 0, ]
 pie(prop$qty, labels=prop$name)
 prop[, c('name', 'qty')]
 ```
@@ -223,22 +223,13 @@ prop[, c('name', 'qty')]
 Derived AJCC-7 Grp and/or SS2000
 
 ```{r}
-var.stage.ss <- var204[grep('3020 Derived SS2000', var204$name), ]
-var.stage.ajcc <- var204[grep('3430 Derived AJCC-7', var204$name), ]
-
-stopifnot(nrow(var.stage.ss) == 1)
-stopifnot(nrow(var.stage.ajcc) == 1)
-var.stage.ajcc
-var.stage.ss
-```
-
-
-```{r}
-tumor.site <- with.var(tumor.site, conn.site, var.stage.ss$concept_path, 'stage.ss')
-tumor.site <- with.var(tumor.site, conn.site, var.stage.ajcc$concept_path, 'stage.ajcc')
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl.all['stage.ss', 'concept_path'], 'stage.ss')
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl.all['stage.ajcc', 'concept_path'], 'stage.ajcc')
 tumor.site$stage <- factor.combine(tumor.site$stage.ss, tumor.site$stage.ajcc)
-  
-head(tumor.site)
+
+head(tumor.site[, c(-3, -4, -5, -6)])
 ```
 
 #### Stage: 3020 Derived SS2000
@@ -269,28 +260,25 @@ data.frame(qty=prop, row.names=names(prop))
 ### Vital Status
 
 ```{r}
-var.vital.tr <- var204[grep('1760 Vital', var204$name), ]
-var.deceased.ehr <- var204[grep('\\\\Deceased\\\\', var204$concept_path), ]
-var.deceased.ssa <- var204[grep('\\\\Deceased per SSA\\\\', var204$concept_path), ]
-
-var.vital.tr
-var.deceased.ehr
-var.deceased.ssa
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl.all['vital.tr', 'concept_path'], 'vital.tr')
+head(tumor.site[, c(-3, -4, -5, -6, -7)])
 ```
-
 
 To match between the tumor registry and the EHR, we can only join on patient num.
 
 ```{r}
-tumor.site <- with.var(tumor.site, conn.site, var.vital.tr$concept_path, 'vital.tr')
-
-tumor.site <- with.var.pat(tumor.site, conn.site, var.deceased.ehr$concept_path, 'deceased.ehr')
-tumor.site <- with.var.pat(tumor.site, conn.site, var.deceased.ssa$concept_path, 'deceased.ssa')
+tumor.site <- with.var.pat(tumor.site, conn.site,
+                           bcterm$excl.all['deceased.ehr', 'concept_path'],
+                           'deceased.ehr')
+tumor.site <- with.var.pat(tumor.site, conn.site,
+                           bcterm$excl.all['deceased.ssa', 'concept_path'],
+                           'deceased.ssa')
 tumor.site$vital <- factor.combine(tumor.site$vital.tr,
                                    tumor.site$deceased.ehr,
                                    tumor.site$deceased.ssa)
   
-head(tumor.site)
+head(tumor.site[, c(-3, -4, -5, -6, -7, -8, -9)])
 ```
 
 #### Vital Status: Tumor Registry
@@ -326,19 +314,10 @@ data.frame(qty=prop, row.names=names(prop))
 ```
 
 
-## Save For Next Section
-
-```{r}
-save(dataDir, got, submission,
-     current, site.data, builder.summary, strip.counts,
-     var.excl, var204,
-     file="bc_data_excl.RData")
-```
-
 ## Summary and Issues for `r SITE`
 
 ```{r}
-summary(tumor.site[, row.names(var.excl)])
+summary(tumor.site[, row.names(bcterm$excl)])
 
-show.issues(tumor.site, var.excl)
+show.issues(tumor.site, bcterm$excl)
 ```
