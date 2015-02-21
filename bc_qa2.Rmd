@@ -1,6 +1,19 @@
 Breast Cancer QA Part 2: Site Data Summary
 ==========================================
 
+Choose the site in this auxiliary file:
+
+```{r}
+SITE <- source('bc_site.R')$value
+```
+
+
+```{r, ECHO=FALSE}
+# Don't wrap so much
+options(width=300) 
+```
+
+
 Recall the results of fetching the files:
 
 ```{r}
@@ -45,7 +58,7 @@ current[, c('site', 'n.patient', 'filename')]
 ```
 
 
-### SQL Queryies on Site Data
+### SQL Queries on Site Data
 
 ```{r echo=FALSE}
 site.data <- function(target, dataDir, current) {
@@ -59,8 +72,8 @@ site.data <- function(target, dataDir, current) {
 For example:
 
 ```{r}
-conn.kumc <- site.data('KUMC', dataDir, current)
-dbGetQuery(conn.kumc, 'select count(*) from patient_dimension')
+conn.site <- site.data(SITE, dataDir, current)
+dbGetQuery(conn.site, 'select count(*) from patient_dimension')
 ```
 
 
@@ -71,7 +84,8 @@ This is the [data summary query from BuilderSaga][sqlsum], tweaked to add encoun
 [sqlsum]: https://informatics.gpcnetwork.org/trac/Project/wiki/BuilderSaga#DataSummary
 
 ```{r}
-builder.summary <- function(conn) {
+builder.summary <- function(conn,
+                            v.name.max=50) {
   sql.summary <- '
   select v.concept_path, v.name_char,
   count(distinct patient_num) pat_qty, count(distinct encounter_num) enc_qty, count(*) fact_qty
@@ -83,7 +97,7 @@ builder.summary <- function(conn) {
   group by v.concept_path, v.name_char
   '
   per.var <- dbGetQuery(conn, sql.summary)
-  per.var$variable <- strip.counts(per.var$name_char)
+  per.var$variable <- substr(strip.counts(per.var$name_char), 1, v.name.max)
   per.var
   }
 
@@ -93,9 +107,9 @@ strip.counts <- function(text) {
 ```
 
 ```{r}
-conn.kumc <- site.data('KUMC', dataDir, current)
+conn.site <- site.data(SITE, dataDir, current)
 
-builder.summary(conn.kumc)[, c('variable', 'pat_qty', 'enc_qty', 'fact_qty')]
+builder.summary(conn.site)[, c('variable', 'pat_qty', 'enc_qty', 'fact_qty')]
 ```
 
 

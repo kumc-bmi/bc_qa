@@ -1,8 +1,20 @@
 Breast Cancer QA: Query Terms and Exclusion Criteria
 ====================================================
 
+Choose the site in this auxiliary file:
+
+```{r}
+SITE <- source('bc_site.R')$value
+```
+
+
 ```{r, ECHO=FALSE}
 load("bc_data_summary.RData")
+```
+
+```{r, ECHO=FALSE}
+# Don't wrap so much
+options(width=300) 
 ```
 
 ## Query Terms
@@ -33,11 +45,33 @@ var204 <- read.csv('bc-variable.csv',
 
 var204$name <- strip.counts(var204$name_char)
 var204 <- var204[, c('id', 'concept_path', 'name')]
-head(var204, n=10)
+var204[, c('concept_path', 'name')]
 
 ```
 
+We seem to have some duplicates:
+```{r}
+var204[duplicated(var204$concept_path), ]
+data.frame(
+  term.qty=nrow(var204),
+  term.uniq.qty=length(unique(var204$concept_path))
+  )
+```
+
 ## Analytic Dataset is based on Breast Cancer Diagnosis
+
+### Site Data Summary
+
+```{r}
+SITE
+subset(current, site == SITE)[, c('record_id', 'site', 'name', 'filename')]
+
+cat(subset(current, site == SITE)$issues_other)
+
+conn.site <- site.data(SITE, dataDir, current)
+
+builder.summary(conn.site)[, c('variable', 'pat_qty', 'enc_qty', 'fact_qty')]
+```
 
 ### Encounter variable
 
@@ -62,7 +96,7 @@ v.enc <- function(conn, var.path, var.name) {
   }
 ```
 
-Let's pick out the breast cancer term; oddly, it seems to occur in the query twice, so we use `unique()`:
+Let's pick out the breast cancer term; as noted above, it seems to occur in the query twice, so we use `unique()`:
 
 ```{r}
 var.dx <- unique(var204[grep('Breast', var204$name), c('concept_path', 'name')])
@@ -73,10 +107,8 @@ var.dx[, c('name', 'concept_path')]
 ### Breast Cancer Diagnoses at a site
 
 ```{r}
-conn.kumc <- site.data('KUMC', dataDir, current)
-
-tumor.kumc <- v.enc(conn.kumc, var.dx$concept_path, 'bc.dx')
-head(tumor.kumc)
+tumor.site <- v.enc(conn.site, var.dx$concept_path, 'bc.dx')
+head(tumor.site)
 ```
 
 
@@ -87,7 +119,7 @@ From Tamara McMahon's message of Thursday, February 19, 2015 9:03 AM:
 > Here are the variables needed for exclusion (e.g., minimum variables required by all institutions)
  
 ```{r}
-var.exclusion <- c(
+tm.exclusion <- c(
        'Sex',
        'Sequence Number',
        'Diagnostic Confirmation',
@@ -95,7 +127,9 @@ var.exclusion <- c(
        'Derived AJCC-7 Grp and/or SS2000',
        'Vital Status'
 )
-length(var.exclusion)
+length(tm.exclusion)
+
+var.exclusion <- c('sex', 'seq.no', 'confirm', 'morphology', 'stage', 'vital')
 ```
 
 
@@ -113,7 +147,7 @@ For nominal variables, we focus on segments of the concept path that distinguish
 ```{r}
 v.enc.nominal <- function(conn, var.path, var.name) {
   sql.summary <- '
-  select f.encounter_num, substr(cd.concept_path, length(v.concept_path)) tail
+  select f.encounter_num, f.patient_num, substr(cd.concept_path, length(v.concept_path)) tail
   from observation_fact f
   join concept_dimension cd
   on cd.concept_cd = f.concept_cd
@@ -124,7 +158,7 @@ v.enc.nominal <- function(conn, var.path, var.name) {
   per.enc <- dbGetPreparedQuery(conn, sql.summary, bind.data=data.frame(path=var.path))
   per.enc$tail <- as.factor(per.enc$tail)
   
-  names(per.enc)[2] <- var.name
+  names(per.enc)[3] <- var.name
   per.enc
   }
 
@@ -134,7 +168,7 @@ v.enc.nominal <- function(conn, var.path, var.name) {
 with.var <- function(data, conn, path, name,
                   get.var=v.enc.nominal) {
   merge(data, get.var(conn, path, name),
-        by=c('encounter_num'))
+        all.x=TRUE)  # don't prune on join mis-matches
 }
 ```
 
@@ -146,14 +180,13 @@ enum.sum <- function(data, v,
 ```
 
 ```{r}
-tumor.kumc <- with.var(tumor.kumc, conn.kumc, var.sex$concept_path, 'sex')
+tumor.site <- with.var(tumor.site, conn.site, var.sex$concept_path, 'sex')
 
-head(tumor.kumc)
+head(tumor.site)
 
-prop <- enum.sum(tumor.kumc, 'sex')
+prop <- enum.sum(tumor.site, 'sex')
 pie(prop)
-prop
-
+data.frame(qty=prop, row.names=names(prop))
 ```
 
 
@@ -167,12 +200,12 @@ var.seq
 
 
 ```{r}
-tumor.kumc <- with.var(tumor.kumc, conn.kumc, var.seq$concept_path, 'seq.no')
-head(tumor.kumc)
+tumor.site <- with.var(tumor.site, conn.site, var.seq$concept_path, 'seq.no')
+head(tumor.site)
 
-prop <- enum.sum(tumor.kumc, 'seq.no')
+prop <- enum.sum(tumor.site, 'seq.no')
 pie(prop)
-prop
+data.frame(qty=prop, row.names=names(prop))
 
 ```
 
@@ -186,13 +219,13 @@ var.confirm
 
 
 ```{r}
-tumor.kumc <- with.var(tumor.kumc, conn.kumc, var.confirm$concept_path, 'confirm')
+tumor.site <- with.var(tumor.site, conn.site, var.confirm$concept_path, 'confirm')
 
-head(tumor.kumc)
+head(tumor.site)
 
-prop <- enum.sum(tumor.kumc, 'confirm')
+prop <- enum.sum(tumor.site, 'confirm')
 pie(prop)
-prop
+data.frame(qty=prop, row.names=names(prop))
 ```
 
 ### Morphology Code
@@ -205,13 +238,13 @@ var.morph
 
 
 ```{r}
-tumor.kumc <- with.var(tumor.kumc, conn.kumc, var.morph$concept_path, 'morphology')
+tumor.site <- with.var(tumor.site, conn.site, var.morph$concept_path, 'morphology')
 
-head(tumor.kumc)
+head(tumor.site)
 
-prop <- enum.sum(tumor.kumc, 'morphology')
+prop <- enum.sum(tumor.site, 'morphology')
 pie(prop)
-prop
+data.frame(qty=prop, row.names=names(prop))
 ```
 
 ### Stage
@@ -220,7 +253,7 @@ Derived AJCC-7 Grp and/or SS2000
 
 ```{r}
 var.stage.ss <- var204[grep('3020 Derived SS2000', var204$name), ]
-var.stage.ajcc <- var204[grep('AJCC-7', var204$name), ]
+var.stage.ajcc <- var204[grep('3430 Derived AJCC-7', var204$name), ]
 
 stopifnot(nrow(var.stage.ss) == 1)
 stopifnot(nrow(var.stage.ajcc) == 1)
@@ -230,20 +263,137 @@ var.stage.ss
 
 
 ```{r}
-tumor.kumc <- with.var(tumor.kumc, conn.kumc, var.stage.ss$concept_path, 'stage.ss')
-tumor.kumc <- with.var(tumor.kumc, conn.kumc, var.stage.ajcc$concept_path, 'stage.ajcc')
-tumor.kumc$stage <- as.factor(paste(as.character(tumor.kumc$stage.ss),
-                                    as.character(tumor.kumc$stage.ajcc)))
-  
-head(tumor.kumc)
+factor.combine <- function(...) {
+  factors <- list(...)
+  x <- factors[[1]]
+  for (ix in 2:length(factors)) {
+    print(length(x))
+    cx <- as.character(x)
+    cy <- as.character(factors[[ix]])
+    cxy <- paste(cx, cy)
+    cxy <- ifelse(is.na(cx), cy, ifelse(is.na(cy), cx, cxy))
+    x <- as.factor(cxy)
+  }
+  x
+}
+```
 
-prop <- enum.sum(tumor.kumc, 'stage.ss')
+```{r}
+tumor.site <- with.var(tumor.site, conn.site, var.stage.ss$concept_path, 'stage.ss')
+tumor.site <- with.var(tumor.site, conn.site, var.stage.ajcc$concept_path, 'stage.ajcc')
+tumor.site$stage <- factor.combine(tumor.site$stage.ss, tumor.site$stage.ajcc)
+  
+head(tumor.site)
+```
+
+#### Stage: 3020 Derived SS2000
+
+```{r}
+prop <- enum.sum(tumor.site, 'stage.ss')
 pie(prop)
-prop
-prop <- enum.sum(tumor.kumc, 'stage.ajcc')
+data.frame(qty=prop, row.names=names(prop))
+```
+
+#### Stage: 3430 Derived AJCC-7
+
+```{r}
+prop <- enum.sum(tumor.site, 'stage.ajcc')
 pie(prop)
-prop
-prop <- enum.sum(tumor.kumc, 'stage')
+data.frame(qty=prop, row.names=names(prop))
+```
+
+#### Stage: Combined
+
+```{r}
+prop <- enum.sum(tumor.site, 'stage')
 pie(prop)
-prop
+data.frame(qty=prop, row.names=names(prop))
+```
+
+
+### Vital Status
+
+```{r}
+var.vital.tr <- var204[grep('1760 Vital', var204$name), ]
+var.deceased.ehr <- var204[grep('\\\\Deceased\\\\', var204$concept_path), ]
+var.deceased.ssa <- var204[grep('\\\\Deceased per SSA\\\\', var204$concept_path), ]
+
+var.vital.tr
+var.deceased.ehr
+var.deceased.ssa
+```
+
+
+To match between the tumor registry and the EHR, we can only join on patient num.
+
+```{r}
+with.var.pat <- function(data, conn, path, name,
+                  get.var=v.enc.nominal) {
+  merge(data, get.var(conn, path, name),
+        all.x=TRUE)  # don't prune on join mis-matches
+}
+
+tumor.site2 <- with.var.pat(tumor.site, conn.site, var.vital.tr$concept_path, 'deceased.ehr')
+```
+
+
+```{r}
+tumor.site <- with.var(tumor.site, conn.site, var.vital.tr$concept_path, 'vital.tr')
+
+tumor.site <- with.var.pat(tumor.site, conn.site, var.deceased.ehr$concept_path, 'deceased.ehr')
+tumor.site <- with.var.pat(tumor.site, conn.site, var.deceased.ssa$concept_path, 'deceased.ssa')
+tumor.site$vital <- factor.combine(tumor.site$vital.tr,
+                                   tumor.site$deceased.ehr,
+                                   tumor.site$deceased.ssa)
+  
+head(tumor.site)
+```
+
+#### Vital Status: Tumor Registry
+
+```{r}
+prop <- enum.sum(tumor.site, 'vital.tr')
+pie(prop)
+data.frame(qty=prop, row.names=names(prop))
+```
+
+#### Vital Status: Deceased (from EHR)
+
+```{r}
+prop <- enum.sum(tumor.site, 'deceased.ehr')
+pie(prop)
+data.frame(qty=prop, row.names=names(prop))
+```
+
+#### Vital Status: Deceased (from SSA)
+
+```{r}
+prop <- enum.sum(tumor.site, 'deceased.ssa')
+pie(prop)
+data.frame(qty=prop, row.names=names(prop))
+```
+
+#### Vital Status: All Sources
+
+```{r}
+prop <- enum.sum(tumor.site, 'vital')
+pie(prop)
+data.frame(qty=prop, row.names=names(prop))
+```
+
+## Summary (issues?)
+
+```{r}
+summary(tumor.site[, var.exclusion])
+
+for (ix in 1:length(var.exclusion)) {
+  v <- var.exclusion[ix]
+  x <- tumor.site[[v]]
+  qty <- length(x)
+  absent <- qty - length(na.omit(x))
+  pct <- round(100.0 * absent / qty, 2)
+  if (pct > 50) {
+    print(paste0('Too many ', v, ' missing: ', pct, '%.'))
+  }
+}
 ```
