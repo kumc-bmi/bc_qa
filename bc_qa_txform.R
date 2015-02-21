@@ -1,32 +1,5 @@
 library(RSQLite)
 
-bc_access <- function(getKey, pyenv, src,
-                      # TODO: document this least authority idiom
-                      .system=system) {
-  fetchTemplate <- 'bc_access --fetch <api_key> logstdout'
-  normalizeTemplate <- 'bc_access normalize *-*-* logstdout'
-  exportTemplate <- 'bc_access --export <api_key>'
-  
-  api_key <- getKey$value()
-  pyscript <- gsub('PYENV', pyenv,
-                   gsub('SRC', src,
-                        'PYENV/bin/python SRC/bc_access.py'))
-  
-  expand <- function(tpl) {
-    gsub('bc_access', pyscript,
-         gsub('<api_key>', api_key,
-              gsub('logstdout', '2>&1', tpl)))
-  }
-  
-  formdata <- .system(expand(exportTemplate), intern=TRUE)
-  fetchlog <- .system(expand(fetchTemplate), intern=TRUE)
-  normalizelog <- .system(expand(normalizeTemplate), intern=TRUE)
-  
-  # TODO: least-authority access to open data files
-  list(formdata=formdata, fetchlog=fetchlog, normalizelog=normalizelog)
-}
-
-
 site.data <- function(target, dataDir, current) {  
   f <- file.path(dataDir, subset(current, site == target)$filename)
   dbConnect(SQLite(), dbname=f)

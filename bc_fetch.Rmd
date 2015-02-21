@@ -1,53 +1,97 @@
 Breast Cancer QA Part 1: Fetch Data Files
 =========================================
 
+```{r echo=FALSE}
+# Don't wrap so much
+options(width=300) 
+```
+
 Data files were submitted to redcap:
  - [GPC Breast Cancer Project 1: review of survey population][4044]
 
 [4044]: https://redcap.kumc.edu/redcap_v5.7.7/index.php?pid=4044
 
-*Transformation and access utilities:*
+*TODO: cite relevant ticket.*
 
-```{r}
-source('bc_qa_txform.R')
+*TODO: attach data dictionary to ticket so others can try this code.*
+
+Generate an API key and put it in the auxilary `bcread_api_key.R` file a la:
+
+```{r eval=FALSE}
+Sys.setenv(BCREAD='ABC...')
+'BCREAD'
 ```
 
-We fetch all the survey and CRF data from that project as well as the submitted data files:
+```{r echo=FALSE}
+bc_access <- function(env.key, pyenv, src,
+                      # TODO: document this least authority idiom
+                      .system=system) {
+  exportTemplate    <- 'bc_access --key <key> export'
+  fetchTemplate     <- 'bc_access --key <key> fetch'
+  normalizeTemplate <- 'bc_access normalize'
+  
+  pyscript <- gsub('PYENV', pyenv,
+                   gsub('SRC', src,
+                        'PYENV/bin/python SRC/bc_access.py'))
+  
+  expand <- function(tpl) {
+    gsub('bc_access', pyscript,
+         gsub('<key>', env.key, tpl))
+  }
+  
+  form.data <- .system(expand(exportTemplate), intern=TRUE)
+  fetch.detail <- .system(expand(fetchTemplate), intern=TRUE)
+  normalize.detail <- .system(expand(normalizeTemplate), input=fetch.detail, intern=TRUE)
+  
+  # TODO: least-authority access to open data files
+  list(form.data=form.data,
+       fetch.detail=fetch.detail,
+       normalize.detail=normalize.detail)
+}
+
+```
+
+Then we can fetch all the survey and CRF data from that project as well as the submitted data files:
 
 ```{r}
-getKey <- source('bcread_api_key.R')
+env.key.bc <- source('bcread_api_key.R')$value
 
 runDir <- getwd()
 
 setwd("~/projects/bc_qa/data-files")
 # get rid of existing data files
 system("rm *")
-dataDir <- getwd()
-got <- bc_access(getKey, src=runDir, pyenv='/home/dconnolly/pyenv/bcqa')
+fetch <- bc_access(env.key.bc, src=runDir, pyenv='/home/dconnolly/pyenv/bcqa')
+fetch$dataDir <- getwd()
 
 setwd(runDir)
 ```
 
-We have data on submitter and (index of) institution, as well as which submissions are obsolete:
+The form data and file info were provided in CSV format:
 
 ```{r}
-submission <- read.csv(textConnection(got$formdata),
-                       row.names='record_id',
-                       stringsAsFactors=FALSE)
-submission[,c('name', 'institution', 'obsolete')]
+text.to.csv <- function(text)
+  read.csv(textConnection(text),
+           stringsAsFactors=FALSE)
+
+fetch$form <- text.to.csv(fetch$form.data)
+fetch$form[, c('record_id', 'institution', 'name')]
+
+fetch$file <- text.to.csv(fetch$normalize.detail)
+fetch$file
 ```
 
-
-And we have basic info about the data files:
+Let's combine the info about datasets:
 
 ```{r}
-grep('patients', got$normalizelog, value=TRUE)
+fetch$dataset <- merge(fetch$file, fetch$form,
+                       by='record_id')
+names(fetch$dataset)
+fetch$dataset[, c('record_id', 'obsolete', 'institution', 'site', 'name', 'bc_db', 'patient_qty')]
 ```
-
-*TODO: save file sizes?*
 
 Save our work for use in later articles:
 
 ```{r}
-save(dataDir, got, submission, file="bc_download.RData")
+save(fetch, file="bc_fetch_results.RData")
 ```
