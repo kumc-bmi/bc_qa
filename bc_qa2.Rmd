@@ -58,6 +58,7 @@ term204 <- term204[!duplicated(term204$concept_path), ]
 These are the `r nrow(term204)` query terms:
 
 ```{r}
+term204$naaccr.code <- substr(term204$name, 1, 4)
 term204[, c('concept_path', 'name')]
 bcterm$term204 <- term204
 ```
@@ -70,36 +71,55 @@ bcterm$term204 <- term204
 From Tamara McMahon's message of Thursday, February 19, 2015 9:03 AM:
 
 > Here are the variables needed for exclusion (e.g., minimum variables required by all institutions)
- 
+>  - Sex
+>  - Sequence Number
+>  - Diagnostic Confirmation
+>  - Morphology Code
+>  - Derived AJCC-7 Grp and/or SS2000
+>  - Vital Status
+
+Note that stage (AJCC, SS2000) and Vital Status are combinations of terms:
+
 ```{r}
-bcterm$excl <- data.frame(
-  tm=c(
-    'Sex',
-    'Sequence Number',
-    'Diagnostic Confirmation',
-    'Morphology Code',
-    'Derived AJCC-7 Grp and/or SS2000',
-    'Vital Status'
-    ),
-  id=NA,
-  name=NA,
-  concept_path=NA
+t.excl <- data.frame(
+  naaccr.code=c('0220',
+                '0380',
+                '0490',
+                '0521',
+                '3020',
+                '3430',
+                '1760'),
+  stringsAsFactors=FALSE
   )
 
-row.names(bcterm$excl) <- c('sex', 'seq.no', 'confirm', 'morphology', 'stage', 'vital')
+t.excl <- merge(t.excl, term204[, c('naaccr.code', 'name', 'concept_path')],
+                by='naaccr.code', all.x=TRUE)
 
-set.excl <- function(name, term) {
-  stopifnot(nrow(term) == 1)
-  bcterm$excl[name, 'id'] <<- term$id
-  bcterm$excl[name, 'name'] <<- term$name
-  bcterm$excl[name, 'concept_path'] <<- term$concept_path
-}
+deceased.ehr <- merge(
+  data.frame(
+  concept_path=c(
+    '\\i2b2\\Demographics\\Vital Status\\Deceased\\',
+    '\\i2b2\\Demographics\\Vital Status\\Deceased per SSA\\'
+    )),
+  term204[, c('name', 'concept_path')],
+  by='concept_path')
+deceased.ehr$naaccr.code <- NA
 
-set.excl('sex', term204[grep('0220 Sex', term204$name), ])
-set.excl('seq.no', term204[grep('0380 Sequence Number', term204$name), ])
-set.excl('confirm', term204[grep('0490 Diagnostic Confirmation', term204$name), ])
-set.excl('morphology', term204[grep('0521 Morph', term204$name), ])
+combo <- data.frame(
+  name=c('stage', 'vital'),
+  naaccr.code=NA,
+  concept_path=NA)
+t.excl <- rbind(t.excl, deceased.ehr, combo)
 
+row.names(t.excl) <- c('sex', 'seq.no', 'confirm', 'morphology',
+                       'stage.ss', 'stage.ajcc',
+                       'vital.tr', 'deceased.ehr', 'deceased.ssa',
+                       'stage', 'vital')
+bcterm$excl.all <- t.excl
+bcterm$excl.all
+
+bcterm$excl <- t.excl[c('sex', 'seq.no', 'confirm', 'morphology',
+                       'stage', 'vital'), ]
 bcterm$excl
 ```
 
@@ -107,5 +127,5 @@ bcterm$excl
 ## Save For Next Section
 
 ```{r}
-save(bcterms, file="bc_terms_results.RData")
+save(bcterm, file="bc_terms_results.RData")
 ```
