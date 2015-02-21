@@ -105,12 +105,8 @@ bad.concept.path
 ## Analytic Dataset is based on Breast Cancer Diagnosis
 
 ```{r}
-tumor.site <- v.enc(
-  conn.site,
-  grep('\\SEER Site\\Breast\\',
-     bcterm$term204$concept_path,
-     value=TRUE, fixed=TRUE),
-  'bc.dx')
+bcterm$bc.dx.path
+tumor.site <- v.enc(conn.site, bcterm$bc.dx.path, 'bc.dx')
 ```
 
 We find `r nrow(tumor.site)` diagnoses; let's look at the first few:

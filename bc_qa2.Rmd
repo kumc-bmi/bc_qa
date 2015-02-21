@@ -63,6 +63,18 @@ term204[, c('concept_path', 'name')]
 bcterm$term204 <- term204
 ```
 
+## BreastCancer Diagnosis
+
+The core breast cancer diagnosis term comes from the SEER site recode:
+
+```{r}
+bcterm$bc.dx.path <-
+  grep('\\SEER Site\\Breast\\',
+     term204$concept_path,
+     value=TRUE, fixed=TRUE)
+
+bcterm$bc.dx.path
+```
 
 ## Exclusion Criteria
 
