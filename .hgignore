@@ -10,4 +10,5 @@ wheelhouse
 data-files
 .Rproj.user
 *.md
-figure
+*figure/
+*.RData
