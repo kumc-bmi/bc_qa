@@ -112,8 +112,9 @@ combo <- data.frame(
 t.excl <- rbind(t.excl, deceased.ehr, combo)
 
 row.names(t.excl) <- c('sex', 'seq.no', 'confirm', 'morphology',
+                       'vital.tr',
                        'stage.ss', 'stage.ajcc',
-                       'vital.tr', 'deceased.ehr', 'deceased.ssa',
+                       'deceased.ssa', 'deceased.ehr',
                        'stage', 'vital')
 bcterm$excl.all <- t.excl
 bcterm$excl.all
