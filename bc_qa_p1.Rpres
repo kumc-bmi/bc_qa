@@ -1,0 +1,101 @@
+GPC Breast Cancer Data by Site
+==============================
+author: Dan Connolly
+date: 20 Feb 2015
+
+Graphs by Site
+========================================================
+
+Generated 20 Feb 2015
+
+
+```{r echo=FALSE}
+source('bc_qa_txform.R')
+
+load("bc_data_excl.RData")
+
+library(ggplot2)
+library(grid)
+```
+
+
+Needed for Exclusions
+=====================
+
+ - Primary site
+ - Sex
+ - Sequence Number
+ - Diagnostic Confirmation
+ - Morphology Code
+ - Derived AJCC-7 Grp and/or SS2000
+ - Vital Status
+
+Patients
+========
+
+Patients (Code)
+===============
+
+```{r}
+# TODO: move this to where current is defined
+current <- current[order(current$site),]
+```
+
+```{r echo=FALSE}
+query.site <- function(q, site) {
+  conn <- site.data(site, dataDir, current)
+  dbGetQuery(conn, q)
+}
+
+query.each.site <- function(kind, q) {
+  data.frame(
+    site=current$site,
+    kind=kind,
+    result=unlist(lapply(current$site, function(s) query.site(q, s)))
+    )
+}
+
+patients <- rbind(
+  query.each.site(
+    'data',
+    'select count(distinct patient_num) from observation_fact'),
+  query.each.site(
+    'patient_dimension',
+    'select count(*) from patient_dimension'),
+  query.each.site(
+    'tumor',
+    "
+    select count(distinct encounter_num)
+    from observation_fact f
+    join concept_dimension cd
+    on cd.concept_cd = f.concept_cd
+    where cd.concept_path like '%naaccr%'
+    "
+    ))
+
+```
+
+scratch pad:
+
+var.site <- function(naaccr.name, var.name) {
+  function(site) {
+    conn <- site.data(site, dataDir, current)
+    v.enc(conn, var204$concept_path[grep(naaccr.name, var204$name)], var.name)
+    }
+  }
+
+dx.site <- var.site('0390 Date of Diagnosis', 'dx')
+site$tumor <- unlist(lapply(site$site,
+                   function (s) nrow(dx.site(s))))
+
+Number of Breast Cancer Patients and Tumors by Site
+===================================================
+
+
+```{r echo=FALSE}
+
+fig1 <- ggplot(data=patients, mapping=aes(x=site, y=result, fill=kind), fill=kind)
+fig1 + geom_bar(stat = "identity", position="dodge") +
+  labs(x="", y="") +
+  theme(legend.position=c(0.9, 0.8))
+```
