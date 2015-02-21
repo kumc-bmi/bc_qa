@@ -1,41 +1,16 @@
 Breast Cancer QA Part 1: Fetch Data Files
 =========================================
 
-```{r, echo=FALSE}
-# Infrastructure details on getting data from REDCap:
-
-bc_access <- function(getKey, pyenv, src,
-                      # TODO: document this least authority idiom
-                      .system=system) {
-  fetchTemplate <- 'bc_access --fetch <api_key> logstdout'
-  normalizeTemplate <- 'bc_access normalize *-*-* logstdout'
-  exportTemplate <- 'bc_access --export <api_key>'
-  
-  api_key <- getKey$value()
-  pyscript <- gsub('PYENV', pyenv,
-                   gsub('SRC', src,
-                        'PYENV/bin/python SRC/bc_access.py'))
-
-  expand <- function(tpl) {
-    gsub('bc_access', pyscript,
-               gsub('<api_key>', api_key,
-                    gsub('logstdout', '2>&1', tpl)))
-    }
-       
-  formdata <- .system(expand(exportTemplate), intern=TRUE)
-  fetchlog <- .system(expand(fetchTemplate), intern=TRUE)
-  normalizelog <- .system(expand(normalizeTemplate), intern=TRUE)
-  
-  # TODO: least-authority access to open data files
-  list(formdata=formdata, fetchlog=fetchlog, normalizelog=normalizelog)
-}
-```
-
-
 Data files were submitted to redcap:
  - [GPC Breast Cancer Project 1: review of survey population][4044]
 
 [4044]: https://redcap.kumc.edu/redcap_v5.7.7/index.php?pid=4044
+
+*Transformation and access utilities:*
+
+```{r}
+source('bc_qa_txform.R')
+```
 
 We fetch all the survey and CRF data from that project as well as the submitted data files:
 

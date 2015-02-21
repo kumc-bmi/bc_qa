@@ -7,6 +7,12 @@ Choose the site in this auxiliary file:
 SITE <- source('bc_site.R')$value
 ```
 
+*Transformation and access utilities:*
+
+```{r}
+source('bc_qa_txform.R')
+```
+
 
 ```{r, ECHO=FALSE}
 # Don't wrap so much
@@ -60,15 +66,6 @@ current[, c('site', 'n.patient', 'filename')]
 
 ### SQL Queries on Site Data
 
-```{r echo=FALSE}
-site.data <- function(target, dataDir, current) {
-  library(RSQLite)
-
-  f <- file.path(dataDir, subset(current, site == target)$filename)
-  dbConnect(SQLite(), dbname=f)
-}
-```
-
 For example:
 
 ```{r}
@@ -82,29 +79,6 @@ dbGetQuery(conn.site, 'select count(*) from patient_dimension')
 This is the [data summary query from BuilderSaga][sqlsum], tweaked to add encounter qty:
 
 [sqlsum]: https://informatics.gpcnetwork.org/trac/Project/wiki/BuilderSaga#DataSummary
-
-```{r}
-builder.summary <- function(conn,
-                            v.name.max=50) {
-  sql.summary <- '
-  select v.concept_path, v.name_char,
-  count(distinct patient_num) pat_qty, count(distinct encounter_num) enc_qty, count(*) fact_qty
-  from observation_fact f
-  join concept_dimension cd
-  on cd.concept_cd = f.concept_cd
-  join variable v
-  on cd.concept_path like (v.concept_path || \'%\')
-  group by v.concept_path, v.name_char
-  '
-  per.var <- dbGetQuery(conn, sql.summary)
-  per.var$variable <- substr(strip.counts(per.var$name_char), 1, v.name.max)
-  per.var
-  }
-
-strip.counts <- function(text) {
-  gsub('\\[.*', '', text)
-}
-```
 
 ```{r}
 conn.site <- site.data(SITE, dataDir, current)
