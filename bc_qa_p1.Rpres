@@ -11,6 +11,7 @@ Graphs by Site
 
 Generated 20 Feb 2015
 
+Modelled after Graphs by Elizabeth A. Chrischilles, PhD 18 Feb 2015
 
 ```{r echo=FALSE}
 opts_chunk$set(fig.width=8,fig.height=4.5,dpi=300,out.width="1536px",height="864px")
