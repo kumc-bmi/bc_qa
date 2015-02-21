@@ -79,6 +79,40 @@ conn.site <- site.data(SITE, dataDir, current)
 builder.summary(conn.site)[, c('variable', 'pat_qty', 'enc_qty', 'fact_qty')]
 ```
 
+### Site Terms
+
+```{r}
+site.path <- dbGetQuery(conn.site,
+                        'select count(*), cd.concept_path
+                        from observation_fact f
+                        join concept_dimension cd
+                        on cd.concept_cd = f.concept_cd
+                        group by cd.concept_path
+                        ')
+site.path
+```
+
+```{r}
+dbGetQuery(conn.site,
+"
+select count(distinct encounter_num)
+from observation_fact f
+join concept_dimension cd
+  on cd.concept_cd = f.concept_cd
+where cd.concept_path like '%naaccr%'
+")
+```
+
+
+```{r}
+v <- dbGetQuery(conn.site,
+"
+select *
+from variable
+")
+```
+
+
 ### Encounter variable
 
 For present/absent variables, we can capture the observation fact start date while we're at it using this query:
@@ -333,7 +367,7 @@ data.frame(qty=prop, row.names=names(prop))
 ```{r}
 save(dataDir, got, submission,
      current, site.data, builder.summary, strip.counts,
-     var.excl,
+     var.excl, var204,
      file="bc_data_excl.RData")
 ```
 

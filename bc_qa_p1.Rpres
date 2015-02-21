@@ -2,6 +2,9 @@ GPC Breast Cancer Data by Site
 ==============================
 author: Dan Connolly
 date: 20 Feb 2015
+width: 1536
+height: 864
+transition: fade
 
 Graphs by Site
 ========================================================
@@ -10,6 +13,8 @@ Generated 20 Feb 2015
 
 
 ```{r echo=FALSE}
+opts_chunk$set(fig.width=8,fig.height=4.5,dpi=300,out.width="1536px",height="864px")
+
 source('bc_qa_txform.R')
 
 load("bc_data_excl.RData")
@@ -101,14 +106,25 @@ pat.per.site <- function(df) {
   as.vector(table(unique(df[, c('site', 'patient_num')])$site))
   }
 
-patients <- rbind(
+patients.vital <- rbind(
   patients,
   data.frame(
     site=site.code,
     key='w/Vital from SEER/EHR',
-    result=pat.per.site(tumor.all[!is.na(tumor.all$vital), ])))
-```
+    result=pat.per.site(tumor.all[!is.na(tumor.all$vital), ])),
 
+  data.frame(
+    site=site.code,
+    key='w/Deceased from EHR (data)',
+    result=pat.per.site(tumor.all[!is.na(tumor.all$deceased.ehr), ])),
+
+  query.each.site(
+    'vital: patient_dimension',
+    'select count(*) from patient_dimension
+     where vital_status_cd is not null')
+)
+
+```
 
 ```{r eval=FALSE, echo=FALSE}
 #Scratchpad...
@@ -121,7 +137,7 @@ var.site <- function(naaccr.name, var.name) {
   }
 
 dx.site <- var.site('0390 Date of Diagnosis', 'dx')
-site$tumor <- unlist(lapply(site$site,
+site$tumor <- unlist(lapply(site.code,
                    function (s) nrow(dx.site(s))))
 ```
 
@@ -132,23 +148,85 @@ Number of Breast Cancer Patients and Tumors by Site
 ```{r echo=FALSE}
 
 fig1 <- ggplot(data=patients, mapping=aes(x=site, y=result, fill=key), fill=key)
+
+# text dodge clue: http://stackoverflow.com/a/6017961
 style.dodge <- function(fig) {
   fig + geom_bar(stat = "identity", position="dodge") +
     labs(x="", y="") +
-    theme(legend.position=c(0.9, 0.8))
-  
+    theme(legend.position=c(0.9, 0.8)) +
+    geom_text(data=fig$data, aes(label = result),
+                  position = position_dodge(width=0.9), angle=45)
   }
 style.dodge(fig1)
 ```
 
 **TODO: tumors in date range**
+**TODO: how did they count tumors?**
 
 
 Number with Vital Status, by Site
 =================================
 
 ```{r echo=FALSE}
-fig2 <- ggplot(subset(patients, key %in% c('patient_dimension', 'w/Vital from SEER/EHR')),
+
+fig2 <- ggplot(subset(patients.vital, key %in% c('patient_dimension', 'w/Vital from SEER/EHR')),
                aes(x=site, y=result, fill=key))
 style.dodge(fig2)
+```
+
+
+Number in “Final” Survey-Eligible Cohort by Site
+================================================
+
+*TODO: formulate exclusion criteria*
+
+Number of patients (data dim.)
+Number after exclusions
+Percent eligible for survey
+
+*TODO: what's the difference between "after exclusions" and "eligible for survey"?*
+
+Number of Breast Cancer Patients with EMR Vital Status by Site
+==============================================================
+
+*Note: the EMR query term was deceased, not vital status.*
+
+```{r echo=FALSE}
+fig2 <- ggplot(subset(patients.vital, key %in% c('w/Vital from EHR (data)', 'vital: patient_dimension')),
+               aes(x=site, y=result, fill=key))
+style.dodge(fig2)
+```
+
+
+Tumors
+======
+
+```{r echo=FALSE}
+site.tumor.var <- function(naaccr.name) {
+  function(s) {
+    df <- v.enc.nominal(site.data(s, dataDir, current),
+                        unique(var204$concept_path[grep(naaccr.name, var204$name)]),
+                        'x')
+    nrow(df)
+    }
+  }
+
+
+tumor.by.site <- rbind.data.frame(
+  subset(patients, key == 'tumor'),
+  
+  data.frame(
+    site=site.code,
+    key='w/Primary Site',
+    result=unlist(lapply(site.code, site.tumor.var('0400 Primary'))))
+  )
+
+```
+
+Number of Tumors Overall and With Primary Site, by Site
+=======================================================
+
+```{r echo=FALSE}
+fig5 <- ggplot(tumor.by.site, aes(x=site, y=result, fill=key))
+style.dodge(fig5)
 ```
