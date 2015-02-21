@@ -1,99 +1,111 @@
-Breast Cancer QA Part 2: Site Data Summary
-==========================================
-
-Choose the site in this auxiliary file:
-
-```{r}
-SITE <- source('bc_site.R')$value
-```
-
-*Transformation and access utilities:*
-
-```{r}
-source('bc_qa_txform.R')
-```
-
+Breast Cancer QA: Query Terms and Exclusion Criteria
+====================================================
 
 ```{r, echo=FALSE}
 # Don't wrap so much
 options(width=300) 
 ```
 
-
-Recall the results of fetching the files:
-
-```{r}
-load("bc_download.RData")
-dataDir
-names(got)
-
-submission$record_id <- as.numeric(row.names(submission))
-current <- submission[submission$obsolete == '', ]
-nrow(current)
-```
-
-The following `r nrow(current)` records are current:
+*Transformation utilities:*
 
 ```{r}
-current[c('record_id', 'name', 'institution')]
-```
-
-## Connecting File Info with CRF Info
-
-```{r}
-options(stringsAsFactors = FALSE)
-
-fileinfo <- (function() {
-  filedesc <- grep('patients', got$normalizelog, value=TRUE)
-  m <- regexec('[^:]+:[^:]+:(([^-]+)-([0-9]+)[^ ]+) has ([0-9]+) patients.', filedesc)
-  lm <- regmatches(filedesc, m)
-  df <- do.call(rbind.data.frame, lm)
-  names(df) <- c('line', 'filename', 'site', 'record_id', 'n.patient')
-  row.names(df) <- df$record_id
-  df$record_id <- as.numeric(as.character(df$record_id))
-  df[order(df$record_id), -1]
-  })()
-
-fileinfo
-```
-
-Now we can merge the file info with the redcap data:
-
-```{r}
-current$filename <- fileinfo$filename
-current$site <- fileinfo$site
-current$n.patient <- fileinfo$n.patient
-current[, c('site', 'n.patient', 'filename')]
+source('bc_qa_txform.R')
 ```
 
 
-### SQL Queries on Site Data
+Query sent to GPC sites 12/23/2014:
 
-For example:
+  - [GPC Honest Brokers: Time to run the breast cancer survey query][23dec]
+    Tamara McMahon
+    Tue Dec 23 16:17:23 CST 2014 
+
+[23dec]: http://listserv.kumc.edu/pipermail/gpc-honest-brokers/2014-December/000002.html
+
+As noted in [ticket:204][204], the query is also on babel.
+
+[204]: https://informatics.gpcnetwork.org/trac/Project/ticket/204
+
+From a KUMC data file, we extracted the variable table using:
+
+    sqlite3 -header -csv kumcBC.db 'select * from variable' >bc-variable.csv 
+
+and attached it to #204 as [bc-variable.csv][222b] on Feb 9.
+
+[222b]:  https://informatics.gpcnetwork.org/trac/Project/attachment/ticket/222/bc-variable.csv
+
+*Note: R doubles backslashes when it displays strings.*
 
 ```{r}
-conn.site <- site.data(SITE, dataDir, current)
-dbGetQuery(conn.site, 'select count(*) from patient_dimension')
+bcterm <- list()
+
+term204 <- read.csv('bc-variable.csv',
+                    stringsAsFactors=FALSE)
+
+term204$name <- strip.counts(term204$name_char)
+term204 <- term204[, c('id', 'concept_path', 'name')]
+```
+
+We seem to have some duplicates; let's eliminate them:
+```{r}
+term204[duplicated(term204$concept_path), ]
+data.frame(
+  term.qty=nrow(term204),
+  term.uniq.qty=length(unique(term204$concept_path))
+  )
+term204 <- term204[!duplicated(term204$concept_path), ]
+```
+
+These are the `r nrow(term204)` query terms:
+
+```{r}
+term204[, c('concept_path', 'name')]
+bcterm$term204 <- term204
 ```
 
 
-### Site Data Summary
+## Exclusion Criteria
 
-This is the [data summary query from BuilderSaga][sqlsum], tweaked to add encounter qty:
+**TODO: trace these to a more authoritative source**
 
-[sqlsum]: https://informatics.gpcnetwork.org/trac/Project/wiki/BuilderSaga#DataSummary
+From Tamara McMahon's message of Thursday, February 19, 2015 9:03 AM:
 
+> Here are the variables needed for exclusion (e.g., minimum variables required by all institutions)
+ 
 ```{r}
-conn.site <- site.data(SITE, dataDir, current)
+bcterm$excl <- data.frame(
+  tm=c(
+    'Sex',
+    'Sequence Number',
+    'Diagnostic Confirmation',
+    'Morphology Code',
+    'Derived AJCC-7 Grp and/or SS2000',
+    'Vital Status'
+    ),
+  id=NA,
+  name=NA,
+  concept_path=NA
+  )
 
-builder.summary(conn.site)[, c('variable', 'pat_qty', 'enc_qty', 'fact_qty')]
+row.names(bcterm$excl) <- c('sex', 'seq.no', 'confirm', 'morphology', 'stage', 'vital')
+
+set.excl <- function(name, term) {
+  stopifnot(nrow(term) == 1)
+  bcterm$excl[name, 'id'] <<- term$id
+  bcterm$excl[name, 'name'] <<- term$name
+  bcterm$excl[name, 'concept_path'] <<- term$concept_path
+}
+
+set.excl('sex', term204[grep('0220 Sex', term204$name), ])
+set.excl('seq.no', term204[grep('0380 Sequence Number', term204$name), ])
+set.excl('confirm', term204[grep('0490 Diagnostic Confirmation', term204$name), ])
+set.excl('morphology', term204[grep('0521 Morph', term204$name), ])
+
+bcterm$excl
 ```
 
 
 ## Save For Next Section
 
 ```{r}
-save(dataDir, got, submission,
-     current, site.data, builder.summary, strip.counts,
-     file="bc_data_summary.RData")
+save(bcterms, file="bc_terms_results.RData")
 ```
