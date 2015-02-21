@@ -1,21 +1,22 @@
-Breast Cancer QA: Query Terms and Exclusion Criteria
-====================================================
-
-Choose the site in this auxiliary file:
-
-```{r}
+```{r echo=FALSE}
 SITE <- source('bc_site.R')$value
 ```
 
 
-*Transformation and access utilities:*
+Breast Cancer QA for `r SITE`
+=============================
+
+*Based on results from previous articles*
 
 ```{r}
-source('bc_qa_txform.R')
+load("bc_fetch_results.RData")
+load("bc_terms_results.RData")
 ```
 
-```{r, echo=FALSE}
-load("bc_data_summary.RData")
+
+```{r echo=FALSE}
+# Transformation utilities:
+source('bc_qa_txform.R')
 ```
 
 ```{r, echo=FALSE}
@@ -23,95 +24,85 @@ load("bc_data_summary.RData")
 options(width=300) 
 ```
 
-## Query Terms
 
- Query sent to GPC sites 12/23/2014:
+## Data Summary for `r SITE`
 
-  - [GPC Honest Brokers: Time to run the breast cancer survey query][23dec]
-    Tamara McMahon
-    Tue Dec 23 16:17:23 CST 2014 
+```{r echo=FALSE}
+dataset <- subset(fetch$dataset, site == SITE)
+dataset[, c('record_id', 'site', 'name', 'bc_db')]
 
-[23dec]: http://listserv.kumc.edu/pipermail/gpc-honest-brokers/2014-December/000002.html
-
-cf. [ticket:204][204]
-
-[204]: https://informatics.gpcnetwork.org/trac/Project/ticket/204
-
-From a KUMC data file, we extracted the variable table in [bc-variable.csv][222b] on Feb 9 using:
-
-    sqlite3 -header -csv kumcBC.db 'select * from variable' >bc-variable.csv 
-
-[222b]:  https://informatics.gpcnetwork.org/trac/Project/attachment/ticket/222/bc-variable.csv
-
-*Note: R doubles backslashes when it displays strings.*
-
-```{r}
-var204 <- read.csv('bc-variable.csv',
-                   stringsAsFactors=FALSE)
-
-var204$name <- strip.counts(var204$name_char)
-var204 <- var204[, c('id', 'concept_path', 'name')]
-var204[, c('concept_path', 'name')]
-
-```
-
-We seem to have some duplicates:
-```{r}
-var204[duplicated(var204$concept_path), ]
-data.frame(
-  term.qty=nrow(var204),
-  term.uniq.qty=length(unique(var204$concept_path))
-  )
-```
-
-## Analytic Dataset is based on Breast Cancer Diagnosis
-
-### Site Data Summary (`r SITE`)
-
-```{r}
-SITE
-subset(current, site == SITE)[, c('record_id', 'site', 'name', 'filename')]
-
-cat(subset(current, site == SITE)$issues_other)
-
-conn.site <- site.data(SITE, dataDir, current)
+conn.site <- site.data(SITE)
 
 builder.summary(conn.site)[, c('variable', 'pat_qty', 'enc_qty', 'fact_qty')]
 ```
 
-### Site Terms
+Issues noted in redcap:
 
-```{r}
-site.path <- dbGetQuery(conn.site,
-                        'select count(*), cd.concept_path
-                        from observation_fact f
-                        join concept_dimension cd
-                        on cd.concept_cd = f.concept_cd
-                        group by cd.concept_path
-                        ')
-site.path
+```{r echo=FALSE}
+cat(dataset$issues_other)
 ```
 
-```{r}
-dbGetQuery(conn.site,
-"
-select count(distinct encounter_num)
-from observation_fact f
-join concept_dimension cd
-  on cd.concept_cd = f.concept_cd
-where cd.concept_path like '%naaccr%'
-")
-```
+## Terms in dataset from `r SITE`
 
+### Variable Terms: Aligned and Misaligned
 
-```{r}
+```{r, echo=FALSE}
 v <- dbGetQuery(conn.site,
 "
-select *
+select id, name, concept_path
 from variable
 ")
+
+# Some sites have really long variable names
+v$name <- substr(v$name, 1, 40)
+v.ok <- v$concept_path %in% bcterm$term204$concept_path
+v.good <- v[v.ok, ]
+v.bad <- v[! v.ok, ]
+
+data.frame(
+  qty.good=nrow(v.good),
+  qty.bad=nrow(v.bad))
 ```
 
+```{r}
+v.good
+v.bad
+```
+
+### Fact Terms: Misaligned
+
+For facts with concept paths that don't match any of the requested terms, how many patients, encounters, and facts?
+
+```{r echo=FALSE}
+
+# KLUDGE rather than adding a table... or even a temp table...
+sql.qterm.table <- (
+  function() {
+    select <- lapply(bcterm$term204$concept_path,
+                     function(p) paste0("select '", p, "' concept_path"))
+    paste(select, collapse=' union all\n')
+    })()
+
+bad.concept.path <-
+  dbGetQuery(conn.site,
+             paste(
+             "select count(distinct patient_num) qty_pat,
+                     count(distinct encounter_num) qty_enc,
+                     count(*) qty_fact,
+                     substr(cd.name_char, 1, 30) name_char,
+                     cd.concept_path
+             from observation_fact f
+             join concept_dimension cd
+             on cd.concept_cd = f.concept_cd
+             where not exists (select t204.concept_path from
+             (", sql.qterm.table, ") t204
+             where cd.concept_path like (t204.concept_path || '%'))
+             group by cd.concept_path
+             "))
+bad.concept.path
+```
+
+## Analytic Dataset is based on Breast Cancer Diagnosis
 
 ### Encounter variable
 
@@ -132,44 +123,6 @@ tumor.site <- v.enc(conn.site, var.dx$concept_path, 'bc.dx')
 head(tumor.site)
 ```
 
-
-## Exclusion Criteria
-
-From Tamara McMahon's message of Thursday, February 19, 2015 9:03 AM:
-
-> Here are the variables needed for exclusion (e.g., minimum variables required by all institutions)
- 
-```{r}
-var.excl <- data.frame(
-  tm=c(
-    'Sex',
-    'Sequence Number',
-    'Diagnostic Confirmation',
-    'Morphology Code',
-    'Derived AJCC-7 Grp and/or SS2000',
-    'Vital Status'
-    ),
-  id=NA,
-  name=NA,
-  concept_path=NA
-  )
-
-row.names(var.excl) <- c('sex', 'seq.no', 'confirm', 'morphology', 'stage', 'vital')
-
-set.excl <- function(name, term) {
-  stopifnot(nrow(term) == 1)
-  var.excl[name, 'id'] <<- term$id
-  var.excl[name, 'name'] <<- term$name
-  var.excl[name, 'concept_path'] <<- term$concept_path
-}
-
-set.excl('sex', var204[grep('0220 Sex', var204$name), ])
-set.excl('seq.no', var204[grep('0380 Sequence Number', var204$name), ])
-set.excl('confirm', var204[grep('0490 Diagnostic Confirmation', var204$name), ])
-set.excl('morphology', var204[grep('0521 Morph', var204$name), ])
-
-var.excl
-```
 
 
 ### Sex
