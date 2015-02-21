@@ -41,6 +41,8 @@ current[c('record_id', 'name', 'institution')]
 ## Connecting File Info with CRF Info
 
 ```{r}
+options(stringsAsFactors = FALSE)
+
 fileinfo <- (function() {
   filedesc <- grep('patients', got$normalizelog, value=TRUE)
   m <- regexec('[^:]+:[^:]+:(([^-]+)-([0-9]+)[^ ]+) has ([0-9]+) patients.', filedesc)
@@ -51,6 +53,7 @@ fileinfo <- (function() {
   df$record_id <- as.numeric(as.character(df$record_id))
   df[order(df$record_id), -1]
   })()
+
 fileinfo
 ```
 

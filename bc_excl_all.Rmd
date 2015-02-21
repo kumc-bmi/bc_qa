@@ -31,7 +31,7 @@ The framework looks like this:
 
 ```{r}
 stats.empty <- function() {
-  empty <- rep(NA, nrow(var.excl) + 1)
+  empty <- rep(0, nrow(var.excl) + 1)
   df <- data.frame(lapply(current$site, function(x) empty))
   names(df) <- current$site
   row.names(df) <- c('BC DX', row.names(var.excl))
@@ -61,7 +61,8 @@ excl.sites <- function(df) {
     tumor.site <- bc.exclusions(site.data(site, dataDir, current))
     stats <- lapply(row.names(var.excl), function(n) pat.with(tumor.site, n))
     stats <- c(nrow(tumor.site), stats)
-    df[[site]] <- unlist(stats)
+    x <- unlist(stats)
+    df[, site] <- x
   }
   df
 }
