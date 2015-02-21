@@ -1,7 +1,8 @@
 library(RSQLite)
 
-site.data <- function(target, dataDir, current) {  
-  f <- file.path(dataDir, subset(current, site == target)$filename)
+site.data <- function(target,
+                      .fetch=fetch) {  
+  f <- file.path(.fetch$dataDir, subset(.fetch$file, site == target)$bc_db)
   dbConnect(SQLite(), dbname=f)
 }
 
