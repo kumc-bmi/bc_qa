@@ -14,11 +14,11 @@ SITE <- source('bc_site.R')$value
 source('bc_qa_txform.R')
 ```
 
-```{r, ECHO=FALSE}
+```{r, echo=FALSE}
 load("bc_data_summary.RData")
 ```
 
-```{r, ECHO=FALSE}
+```{r, echo=FALSE}
 # Don't wrap so much
 options(width=300) 
 ```
@@ -106,17 +106,35 @@ From Tamara McMahon's message of Thursday, February 19, 2015 9:03 AM:
 > Here are the variables needed for exclusion (e.g., minimum variables required by all institutions)
  
 ```{r}
-tm.exclusion <- c(
-       'Sex',
-       'Sequence Number',
-       'Diagnostic Confirmation',
-       'Morphology Code',
-       'Derived AJCC-7 Grp and/or SS2000',
-       'Vital Status'
-)
-length(tm.exclusion)
+var.excl <- data.frame(
+  tm=c(
+    'Sex',
+    'Sequence Number',
+    'Diagnostic Confirmation',
+    'Morphology Code',
+    'Derived AJCC-7 Grp and/or SS2000',
+    'Vital Status'
+    ),
+  id=NA,
+  name=NA,
+  concept_path=NA
+  )
 
-var.exclusion <- c('sex', 'seq.no', 'confirm', 'morphology', 'stage', 'vital')
+row.names(var.excl) <- c('sex', 'seq.no', 'confirm', 'morphology', 'stage', 'vital')
+
+set.excl <- function(name, term) {
+  stopifnot(nrow(term) == 1)
+  var.excl[name, 'id'] <<- term$id
+  var.excl[name, 'name'] <<- term$name
+  var.excl[name, 'concept_path'] <<- term$concept_path
+}
+
+set.excl('sex', var204[grep('0220 Sex', var204$name), ])
+set.excl('seq.no', var204[grep('0380 Sequence Number', var204$name), ])
+set.excl('confirm', var204[grep('0490 Diagnostic Confirmation', var204$name), ])
+set.excl('morphology', var204[grep('0521 Morph', var204$name), ])
+
+var.excl
 ```
 
 
@@ -124,8 +142,7 @@ var.exclusion <- c('sex', 'seq.no', 'confirm', 'morphology', 'stage', 'vital')
 
 
 ```{r}
-var.sex <- var204[grep('0220 Sex', var204$name), ]
-stopifnot(nrow(var.sex) == 1)
+var.sex <- var.excl['sex', ]
 var.sex
 ```
 
@@ -153,9 +170,7 @@ data.frame(qty=prop, row.names=names(prop))
 ### Sequence Number
 
 ```{r}
-var.seq <- var204[grep('0380 Sequence Number', var204$name), ]
-stopifnot(nrow(var.seq) == 1)
-var.seq
+var.seq <- var.excl['seq.no', ]
 ```
 
 
@@ -172,8 +187,7 @@ data.frame(qty=prop, row.names=names(prop))
 ### Diagnostic Confirmation
 
 ```{r}
-var.confirm <- var204[grep('0490 Diagnostic Confirmation', var204$name), ]
-stopifnot(nrow(var.confirm) == 1)
+var.confirm <- var.excl['confirm', ]
 var.confirm
 ```
 
@@ -191,8 +205,7 @@ data.frame(qty=prop, row.names=names(prop))
 ### Morphology Code
 
 ```{r}
-var.morph <- var204[grep('0521 Morph', var204$name), ]
-stopifnot(nrow(var.morph) == 1)
+var.morph <- var.excl['morphology', ]
 var.morph
 ```
 
@@ -314,10 +327,20 @@ pie(prop)
 data.frame(qty=prop, row.names=names(prop))
 ```
 
+
+## Save For Next Section
+
+```{r}
+save(dataDir, got, submission,
+     current, site.data, builder.summary, strip.counts,
+     var.excl,
+     file="bc_data_excl.RData")
+```
+
 ## Summary and Issues for `r SITE`
 
 ```{r}
-summary(tumor.site[, var.exclusion])
+summary(tumor.site[, row.names(var.excl)])
 
-show.issues(tumor.site)
+show.issues(tumor.site, var.excl)
 ```

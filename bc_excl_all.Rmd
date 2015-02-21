@@ -1,0 +1,71 @@
+Breast Cancer QA: Exclusion Criteria from All Sites
+===================================================
+
+*Transformation and access utilities:*
+
+```{r}
+source('bc_qa_txform.R')
+```
+
+
+```{r echo=FALSE}
+# Don't wrap so much
+options(width=300) 
+```
+
+
+Let's summarize exclusion criteria for the current data sets:
+
+*Restore work saved from earlier sections.*
+
+```{r}
+load("bc_data_excl.RData")
+```
+
+```{r}
+current[c('record_id', 'site', 'name', 'filename')]
+```
+
+
+The framework looks like this:
+
+```{r}
+stats.empty <- function() {
+  empty <- rep(NA, nrow(var.excl) + 1)
+  df <- data.frame(lapply(current$site, function(x) empty))
+  names(df) <- current$site
+  row.names(df) <- c('BC DX', row.names(var.excl))
+  df
+}
+
+stats.empty()
+```
+
+Our data set has one row per case (tumor) and columns for encounter number, patient number, and our exclusion criteria. We're counting the number of distinct patient numbers where the some value of the exclusion criterion is provided in the data set.
+
+
+```{r}
+pat.with <- function(df, col) {
+  ok.cases <- !is.na(df[[col]])
+  length(unique(df$patient_num[ok.cases]))
+}
+```
+
+Now let's crunch the data:
+
+```{r}
+excl.sites <- function(df) {
+  for (ix in 1:nrow(current)) {
+    site <- current$site[ix]
+    message('working on site: ', ix, ' ', site)
+    tumor.site <- bc.exclusions(site.data(site, dataDir, current))
+    stats <- lapply(row.names(var.excl), function(n) pat.with(tumor.site, n))
+    stats <- c(nrow(tumor.site), stats)
+    df[[site]] <- unlist(stats)
+  }
+  df
+}
+
+stats <- excl.sites(stats.empty())
+stats
+```

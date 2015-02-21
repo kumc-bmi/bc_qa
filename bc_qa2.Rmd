@@ -14,7 +14,7 @@ source('bc_qa_txform.R')
 ```
 
 
-```{r, ECHO=FALSE}
+```{r, echo=FALSE}
 # Don't wrap so much
 options(width=300) 
 ```
