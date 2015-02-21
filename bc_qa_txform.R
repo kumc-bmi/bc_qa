@@ -103,33 +103,24 @@ show.issues <- function(tumor.site, var.excl,
 }
 
 bc.exclusions <- function(conn.site,
-                          dx_path='\\i2b2\\naaccr\\SEER Site\\Breast\\') {
+                          dx_path=bcterm$bc.dx.path,
+                          var.excl=bcterm$excl.all) {
   tumor.site <- v.enc(conn.site, dx_path, 'bc.dx')
-  tumor.site <- with.var(tumor.site, conn.site, var.excl['sex',]$concept_path, 'sex')
-  tumor.site <- with.var(tumor.site, conn.site, var.excl['seq.no',]$concept_path, 'seq.no')
-  tumor.site <- with.var(tumor.site, conn.site, var.excl['confirm',]$concept_path, 'confirm')
-  tumor.site <- with.var(tumor.site, conn.site, var.excl['morphology',]$concept_path, 'morphology')
-  
-  # TODO: factor out paths
-  tumor.site <- with.var(
-    tumor.site, conn.site,
-    '\\i2b2\\naaccr\\S:11 Stage/Prognostic Factors\\3020 Derived SS2000\\', 'stage.ss')
-  tumor.site <- with.var(
-    tumor.site, conn.site,
-    '\\i2b2\\naaccr\\S:11 Stage/Prognostic Factors\\3430 Derived AJCC-7 Stage Grp\\', 'stage.ajcc')  
-  tumor.site$stage <- factor.combine(tumor.site$stage.ss, tumor.site$stage.ajcc)
-  
-  tumor.site <- with.var(
-    tumor.site, conn.site,
-    '\\i2b2\\naaccr\\S:4 Follow-up/Recurrence/Death\\1760 Vital Status\\',
-    'vital.tr')
-  
-  tumor.site <- with.var.pat(
-    tumor.site, conn.site,
-    '\\i2b2\\Demographics\\Vital Status\\Deceased\\', 'deceased.ehr')
-  tumor.site <- with.var.pat(
-    tumor.site, conn.site,
-    '\\i2b2\\Demographics\\Vital Status\\Deceased per SSA\\', 'deceased.ssa')
+
+  # Per-encounter variables
+  for (v in rownames(var.excl)) {
+    if (! v %in% c('stage', 'deceased', 'deceased.ehr', 'deceased.ssa'))
+    tumor.site <- with.var(tumor.site, conn.site, var.excl[v,]$concept_path, v)
+  }
+
+  # Per-patient variables
+  for (v in c('deceased.ehr', 'deceased.ssa')) {
+      tumor.site <- with.var.pat(tumor.site, conn.site, var.excl[v,]$concept_path, v)
+  }
+
+  # Combinations
+  tumor.site$stage <- factor.combine(tumor.site$stage.ss,
+                                     tumor.site$stage.ajcc)  
   tumor.site$vital <- factor.combine(tumor.site$vital.tr,
                                      tumor.site$deceased.ehr,
                                      tumor.site$deceased.ssa)
