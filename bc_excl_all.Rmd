@@ -74,7 +74,9 @@ stats
 For comparison with Vince's work, we can look at it the other way:
 
 ```{r}
-t(stats)
+stats.by.site <- t(stats)
+stats.by.site <- stats.by.site[order(row.names(stats.by.site)), ]
+stats.by.site
 ```
 
 
