@@ -33,12 +33,10 @@ Needed for Exclusions
 Patients
 ========
 
-Patients (Code)
-===============
-
-```{r}
+```{r echo=FALSE}
 # TODO: move this to where current is defined
 current <- current[order(current$site),]
+site.code <- factor(current$site)
 ```
 
 ```{r echo=FALSE}
@@ -47,10 +45,10 @@ query.site <- function(q, site) {
   dbGetQuery(conn, q)
 }
 
-query.each.site <- function(kind, q) {
+query.each.site <- function(key, q) {
   data.frame(
-    site=current$site,
-    kind=kind,
+    site=site.code,
+    key=key,
     result=unlist(lapply(current$site, function(s) query.site(q, s)))
     )
 }
@@ -75,7 +73,45 @@ patients <- rbind(
 
 ```
 
-scratch pad:
+```{r echo=FALSE}
+tumor.sites <- function() {
+  site.code <- factor(current$site)
+  df <- NULL
+  for (ix in 1:nrow(current)) {
+    site <- current$site[ix]
+    message('working on site: ', ix, ' ', site)
+    tumor.site <- bc.exclusions(site.data(site, dataDir, current))
+    if (nrow(tumor.site) > 0) {
+      tumor.site$site <- site.code[ix]
+      names <- names(tumor.site)
+      if (is.null(df)) {
+        df <- tumor.site
+        } else {
+          df <- rbind(df, tumor.site)
+          }
+      }
+    }
+  df
+}
+tumor.all <- tumor.sites()
+```
+
+```{r echo=FALSE}
+pat.per.site <- function(df) {
+  as.vector(table(unique(df[, c('site', 'patient_num')])$site))
+  }
+
+patients <- rbind(
+  patients,
+  data.frame(
+    site=site.code,
+    key='w/Vital from SEER/EHR',
+    result=pat.per.site(tumor.all[!is.na(tumor.all$vital), ])))
+```
+
+
+```{r eval=FALSE, echo=FALSE}
+#Scratchpad...
 
 var.site <- function(naaccr.name, var.name) {
   function(site) {
@@ -87,6 +123,7 @@ var.site <- function(naaccr.name, var.name) {
 dx.site <- var.site('0390 Date of Diagnosis', 'dx')
 site$tumor <- unlist(lapply(site$site,
                    function (s) nrow(dx.site(s))))
+```
 
 Number of Breast Cancer Patients and Tumors by Site
 ===================================================
@@ -94,8 +131,24 @@ Number of Breast Cancer Patients and Tumors by Site
 
 ```{r echo=FALSE}
 
-fig1 <- ggplot(data=patients, mapping=aes(x=site, y=result, fill=kind), fill=kind)
-fig1 + geom_bar(stat = "identity", position="dodge") +
-  labs(x="", y="") +
-  theme(legend.position=c(0.9, 0.8))
+fig1 <- ggplot(data=patients, mapping=aes(x=site, y=result, fill=key), fill=key)
+style.dodge <- function(fig) {
+  fig + geom_bar(stat = "identity", position="dodge") +
+    labs(x="", y="") +
+    theme(legend.position=c(0.9, 0.8))
+  
+  }
+style.dodge(fig1)
+```
+
+**TODO: tumors in date range**
+
+
+Number with Vital Status, by Site
+=================================
+
+```{r echo=FALSE}
+fig2 <- ggplot(subset(patients, key %in% c('patient_dimension', 'w/Vital from SEER/EHR')),
+               aes(x=site, y=result, fill=key))
+style.dodge(fig2)
 ```
