@@ -84,9 +84,12 @@ fetch$file
 Let's combine the info about datasets:
 
 ```{r}
-fetch$dataset <- merge(fetch$file, fetch$form,
+dataset <- merge(fetch$file, fetch$form,
                        by='record_id')
-names(fetch$dataset)
+names(dataset)
+dataset <- dataset[order(dataset$site),]
+
+fetch$dataset <- dataset
 fetch$dataset[, c('record_id', 'obsolete', 'institution', 'site', 'name', 'bc_db', 'patient_qty')]
 ```
 
