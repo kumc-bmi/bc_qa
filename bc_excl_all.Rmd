@@ -60,7 +60,7 @@ excl.sites <- function(df) {
     message('working on site: ', ix, ' ', site)
     tumor.site <- bc.exclusions(site.data(site, dataDir, current))
     stats <- lapply(row.names(var.excl), function(n) pat.with(tumor.site, n))
-    stats <- c(nrow(tumor.site), stats)
+    stats <- c(length(unique(tumor.site$patient_num)), stats)
     x <- unlist(stats)
     df[, site] <- x
   }
