@@ -112,7 +112,7 @@ show.issues <- function(tumor.site, var.excl,
     absent <- qty - length(na.omit(x))
     pct <- round(100.0 * absent / qty, 2)
     if (pct > threshold) {
-      print(paste0('Too many ', v, ' missing: ', pct, '%.'))
+      print(paste0('Too many ', v, ' missing: ', pct, '%. ', var.excl[ix, 'concept_path']))
     }
   }
 }
