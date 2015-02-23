@@ -18,15 +18,11 @@ def main(report_mail='bc_site_email.txt',
                          'vleonardo']]):
   for item in csv.DictReader(open(report_mail)):
     site = item['site']
-    if site != 'KUMC':
-      continue
-    cc = []#@@
     subject = 'Breast Cancer QA report for %s' % site
     report = '%s/report-%s.html' % (df, site)
-    #print item, report, len(open(report).read())
     mbox = item['email']
     send_mail(sender, [mbox] + cc, subject,
-              'Please acknowledge receipt.',
+              '%s,\nPlease acknowledge receipt.' % item['name'],
               files=[report])
 
 
@@ -35,12 +31,12 @@ def send_mail(send_from, send_to, subject, text, files=None,
     # ack: http://stackoverflow.com/a/3363254
     assert isinstance(send_to, list)
 
-    msg = MIMEMultipart(
-        From=send_from,
-        To=COMMASPACE.join(send_to),
-        Date=formatdate(localtime=True),
-        Subject=subject
-    )
+    msg = MIMEMultipart()
+    msg['From'] = send_from
+    msg['To'] = COMMASPACE.join(send_to)
+    # Date=formatdate(localtime=True),
+    msg['Subject'] = subject
+
     msg.attach(MIMEText(text))
 
     for f in files or []:
@@ -48,7 +44,7 @@ def send_mail(send_from, send_to, subject, text, files=None,
             msg.attach(MIMEText(
                 fil.read(), 'html'))
 
-    print "sending to", send_to
+    print "sending to", send_to, subject
     smtp = smtplib.SMTP(server)
     smtp.sendmail(send_from, send_to, msg.as_string())
     smtp.close()
