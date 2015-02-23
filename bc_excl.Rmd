@@ -1,42 +1,50 @@
-```{r echo=FALSE}
-SITE <- source('bc_site.R')$value
+```{r input, echo=FALSE}
+input <- source('dataset.R')$value
+
+conn.site <- input$conn
+
+# about has $record_id $site name, $bc_db filename, $content_length, submitter $name, $issues_other
+dataset <- input$about
+
+SITE <- dataset$site
+```
+
+Breast Cancer QA for `r SITE`
+=============================
+
+This report is generated using [bc_qa][] version`r system('hg id', intern=TRUE)`
+For context, see [ticket:227].
+
+[227]: https://informatics.gpcnetwork.org/trac/Project/ticket/227
+[bc_qa]: https://bitbucket.org/gpcnetwork/bc_qa
+
+*Load query terms and exclusion criteria from earlier article.*
+
+```{r terms}
+load("bc_terms_results.RData")
 ```
 
 
-```{r echo=FALSE}
+```{r txform, echo=FALSE}
 # Transformation utilities:
 source('bc_qa_txform.R')
 ```
 
 
-Breast Cancer QA for `r SITE`
-=============================
-
-*Based on results from previous articles*
-
-```{r}
-load("bc_fetch_results.RData")
-load("bc_terms_results.RData")
-
-conn.site <- site.data(SITE)
-```
-
-```{r, echo=FALSE}
+```{r wrap, echo=FALSE}
 # Don't wrap so much
 options(width=300)
 ```
 
-
 ## Data Summary for `r SITE`
 
-```{r echo=FALSE}
-dataset <- subset(fetch$dataset, site == SITE)
-dataset[, c('record_id', 'site', 'name', 'bc_db')]
+```{r about_dataset, echo=FALSE}
+dataset[, c('record_id', 'site', 'name', 'bc_db', 'content_length')]
 ```
 
-Issues noted in redcap:
+Issues noted by breast cancer research team via redcap:
 
-```{r echo=FALSE}
+```{r issues, echo=FALSE}
 cat(dataset$issues_other)
 ```
 

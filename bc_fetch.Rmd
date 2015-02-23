@@ -93,6 +93,18 @@ fetch$dataset <- dataset
 fetch$dataset[, c('record_id', 'obsolete', 'institution', 'site', 'name', 'bc_db', 'patient_qty')]
 ```
 
+We'll use this function to access the files:
+
+```{r}
+site.data <- function(target) {
+  library(RSQLite)
+  
+  f <- file.path(fetch$dataDir, subset(fetch$file, site == target)$bc_db)
+  dbConnect(SQLite(), dbname=f)
+  }
+fetch$site.data <- site.data
+```
+
 Save our work for use in later articles:
 
 ```{r}
