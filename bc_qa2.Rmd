@@ -45,6 +45,13 @@ term204 <- term204[, c('id', 'concept_path', 'name')]
 term204$naaccr.code <- substr(term204$name, 1, 4)
 ```
 
+*Oops... an Abridged term got left in*
+```{r}
+term204$concept_path[term204$naaccr.code == '0240'] <-
+  '\\i2b2\\naaccr\\S:2 Demographic\\0240 Date of Birth\\'
+```
+
+
 *We seem to have `r length(which(duplicated(term204$concept_path)))` duplicates:*
 
 ```{r echo=FALSE, results='asis'}
