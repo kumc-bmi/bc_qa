@@ -12,7 +12,7 @@ SITE <- dataset$site
 Breast Cancer QA for `r SITE`
 =============================
 
-This report is generated using [bc_qa][] version`r system('hg id', intern=TRUE)`
+This report is generated using [bc_qa][] version `r system('hg id', intern=TRUE)`
 For context, see [227].
 
 [227]: https://informatics.gpcnetwork.org/trac/Project/ticket/227
@@ -64,13 +64,13 @@ ht(
 ```{r, echo=FALSE}
 v <- dbGetQuery(conn.site,
 paste0("
-select id, name, ", patch.umn('concept_path'), " concept_path
+select id, name, concept_path, ", patch.umn('concept_path'), " patched_path
 from variable
 "))
 
 # Some sites have really long variable names
 v$name <- substr(v$name, 1, 40)
-v.ok <- v$concept_path %in% bcterm$term204$concept_path
+v.ok <- v$patched_path %in% bcterm$term204$concept_path
 v.good <- v[v.ok, ]
 v.bad <- v[! v.ok, ]
 

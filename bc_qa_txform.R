@@ -33,13 +33,20 @@ ht <- function(x,
 
 
 patch.umn <- function(col) {
-  # TODO
-  paste0("replace(
-            replace(
-              replace(", col, ", '\\I2B2\\Cancer Cases\\0', '\\i2b2\\naaccr\\S:'),
-              '\\I2B2\\Cancer Cases\\1', '\\i2b2\\naaccr\\S:1'),
-            '\\I2B2\\Cancer Cases\\SEER Site Summary', '\\i2b2\\naaccr\\SEER Site')")
-  col
+  fixes <- read.csv(textConnection(
+    'from,to
+\\I2B2\\Cancer Cases\\0,\\i2b2\\naaccr\\S:
+\\I2B2\\Cancer Cases\\1,\\i2b2\\naaccr\\S:1
+\\I2B2\\Cancer Cases\\SEER Site Summary,\\i2b2\\naaccr\\SEER Site
+\\I2B2\\Demographics,\\i2b2\\Demographics
+Type and Behav ICD-O-3,Type&Behav ICD-O-3
+'))
+  
+  expr <- col
+  for (ix in 1:nrow(fixes)) {
+    expr = paste0("replace(", expr, ", '", fixes$from[ix], "', '", fixes$to[ix], "')")
+  }
+  expr
 }
 
 sql.fact <- function(var.col) {
