@@ -197,13 +197,24 @@ data.frame(qty=prop, row.names=names(prop))
 
 ```{r}
 if (any(!is.na(tumor.site$date.birth))) {
-  age.by.pat <- unique(survey.sample[, c('patient_num', 'age')])
+  x <- tumor.site[, c('encounter_num', 'patient_num', 'date.birth')]
+  x$age <- age.in.years(x$date.birth)
+  age.by.pat <- unique(x[, c('patient_num', 'age')])
   hist(age.by.pat$age)
+  summary(age.by.pat$age)
   
   age.at.dx <- age.in.years(tumor.site$date.birth,
                             as.of=as.POSIXct(tumor.site$bc.dx))
   hist(age.at.dx)
   }
+
+if (any(!is.na(tumor.site$date.birth))) {
+  summary(age.by.pat$age)
+}
+if (any(!is.na(tumor.site$date.birth))) {
+  summary(age.at.dx)
+}
+
 ```
 
 ### Vital Status
