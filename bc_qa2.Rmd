@@ -111,17 +111,17 @@ Note that stage (AJCC, SS2000) and Vital Status are combinations of terms:
 t.excl <- data.frame(
   naaccr.code=c('0220',
                 '0240',
-                '0380',
+                '1760',
                 '0490',
                 '0521',
                 '3020',
                 '3430',
-                '1760'),
+                '0380'),
   stringsAsFactors=FALSE
   )
 
 t.excl <- merge(t.excl, term204[, c('naaccr.code', 'name', 'concept_path')],
-                by='naaccr.code', all.x=TRUE)
+                by='naaccr.code', all.x=TRUE, sort=FALSE)
 
 deceased.ehr <- merge(
   data.frame(
@@ -137,18 +137,20 @@ combo <- data.frame(
   name=c('stage', 'vital'),
   naaccr.code=NA,
   concept_path=NA)
-t.excl <- rbind(t.excl, deceased.ehr, combo)
+t.excl <- rbind(t.excl, combo, deceased.ehr)
 
-row.names(t.excl) <- c('sex', 'date.birth', 'seq.no', 'confirm', 'morphology',
+row.names(t.excl) <- c('sex', 'date.birth',
                        'vital.tr',
+                       'confirm', 'morphology',
                        'stage.ss', 'stage.ajcc',
-                       'deceased.ssa', 'deceased.ehr',
-                       'stage', 'vital')
+                       'seq.no',
+                       'stage',
+                       'vital', 'deceased.ssa', 'deceased.ehr')
 bcterm$excl.all <- t.excl
 
 
-bcterm$excl <- t.excl[c('sex', 'date.birth', 'seq.no', 'confirm', 'morphology',
-                       'stage', 'vital'), ]
+bcterm$excl <- t.excl[c('sex', 'date.birth', 'vital',
+                        'confirm', 'morphology', 'stage', 'seq.no'), ]
 ```
 
 ```{r echo=FALSE, results='asis'}

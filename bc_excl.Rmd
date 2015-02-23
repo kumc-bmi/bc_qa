@@ -280,26 +280,6 @@ survey.sample$not.dead <- ! tumor.site$vital == 'Y'
 ```{r}
 table(unique(survey.sample[, c('patient_num', 'female', 'adult', 'not.dead')])[, -1])
 ```
-
-### Sequence Number
-
-
-```{r}
-tumor.site <- with.var(tumor.site, conn.site,
-                       bcterm$excl['seq.no', 'concept_path'], 'seq.no')
-head(tumor.site[, c(-3:-5)])
-
-prop <- enum.sum(tumor.site, 'seq.no')
-pie(prop)
-data.frame(qty=prop, row.names=names(prop))
-
-```
-
-
-```{r}
-survey.sample$no.prior <- grepl('00', tumor.site$seq)
-```
-
 ### Diagnostic Confirmation
 
 ```{r}
@@ -425,6 +405,25 @@ data.frame(qty=prop, row.names=names(prop))
 
 ```{r}
 survey.sample$stage.ok <- ! tumor.site$stage == 'IV'
+```
+
+
+### Prior Diagnosis: Sequence Number
+
+```{r}
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl['seq.no', 'concept_path'], 'seq.no')
+head(tumor.site[, c(-3:-12)])
+
+prop <- enum.sum(tumor.site, 'seq.no')
+pie(prop)
+data.frame(qty=prop, row.names=names(prop))
+
+```
+
+
+```{r}
+survey.sample$no.prior <- grepl('00', tumor.site$seq.no)
 ```
 
 ## Summary and Issues for `r SITE`
