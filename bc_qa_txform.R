@@ -135,7 +135,8 @@ bc.exclusions <- function(conn.site,
                          patient_num from observation_fact f
                          join concept_dimension cd
                          on cd.concept_cd = f.concept_cd
-                         where cd.concept_path like '%naaccr%'")
+                         where cd.concept_path like '%naaccr%'
+                           or concept_path like '%\\0390 Date of Diagnosis%'")
   # Breast cancer diagnosis
   tumor.site <- with.var(tumor.site, conn.site,
                          bcterm$bc.dx.path, 'bc.dx',
@@ -180,8 +181,8 @@ check.demographics <- function(tumor.site) {
   survey.sample$adult <- FALSE
   
   if (any(!is.na(tumor.site$date.birth))) {
-    survey.sample$age <- age.in.years(tumor.site$date.birth)
-    survey.sample$adult <- ! survey.sample$age < 18
+    survey.sample$age <- try(age.in.years(tumor.site$date.birth))
+    survey.sample$adult <- survey.sample$age >= 18
   }
   survey.sample$female <- grepl('2', tumor.site$sex)
   survey.sample$not.dead <- ! tumor.site$vital == 'Y'
