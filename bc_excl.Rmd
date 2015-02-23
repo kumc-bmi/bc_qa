@@ -3,6 +3,12 @@ SITE <- source('bc_site.R')$value
 ```
 
 
+```{r echo=FALSE}
+# Transformation utilities:
+source('bc_qa_txform.R')
+```
+
+
 Breast Cancer QA for `r SITE`
 =============================
 
@@ -11,17 +17,13 @@ Breast Cancer QA for `r SITE`
 ```{r}
 load("bc_fetch_results.RData")
 load("bc_terms_results.RData")
-```
 
-
-```{r echo=FALSE}
-# Transformation utilities:
-source('bc_qa_txform.R')
+conn.site <- site.data(SITE)
 ```
 
 ```{r, echo=FALSE}
 # Don't wrap so much
-options(width=300) 
+options(width=300)
 ```
 
 
@@ -30,16 +32,19 @@ options(width=300)
 ```{r echo=FALSE}
 dataset <- subset(fetch$dataset, site == SITE)
 dataset[, c('record_id', 'site', 'name', 'bc_db')]
-
-conn.site <- site.data(SITE)
-
-builder.summary(conn.site)[, c('variable', 'pat_qty', 'enc_qty', 'fact_qty')]
 ```
 
 Issues noted in redcap:
 
 ```{r echo=FALSE}
 cat(dataset$issues_other)
+```
+
+```{r echo=FALSE, results='asis'}
+ht(
+  caption="Patients, Encounters, and Observations per Variable",
+  builder.summary(conn.site)[, c('variable', 'pat_qty', 'enc_qty', 'fact_qty')]
+  )
 ```
 
 ## Terms in dataset from `r SITE`
@@ -60,14 +65,25 @@ v.good <- v[v.ok, ]
 v.bad <- v[! v.ok, ]
 
 data.frame(
+  qty=nrow(v),
   qty.good=nrow(v.good),
   qty.bad=nrow(v.bad))
 ```
 
-```{r}
-v.good
-v.bad
+```{r echo=FALSE, results='asis'}
+ht(
+  caption="Aligned Query Terms",
+  v.good
+  )
 ```
+
+```{r echo=FALSE, results='asis'}
+ht(
+  caption="Mis-Aligned Query Terms",
+  v.bad
+  )
+```
+
 
 ### Fact Terms: Misaligned
 
@@ -99,7 +115,13 @@ bad.concept.path <-
              where cd.concept_path like (t204.concept_path || '%'))
              group by cd.concept_path
              "))
-bad.concept.path
+```
+
+```{r echo=FALSE, results='asis'}
+ht(
+  bad.concept.path,
+  caption="Facts not aligned to Query Terms"
+  )
 ```
 
 ## Analytic Dataset is based on Breast Cancer Diagnosis
@@ -117,13 +139,17 @@ head(tumor.site)
 
 
 
-### Sex
+### Sex, Age
 
-Let's be careful to continue to rely only on paths. For nominal variables, we focus on segments of the concept path that distinguish it from the variable:
+Let's be careful to continue to rely only on paths. For nominal variables, we focus on segments of the concept path that distinguish it from the variable. For date-valued variables, we use the i2b2 `start_date`.
 
 ```{r}
 tumor.site <- with.var(tumor.site, conn.site,
                        bcterm$excl['sex', 'concept_path'], 'sex')
+
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl['date.birth', 'concept_path'], 'date.birth',
+                       get.var=v.enc)
 
 head(tumor.site)
 ```
@@ -148,108 +174,36 @@ data.frame(qty=prop, row.names=names(prop))
 ```
 
 
-### Sequence Number
-
-
 ```{r}
-tumor.site <- with.var(tumor.site, conn.site,
-                       bcterm$excl['seq.no', 'concept_path'], 'seq.no')
-head(tumor.site[, c(-3)])
+survey.sample <- tumor.site[, c('encounter_num', 'patient_num')]
 
-prop <- enum.sum(tumor.site, 'seq.no')
-pie(prop)
-data.frame(qty=prop, row.names=names(prop))
-
-```
-
-### Diagnostic Confirmation
-
-```{r}
-tumor.site <- with.var(tumor.site, conn.site,
-                       bcterm$excl['confirm', 'concept_path'], 'confirm')
-
-head(tumor.site[, c(-3, -4)])
-
-prop <- enum.sum(tumor.site, 'confirm')
-pie(prop)
-data.frame(qty=prop, row.names=names(prop))
-```
-
-### Morphology Code
-
-```{r}
-tumor.site <- with.var(tumor.site, conn.site,
-                       bcterm$excl['morphology', 'concept_path'], 'morphology')
-
-head(tumor.site[, c(-3, -4, -5)])
-
-prop <- enum.sum(tumor.site, 'morphology')
-pie(prop)
-```
-
-Those codes aren't very satisfying; let's put the names back on:
-
-```{r echo=FALSE}
-# Put the names back on
-enum.name <- function(x, path.var) {
-  df <- data.frame(
-    concept_path=paste0(path.var,
-                        # chop off 1st character
-                        substr(x, 2, length(x))))
+age.in.years <- function(date.birth, as.of=Sys.Date()) {
+  as.numeric(difftime(as.of,
+                      as.POSIXct(date.birth),
+                      units="days")) / 365.25
   
-  df <- merge(df,
-              dbGetQuery(conn.site,
-                         'select name_char, concept_path from concept_dimension'),
-              by='concept_path',
-              all.x=TRUE)
-  df$name_char
-}
+  }
+
+if (any(!is.na(tumor.site$date.birth))) {
+  survey.sample$age <- age.in.years(tumor.site$date.birth)
+  survey.sample$adult <- ! survey.sample$age < 18
+  
+  age.by.pat <- unique(survey.sample[, c('patient_num', 'age')])
+  hist(age.by.pat$age)
+  
+  age.at.dx <- age.in.years(tumor.site$date.birth,
+                            as.of=as.POSIXct(tumor.site$bc.dx))
+  hist(age.at.dx)
+  
+  } else {
+    survey.sample$age <- NA
+    survey.sample$adult <- FALSE
+    }
 ```
 
-```{r}
-prop <- data.frame(qty=prop, row.names=names(prop))
-prop$name <- enum.name(row.names(prop), bcterm$excl['morphology', 'concept_path'])
-prop <- prop[prop$qty> 0, ]
-pie(prop$qty, labels=prop$name)
-prop[, c('name', 'qty')]
-```
-
-### Stage
-
-Derived AJCC-7 Grp and/or SS2000
 
 ```{r}
-tumor.site <- with.var(tumor.site, conn.site,
-                       bcterm$excl.all['stage.ss', 'concept_path'], 'stage.ss')
-tumor.site <- with.var(tumor.site, conn.site,
-                       bcterm$excl.all['stage.ajcc', 'concept_path'], 'stage.ajcc')
-tumor.site$stage <- factor.combine(tumor.site$stage.ss, tumor.site$stage.ajcc)
-
-head(tumor.site[, c(-3, -4, -5, -6)])
-```
-
-#### Stage: 3020 Derived SS2000
-
-```{r}
-prop <- enum.sum(tumor.site, 'stage.ss')
-pie(prop)
-data.frame(qty=prop, row.names=names(prop))
-```
-
-#### Stage: 3430 Derived AJCC-7
-
-```{r}
-prop <- enum.sum(tumor.site, 'stage.ajcc')
-pie(prop)
-data.frame(qty=prop, row.names=names(prop))
-```
-
-#### Stage: Combined
-
-```{r}
-prop <- enum.sum(tumor.site, 'stage')
-pie(prop)
-data.frame(qty=prop, row.names=names(prop))
+survey.sample$female <- grepl('2', tumor.site$sex)
 ```
 
 
@@ -258,7 +212,7 @@ data.frame(qty=prop, row.names=names(prop))
 ```{r}
 tumor.site <- with.var(tumor.site, conn.site,
                        bcterm$excl.all['vital.tr', 'concept_path'], 'vital.tr')
-head(tumor.site[, c(-3, -4, -5, -6, -7)])
+head(tumor.site)
 ```
 
 To match between the tumor registry and the EHR, we can only join on patient num.
@@ -270,11 +224,9 @@ tumor.site <- with.var.pat(tumor.site, conn.site,
 tumor.site <- with.var.pat(tumor.site, conn.site,
                            bcterm$excl.all['deceased.ssa', 'concept_path'],
                            'deceased.ssa')
-tumor.site$vital <- factor.combine(tumor.site$vital.tr,
-                                   tumor.site$deceased.ehr,
-                                   tumor.site$deceased.ssa)
-  
-head(tumor.site[, c(-3, -4, -5, -6, -7, -8, -9)])
+tumor.site$vital <- vital.combine(tumor.site)
+
+head(tumor.site)
 ```
 
 #### Vital Status: Tumor Registry
@@ -309,11 +261,206 @@ pie(prop)
 data.frame(qty=prop, row.names=names(prop))
 ```
 
+```{r}
+survey.sample$not.dead <- ! tumor.site$vital == 'Y'
+```
+
+### Language *TODO*
+
+### Demographic Eligibility
+
+```{r}
+table(unique(survey.sample[, c('patient_num', 'female', 'adult', 'not.dead')])[, -1])
+```
+
+### Sequence Number
+
+
+```{r}
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl['seq.no', 'concept_path'], 'seq.no')
+head(tumor.site[, c(-3:-5)])
+
+prop <- enum.sum(tumor.site, 'seq.no')
+pie(prop)
+data.frame(qty=prop, row.names=names(prop))
+
+```
+
+
+```{r}
+survey.sample$no.prior <- grepl('00', tumor.site$seq)
+```
+
+### Diagnostic Confirmation
+
+```{r}
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl['confirm', 'concept_path'], 'confirm')
+
+head(tumor.site[, c(-3:-6)])
+
+prop <- enum.sum(tumor.site, 'confirm')
+pie(prop)
+data.frame(qty=prop, row.names=names(prop))
+```
+
+
+```{r}
+survey.sample$confirmed <- grepl('\\1', tumor.site$confirm, fixed=TRUE)
+```
+
+
+### Morphology Code
+
+```{r}
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl['morphology', 'concept_path'], 'morphology')
+
+head(tumor.site[, c(-3:-7)])
+
+prop <- enum.sum(tumor.site, 'morphology')
+pie(prop)
+```
+
+Those codes aren't very satisfying; let's put the names back on:
+
+```{r echo=FALSE}
+# Put the names back on
+enum.name <- function(x, path.var) {
+  df <- data.frame(
+    concept_path=paste0(path.var,
+                        # chop off 1st character
+                        substr(x, 2, length(x))))
+  
+  df <- merge(df,
+              dbGetQuery(conn.site,
+                         'select name_char, concept_path from concept_dimension'),
+              by='concept_path',
+              all.x=TRUE)
+  df$name_char
+}
+```
+
+```{r}
+prop <- data.frame(qty=prop, row.names=names(prop))
+prop$name <- enum.name(row.names(prop), bcterm$excl['morphology', 'concept_path'])
+prop <- prop[prop$qty> 0, ]
+pie(prop$qty, labels=prop$name)
+prop[, c('name', 'qty')]
+```
+
+
+#### Only tumor morphology was lobular carcinoma in situ?
+
+```{r}
+morph.by.pat <- unique(tumor.site[, c('patient_num', 'morphology')])
+morph.by.pat$other.morph <-
+  (duplicated(morph.by.pat$patient_num) |
+  !grepl('8520/2', morph.by.pat$morphology, fixed=TRUE))
+
+survey.sample$other.morph <- survey.sample$patient_num %in% morph.by.pat$patient_num[morph.by.pat$other.morph]
+```
+
+### Stage
+
+Derived AJCC-7 Grp and/or SS2000.
+
+In AJCC, stage
+0xx      are stage 0
+1xx, 2xx are stage I
+3xx, 4xx are stage II
+5xx, 6xx are stage III
+7xx      are stage IV
+
+IV is 7xx per
+http://www.ccrcal.org/dsqc_pubs/v3_2010_forward/Data_Items/Derived_AJCC-7_Stage_Grp.htm
+
+"Stage 4 is 'metastatic' cancer ... where the disease has spread to distant sites" per wikipedia. In SS2000, 7 is D Distant
+http://www.ccrcal.org/dsqc_pubs/v3_2010_forward/Data_Items/Derived_SS2000.htm
+
+
+```{r}
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl.all['stage.ss', 'concept_path'], 'stage.ss')
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl.all['stage.ajcc', 'concept_path'], 'stage.ajcc')
+tumor.site$stage <- stage.combine(tumor.site)
+
+head(tumor.site[, c(-3:-8)])
+```
+
+#### Stage: 3020 Derived SS2000
+
+```{r}
+prop <- enum.sum(tumor.site, 'stage.ss')
+pie(prop)
+data.frame(qty=prop, row.names=names(prop))
+```
+
+#### Stage: 3430 Derived AJCC-7
+
+```{r}
+prop <- enum.sum(tumor.site, 'stage.ajcc')
+pie(prop)
+data.frame(qty=prop, row.names=names(prop))
+```
+
+#### Stage: Combined
+
+```{r}
+prop <- enum.sum(tumor.site, 'stage')
+pie(prop)
+data.frame(qty=prop, row.names=names(prop))
+```
+
+
+```{r}
+survey.sample$stage.ok <- ! tumor.site$stage == 'IV'
+```
 
 ## Summary and Issues for `r SITE`
 
-```{r}
-summary(tumor.site[, row.names(bcterm$excl)])
+```{r echo=FALSE, results='asis'}
+ht(
+  caption='Summary of exclusion criteria data',
+  summary(tumor.site[, row.names(bcterm$excl)]),
+  NA.string=''
+  )
+```
 
+### Eligible Cohort from `r SITE`
+
+```{r echo=FALSE}
+col.crit <- 4:length(survey.sample)
+survey.sample.size <- as.data.frame(array(NA, c(2, length(col.crit))))
+names(survey.sample.size) <- names(survey.sample[, col.crit])
+row.names(survey.sample.size) <- c('independent', 'cumulative')
+
+cum.crit <- rep(TRUE, nrow(survey.sample))
+
+patient_num <- survey.sample[, 'patient_num']
+for (col in col.crit) {
+  crit.name <- names(survey.sample)[col]
+  crit <- survey.sample[, col]
+  survey.sample.size['independent', crit.name] <- length(unique(patient_num[crit]))
+  cum.crit <- cum.crit & crit
+  survey.sample.size['cumulative', crit.name] <- length(unique(patient_num[cum.crit]))
+}
+```
+
+```{r echo=FALSE, results='asis'}
+ht(
+  survey.sample.size
+  )
+```
+
+### Issues for `r SITE`
+
+Mis-aligned query terms: `r nrow(v.bad)`.
+
+Mis-aligned facts: `r if(nrow(bad.concept.path) > 0) { sum(bad.concept.path$qty_fact) } else { 0 }`.
+
+```{r}
 show.issues(tumor.site, bcterm$excl)
 ```

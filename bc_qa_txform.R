@@ -31,10 +31,11 @@ strip.counts <- function(text) {
 
 # nice HTML tables
 library("xtable")
-ht <- function(x, caption=NULL) {
+ht <- function(x,
+               caption=NULL, NA.string='NA') {
   print(xtable(x, caption=caption),
         type='html',
-        NA.string='NA',
+        NA.string=NA.string,
         caption.placement='top',
         html.table.attributes='border=1')
 }
@@ -60,20 +61,6 @@ with.var <- function(data, conn, path, name,
                      get.var=v.enc.nominal) {
   merge(data, get.var(conn, path, name),
         all.x=TRUE)  # don't prune on join mis-matches
-}
-
-
-factor.combine <- function(...) {
-  factors <- list(...)
-  x <- factors[[1]]
-  for (ix in 2:length(factors)) {
-    cx <- as.character(x)
-    cy <- as.character(factors[[ix]])
-    cxy <- paste(cx, cy)
-    cxy <- ifelse(is.na(cx), cy, ifelse(is.na(cy), cx, cxy))
-    x <- as.factor(cxy)
-  }
-  x
 }
 
 
@@ -144,10 +131,30 @@ bc.exclusions <- function(conn.site,
   }
 
   # Combinations
-  tumor.site$stage <- factor.combine(tumor.site$stage.ss,
-                                     tumor.site$stage.ajcc)  
-  tumor.site$vital <- factor.combine(tumor.site$vital.tr,
-                                     tumor.site$deceased.ehr,
-                                     tumor.site$deceased.ssa)
+  tumor.site$vital <- vital.combine(tumor.site)
+  tumor.site$stage <- stage.combine(tumor.site)
+
   tumor.site
+}
+
+vital.combine <- function(tumor.site) {
+  factor(
+    ifelse(grepl('^.0', tumor.site$vital.tr) |
+             !is.na(tumor.site$deceased.ehr) |
+             !is.na(tumor.site$deceased.ssa), 'Y',
+           ifelse(grepl('^.1', tumor.site$vital.tr), 'N', NA)
+    ))
+  
+}
+
+stage.combine <- function(tumor.site) {
+  factor(
+    ifelse(grepl('^.7', tumor.site$stage.ajcc) |
+             grepl('^.7', tumor.site$stage.ss), 'IV',
+           ifelse(grepl('^.[1-6]', tumor.site$stage.ajcc) |
+                    grepl('^.[1-5]', tumor.site$stage.ss), 'I-III',
+                  ifelse(grepl('^.0', tumor.site$stage.ajcc) |
+                           grepl('^.0', tumor.site$stage.ss), '0',
+                         ifelse(is.na(tumor.site$stage.ajcc) & is.na(tumor.site$stage.ss), NA, '?'))))
+  )
 }

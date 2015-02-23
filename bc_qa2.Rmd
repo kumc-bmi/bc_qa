@@ -89,17 +89,21 @@ bcterm$bc.dx.path
 
 ## Exclusion Criteria
 
-**TODO: trace these to a more authoritative source**
+In [Share Thoughts on Breast Cancer Study][18Dec] GPC Global Webinar, December 18, 2014, on Slide 8 *Selection Criteria*:
 
-From Tamara McMahon's message of Thursday, February 19, 2015 9:03 AM:
+[18Dec]: http://listserv.kumc.edu/pipermail/gpc-all/attachments/20141215/f655d41b/attachment-0001.pptx
 
-> Here are the variables needed for exclusion (e.g., minimum variables required by all institutions)
->  - Sex
->  - Sequence Number
->  - Diagnostic Confirmation
->  - Morphology Code
->  - Derived AJCC-7 Grp and/or SS2000
->  - Vital Status
+> Exclude from the SURVEY sample if:
+>  - Sex not equal to female
+>  - Less than 18 years of age
+>  - Prior cancer diagnosis
+>  - Breast cancer was not microscopically confirmed
+>  - Only tumor morphology was lobular carcinoma in situ
+>  - Stage IV breast cancer
+>  - Known to be deceased
+>  - Non-English speaking (for now)
+
+**TODO: Language**
 
 Note that stage (AJCC, SS2000) and Vital Status are combinations of terms:
 
