@@ -27,7 +27,7 @@ def main(report_mail='bc_site_email.txt',
 
 
 def send_mail(send_from, send_to, subject, text, files=None,
-              server="127.0.0.1"):
+              server="smtp.kumc.edu"):
     # ack: http://stackoverflow.com/a/3363254
     assert isinstance(send_to, list)
 
