@@ -199,7 +199,7 @@ check.cases <- function(tumor.site) {
   survey.sample$confirmed <- grepl('\\1', tumor.site$confirm, fixed=TRUE)
   survey.sample$other.morph <- survey.sample$patient_num %in% check.morph(tumor.site)
   survey.sample$stage.ok <- ! tumor.site$stage == 'IV'
-  survey.sample$no.prior <- grepl('00', tumor.site$seq.no)
+  survey.sample$no.prior <- grepl('0[01]', tumor.site$seq.no)
   survey.sample
 }
 
