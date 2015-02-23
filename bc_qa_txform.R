@@ -105,16 +105,40 @@ show.issues <- function(tumor.site, var.excl,
   }
 }
 
+
+age.in.years <- function(date.birth, as.of=Sys.Date()) {
+  as.numeric(difftime(as.of,
+                      as.POSIXct(date.birth),
+                      units="days")) / 365.25
+  
+}
+
+
 bc.exclusions <- function(conn.site,
                           dx_path=bcterm$bc.dx.path,
                           var.excl=bcterm$excl.all) {
-  tumor.site <- v.enc(conn.site, dx_path, 'bc.dx')
+  # All NAACCR-related encounters
+  tumor.site <- dbGetQuery(conn.site,
+                           "select distinct encounter_num,
+                         patient_num from observation_fact f
+                         join concept_dimension cd
+                         on cd.concept_cd = f.concept_cd
+                         where cd.concept_path like '%naaccr%'")
+  # Breast cancer diagnosis
+  tumor.site <- with.var(tumor.site, conn.site,
+                         bcterm$bc.dx.path, 'bc.dx',
+                         get.var=v.enc)
 
-  # Per-encounter variables
+  # Per-encounter nominal variables
   for (v in rownames(var.excl)) {
-    if (! v %in% c('stage', 'deceased', 'deceased.ehr', 'deceased.ssa'))
+    if (! v %in% c('stage', 'deceased', 'deceased.ehr', 'deceased.ssa', 'date.birth'))
     tumor.site <- with.var(tumor.site, conn.site, var.excl[v,]$concept_path, v)
   }
+  
+  # Per-encounter date var.
+  tumor.site <- with.var(tumor.site, conn.site,
+                         bcterm$excl['date.birth', 'concept_path'], 'date.birth',
+                         get.var=v.enc)
 
   # Per-patient variables
   for (v in c('deceased.ehr', 'deceased.ssa')) {
@@ -138,6 +162,21 @@ vital.combine <- function(tumor.site) {
   
 }
 
+check.demographics <- function(tumor.site) {
+  survey.sample <- tumor.site[, c('encounter_num', 'patient_num')]
+  survey.sample$age <- NA
+  survey.sample$adult <- FALSE
+  
+  if (any(!is.na(tumor.site$date.birth))) {
+    survey.sample$age <- age.in.years(tumor.site$date.birth)
+    survey.sample$adult <- ! survey.sample$age < 18
+  }
+  survey.sample$female <- grepl('2', tumor.site$sex)
+  survey.sample$not.dead <- ! tumor.site$vital == 'Y'
+  survey.sample
+}
+
+
 stage.combine <- function(tumor.site) {
   factor(
     ifelse(grepl('^.7', tumor.site$stage.ajcc) |
@@ -148,4 +187,45 @@ stage.combine <- function(tumor.site) {
                            grepl('^.0', tumor.site$stage.ss), '0',
                          ifelse(is.na(tumor.site$stage.ajcc) & is.na(tumor.site$stage.ss), NA, '?'))))
   )
+}
+
+check.cases <- function(tumor.site) {
+  survey.sample <- check.demographics(tumor.site)
+  survey.sample$bc.dx <- !is.na(tumor.site$bc.dx)
+  survey.sample$confirmed <- grepl('\\1', tumor.site$confirm, fixed=TRUE)
+  survey.sample$other.morph <- survey.sample$patient_num %in% check.morph(tumor.site)
+  survey.sample$stage.ok <- ! tumor.site$stage == 'IV'
+  survey.sample$no.prior <- grepl('00', tumor.site$seq.no)
+  survey.sample
+}
+
+check.morph <- function(tumor.site,
+                        morph='8520/2') {
+  morph.by.pat <- unique(tumor.site[, c('patient_num', 'morphology')])
+  morph.by.pat$other.morph <-
+    (duplicated(morph.by.pat$patient_num) |
+       !grepl(morph, morph.by.pat$morphology, fixed=TRUE))
+  
+  morph.by.pat$patient_num[morph.by.pat$other.morph]
+}
+
+count.cases <- function(survey.sample) {
+  col.crit <- 4:length(survey.sample)  # skip encounter_num, patient_num, age
+
+  survey.sample.size <- as.data.frame(array(NA, c(2, length(col.crit))))
+  names(survey.sample.size) <- names(survey.sample[, col.crit])
+  row.names(survey.sample.size) <- c('independent', 'cumulative')
+  
+  cum.crit <- rep(TRUE, nrow(survey.sample))
+  
+  patient_num <- survey.sample[, 'patient_num']
+  for (col in col.crit) {
+    crit.name <- names(survey.sample)[col]
+    crit <- survey.sample[, col]
+    survey.sample.size['independent', crit.name] <- length(unique(patient_num[crit]))
+    cum.crit <- cum.crit & crit
+    survey.sample.size['cumulative', crit.name] <- length(unique(patient_num[cum.crit]))
+  }
+
+  survey.sample.size
 }

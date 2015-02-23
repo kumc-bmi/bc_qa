@@ -132,14 +132,23 @@ ht(
   )
 ```
 
-## Analytic Dataset is based on Breast Cancer Diagnosis
+## Analytic Dataset: One Record per Tumor
 
 ```{r}
+tumor.site <- dbGetQuery(conn.site,
+                         "select distinct encounter_num,
+                         patient_num from observation_fact f
+                         join concept_dimension cd
+                         on cd.concept_cd = f.concept_cd
+                         where cd.concept_path like '%naaccr%'")
+
 bcterm$bc.dx.path
-tumor.site <- v.enc(conn.site, bcterm$bc.dx.path, 'bc.dx')
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$bc.dx.path, 'bc.dx',
+                       get.var=v.enc)
 ```
 
-We find `r nrow(tumor.site)` diagnoses; let's look at the first few:
+We find `r nrow(tumor.site)` NAACCR-related encounters, `r length(which(!is.na(tumor.site$bc.dx)))` of which have breast cancer diagnoses; let's look at the first few:
 
 ```{r}
 head(tumor.site)
@@ -183,37 +192,15 @@ data.frame(qty=prop, row.names=names(prop))
 
 
 ```{r}
-survey.sample <- tumor.site[, c('encounter_num', 'patient_num')]
-
-age.in.years <- function(date.birth, as.of=Sys.Date()) {
-  as.numeric(difftime(as.of,
-                      as.POSIXct(date.birth),
-                      units="days")) / 365.25
-  
-  }
-
 if (any(!is.na(tumor.site$date.birth))) {
-  survey.sample$age <- age.in.years(tumor.site$date.birth)
-  survey.sample$adult <- ! survey.sample$age < 18
-  
   age.by.pat <- unique(survey.sample[, c('patient_num', 'age')])
   hist(age.by.pat$age)
   
   age.at.dx <- age.in.years(tumor.site$date.birth,
                             as.of=as.POSIXct(tumor.site$bc.dx))
   hist(age.at.dx)
-  
-  } else {
-    survey.sample$age <- NA
-    survey.sample$adult <- FALSE
-    }
+  }
 ```
-
-
-```{r}
-survey.sample$female <- grepl('2', tumor.site$sex)
-```
-
 
 ### Vital Status
 
@@ -269,15 +256,12 @@ pie(prop)
 data.frame(qty=prop, row.names=names(prop))
 ```
 
-```{r}
-survey.sample$not.dead <- ! tumor.site$vital == 'Y'
-```
-
 ### Language *TODO*
 
 ### Demographic Eligibility
 
 ```{r}
+survey.sample <- check.demographics(tumor.site)
 table(unique(survey.sample[, c('patient_num', 'female', 'adult', 'not.dead')])[, -1])
 ```
 ### Diagnostic Confirmation
@@ -291,11 +275,6 @@ head(tumor.site[, c(-3:-6)])
 prop <- enum.sum(tumor.site, 'confirm')
 pie(prop)
 data.frame(qty=prop, row.names=names(prop))
-```
-
-
-```{r}
-survey.sample$confirmed <- grepl('\\1', tumor.site$confirm, fixed=TRUE)
 ```
 
 
@@ -342,31 +321,10 @@ prop[, c('name', 'qty')]
 #### Only tumor morphology was lobular carcinoma in situ?
 
 ```{r}
-morph.by.pat <- unique(tumor.site[, c('patient_num', 'morphology')])
-morph.by.pat$other.morph <-
-  (duplicated(morph.by.pat$patient_num) |
-  !grepl('8520/2', morph.by.pat$morphology, fixed=TRUE))
-
-survey.sample$other.morph <- survey.sample$patient_num %in% morph.by.pat$patient_num[morph.by.pat$other.morph]
+survey.sample$other.morph <- survey.sample$patient_num %in% check.morph(tumor.site, '8520/2')
 ```
 
 ### Stage
-
-Derived AJCC-7 Grp and/or SS2000.
-
-In AJCC, stage
-0xx      are stage 0
-1xx, 2xx are stage I
-3xx, 4xx are stage II
-5xx, 6xx are stage III
-7xx      are stage IV
-
-IV is 7xx per
-http://www.ccrcal.org/dsqc_pubs/v3_2010_forward/Data_Items/Derived_AJCC-7_Stage_Grp.htm
-
-"Stage 4 is 'metastatic' cancer ... where the disease has spread to distant sites" per wikipedia. In SS2000, 7 is D Distant
-http://www.ccrcal.org/dsqc_pubs/v3_2010_forward/Data_Items/Derived_SS2000.htm
-
 
 ```{r}
 tumor.site <- with.var(tumor.site, conn.site,
@@ -396,17 +354,24 @@ data.frame(qty=prop, row.names=names(prop))
 
 #### Stage: Combined
 
+In [AJCC][], codes
+ - 0xx      are stage 0
+ - 1xx, 2xx are stage I
+ - 3xx, 4xx are stage II
+ - 5xx, 6xx are stage III
+ - 7xx      are stage IV
+
+[AJCC]: http://www.ccrcal.org/dsqc_pubs/v3_2010_forward/Data_Items/Derived_AJCC-7_Stage_Grp.htm
+
+In [SS2000][], 7 is D Distant; per wikipedia, that's metastatic, i.e. stage 4.
+
+[SS2000]: http://www.ccrcal.org/dsqc_pubs/v3_2010_forward/Data_Items/Derived_SS2000.htm
+
 ```{r}
 prop <- enum.sum(tumor.site, 'stage')
 pie(prop)
 data.frame(qty=prop, row.names=names(prop))
 ```
-
-
-```{r}
-survey.sample$stage.ok <- ! tumor.site$stage == 'IV'
-```
-
 
 ### Prior Diagnosis: Sequence Number
 
@@ -419,11 +384,6 @@ prop <- enum.sum(tumor.site, 'seq.no')
 pie(prop)
 data.frame(qty=prop, row.names=names(prop))
 
-```
-
-
-```{r}
-survey.sample$no.prior <- grepl('00', tumor.site$seq.no)
 ```
 
 ## Summary and Issues for `r SITE`
@@ -439,21 +399,8 @@ ht(
 ### Eligible Cohort from `r SITE`
 
 ```{r echo=FALSE}
-col.crit <- 4:length(survey.sample)
-survey.sample.size <- as.data.frame(array(NA, c(2, length(col.crit))))
-names(survey.sample.size) <- names(survey.sample[, col.crit])
-row.names(survey.sample.size) <- c('independent', 'cumulative')
-
-cum.crit <- rep(TRUE, nrow(survey.sample))
-
-patient_num <- survey.sample[, 'patient_num']
-for (col in col.crit) {
-  crit.name <- names(survey.sample)[col]
-  crit <- survey.sample[, col]
-  survey.sample.size['independent', crit.name] <- length(unique(patient_num[crit]))
-  cum.crit <- cum.crit & crit
-  survey.sample.size['cumulative', crit.name] <- length(unique(patient_num[cum.crit]))
-}
+survey.sample <- check.cases(tumor.site)
+survey.sample.size <- count.cases(survey.sample)
 ```
 
 ```{r echo=FALSE, results='asis'}
