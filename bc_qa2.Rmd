@@ -33,8 +33,6 @@ and attached it to #204 as [bc-variable.csv][222b] on Feb 9.
 
 [222b]:  https://informatics.gpcnetwork.org/trac/Project/attachment/ticket/222/bc-variable.csv
 
-*Note: R doubles backslashes when it displays strings.*
-
 ```{r}
 bcterm <- list()
 
@@ -43,24 +41,37 @@ term204 <- read.csv('bc-variable.csv',
 
 term204$name <- strip.counts(term204$name_char)
 term204 <- term204[, c('id', 'concept_path', 'name')]
+
+term204$naaccr.code <- substr(term204$name, 1, 4)
 ```
 
-We seem to have some duplicates; let's eliminate them:
+*We seem to have `r length(which(duplicated(term204$concept_path)))` duplicates:*
+
+```{r echo=FALSE, results='asis'}
+ht(
+  term204[duplicated(term204$concept_path), ]
+  )
+```
+
+Let's eliminate them:
+
 ```{r}
-term204[duplicated(term204$concept_path), ]
 data.frame(
   term.qty=nrow(term204),
   term.uniq.qty=length(unique(term204$concept_path))
   )
 term204 <- term204[!duplicated(term204$concept_path), ]
+
+bcterm$term204 <- term204
 ```
 
 These are the `r nrow(term204)` query terms:
 
-```{r}
-term204$naaccr.code <- substr(term204$name, 1, 4)
-term204[, c('concept_path', 'name')]
-bcterm$term204 <- term204
+```{r, echo=FALSE, results='asis'}
+
+ht(
+  term204[, c('concept_path', 'name')]
+  )
 ```
 
 ## BreastCancer Diagnosis
@@ -95,6 +106,7 @@ Note that stage (AJCC, SS2000) and Vital Status are combinations of terms:
 ```{r}
 t.excl <- data.frame(
   naaccr.code=c('0220',
+                '0240',
                 '0380',
                 '0490',
                 '0521',
@@ -123,19 +135,24 @@ combo <- data.frame(
   concept_path=NA)
 t.excl <- rbind(t.excl, deceased.ehr, combo)
 
-row.names(t.excl) <- c('sex', 'seq.no', 'confirm', 'morphology',
+row.names(t.excl) <- c('sex', 'date.birth', 'seq.no', 'confirm', 'morphology',
                        'vital.tr',
                        'stage.ss', 'stage.ajcc',
                        'deceased.ssa', 'deceased.ehr',
                        'stage', 'vital')
 bcterm$excl.all <- t.excl
-bcterm$excl.all
 
-bcterm$excl <- t.excl[c('sex', 'seq.no', 'confirm', 'morphology',
+
+bcterm$excl <- t.excl[c('sex', 'date.birth', 'seq.no', 'confirm', 'morphology',
                        'stage', 'vital'), ]
-bcterm$excl
 ```
 
+```{r echo=FALSE, results='asis'}
+ht(caption="Exclusion Criteria Terms (All)",
+   bcterm$excl.all)
+ht(caption="Exclusion Criteria Terms (Primary)",
+   bcterm$excl)
+```
 
 ## Save For Next Section
 
