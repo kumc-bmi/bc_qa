@@ -62,7 +62,7 @@ ht(
 
 ### Variable Terms: Aligned and Misaligned
 
-*TODO: normalize `\I2B2\Cancer Cases\NN` to `\i2b2\naaccr\S:NN` at the start of paths.*
+*in progress: normalize `\I2B2\Cancer Cases\NN` to `\i2b2\naaccr\S:NN` at the start of paths.*
 
 ```{r, echo=FALSE}
 v <- dbGetQuery(conn.site,
