@@ -38,6 +38,7 @@ patch.umn <- function(col) {
 \\I2B2\\Cancer Cases\\0,\\i2b2\\naaccr\\S:
 \\I2B2\\Cancer Cases\\1,\\i2b2\\naaccr\\S:1
 \\I2B2\\Cancer Cases\\SEER Site Summary,\\i2b2\\naaccr\\SEER Site
+\\i2b2\\Abridged\\Demographics,\\i2b2\\naaccr\\S:2 Demographic
 \\I2B2\\Demographics,\\i2b2\\Demographics
 Type and Behav ICD-O-3,Type&Behav ICD-O-3
 '))
@@ -62,8 +63,8 @@ sql.fact <- function(var.col) {
 }
 
 v.enc.nominal <- function(conn, var.path, var.name) {
-  per.enc <- dbGetPreparedQuery(conn, sql.fact("substr(cd.concept_path, length(:path)) tail"),
-                                bind.data=data.frame(path=var.path))
+  sql <- sql.fact(paste0("substr(", patch.umn('cd.concept_path'), ", length(:path)) tail"))
+  per.enc <- dbGetPreparedQuery(conn, sql, bind.data=data.frame(path=var.path))
   per.enc$tail <- as.factor(per.enc$tail)
   
   names(per.enc)[3] <- var.name
@@ -86,7 +87,7 @@ with.var.pat <- function(data, conn, path, name,
 
 
 v.enc <- function(conn, var.path, var.name) {
-  per.enc <- dbGetPreparedQuery(conn, sql.fact("f.start_date"),
+  per.enc <- dbGetPreparedQuery(conn, sql.fact("strftime('%Y-%m-%d %H:%M:%S', f.start_date)"),
                                 bind.data=data.frame(path=var.path))
   # per.enc$start_date <- as.POSIXct(per.enc$start_date)
   
