@@ -13,7 +13,7 @@ Breast Cancer QA for `r SITE`
 =============================
 
 This report is generated using [bc_qa][] version`r system('hg id', intern=TRUE)`
-For context, see [ticket:227].
+For context, see [227].
 
 [227]: https://informatics.gpcnetwork.org/trac/Project/ticket/227
 [bc_qa]: https://bitbucket.org/gpcnetwork/bc_qa
