@@ -12,8 +12,7 @@ SITE <- dataset$site
 Breast Cancer QA for `r SITE`
 =============================
 
-*TODO: note issues/todos are at the bottom.*
-*TODO: discuss previous article re query terms, exclusion criteria.*
+**NOTE: Selected cohort and issues are summarized at the end of this report.**
 
 This report is generated using [bc_qa][] version `r system('hg id', intern=TRUE)`
 For context, see [227].
@@ -433,8 +432,6 @@ Mis-aligned query terms: `r nrow(v.bad)`.
 
 Mis-aligned facts: `r if(nrow(bad.concept.path) > 0) { sum(bad.concept.path$qty_fact) } else { 0 }`.
 
-**TODO: Show term details for missing stuff.**
-
-```{r}
+```{r echo=FALSE}
 show.issues(tumor.site, bcterm$excl)
 ```
