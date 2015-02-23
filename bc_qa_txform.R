@@ -32,15 +32,31 @@ ht <- function(x,
 }
 
 
-v.enc.nominal <- function(conn, var.path, var.name) {
-  sql.summary <- '
-  select f.encounter_num, f.patient_num, substr(cd.concept_path, length(:path)) tail
+patch.umn <- function(col) {
+  # TODO
+  paste0("replace(
+            replace(
+              replace(", col, ", '\\I2B2\\Cancer Cases\\0', '\\i2b2\\naaccr\\S:'),
+              '\\I2B2\\Cancer Cases\\1', '\\i2b2\\naaccr\\S:1'),
+            '\\I2B2\\Cancer Cases\\SEER Site Summary', '\\i2b2\\naaccr\\SEER Site')")
+  col
+}
+
+sql.fact <- function(var.col) {
+  paste0("
+  select f.encounter_num, f.patient_num, ", var.col, "
   from observation_fact f
   join concept_dimension cd
   on cd.concept_cd = f.concept_cd
-  where cd.concept_path like (:path || \'%\')
-  '
-  per.enc <- dbGetPreparedQuery(conn, sql.summary, bind.data=data.frame(path=var.path))
+  where ", patch.umn("cd.concept_path"),
+         # patch for Abridged stuff
+  " like (replace(:path, '\\i2b2\\Abridged\\Demographics', '%') || \'%\')
+  ")
+}
+
+v.enc.nominal <- function(conn, var.path, var.name) {
+  per.enc <- dbGetPreparedQuery(conn, sql.fact("substr(cd.concept_path, length(:path)) tail"),
+                                bind.data=data.frame(path=var.path))
   per.enc$tail <- as.factor(per.enc$tail)
   
   names(per.enc)[3] <- var.name
@@ -63,14 +79,8 @@ with.var.pat <- function(data, conn, path, name,
 
 
 v.enc <- function(conn, var.path, var.name) {
-  sql.summary <- '
-  select f.encounter_num, f.patient_num, f.start_date
-  from observation_fact f
-  join concept_dimension cd
-  on cd.concept_cd = f.concept_cd
-  where cd.concept_path like (? || \'%\')
-  '
-  per.enc <- dbGetPreparedQuery(conn, sql.summary, bind.data=data.frame(path=var.path))
+  per.enc <- dbGetPreparedQuery(conn, sql.fact("f.start_date"),
+                                bind.data=data.frame(path=var.path))
   # per.enc$start_date <- as.POSIXct(per.enc$start_date)
   
   names(per.enc)[3] <- var.name
@@ -78,14 +88,8 @@ v.enc <- function(conn, var.path, var.name) {
 }
 
 v.enc.text <- function(conn, var.path, var.name) {
-  sql.summary <- '
-  select f.encounter_num, f.patient_num, f.tval_char
-  from observation_fact f
-  join concept_dimension cd
-  on cd.concept_cd = f.concept_cd
-  where cd.concept_path like (? || \'%\')
-  '
-  per.enc <- dbGetPreparedQuery(conn, sql.summary, bind.data=data.frame(path=var.path))
+  per.enc <- dbGetPreparedQuery(conn, sql.fact("f.tval_char"),
+                                bind.data=data.frame(path=var.path))
   
   names(per.enc)[3] <- var.name
   per.enc

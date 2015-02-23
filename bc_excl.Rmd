@@ -59,12 +59,14 @@ ht(
 
 ### Variable Terms: Aligned and Misaligned
 
+*TODO: normalize `\I2B2\Cancer Cases\NN` to `\i2b2\naaccr\S:NN` at the start of paths.*
+
 ```{r, echo=FALSE}
 v <- dbGetQuery(conn.site,
-"
-select id, name, concept_path
+paste0("
+select id, name, ", patch.umn('concept_path'), " concept_path
 from variable
-")
+"))
 
 # Some sites have really long variable names
 v$name <- substr(v$name, 1, 40)
@@ -120,7 +122,8 @@ bad.concept.path <-
              on cd.concept_cd = f.concept_cd
              where not exists (select t204.concept_path from
              (", sql.qterm.table, ") t204
-             where cd.concept_path like (t204.concept_path || '%'))
+             where", patch.umn('concept_path'), "
+              like (t204.concept_path || '%'))
              group by cd.concept_path
              "))
 ```
@@ -140,7 +143,8 @@ tumor.site <- dbGetQuery(conn.site,
                          patient_num from observation_fact f
                          join concept_dimension cd
                          on cd.concept_cd = f.concept_cd
-                         where cd.concept_path like '%naaccr%'")
+                         where concept_path like '%naaccr%'
+                         or concept_path like '%\\0390 Date of Diagnosis%'")
 
 bcterm$bc.dx.path
 tumor.site <- with.var(tumor.site, conn.site,
