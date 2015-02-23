@@ -9,21 +9,30 @@ from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
 
 
-def main(report_mail='bc_site_email.txt',
+def main(argv,
+         report_mail='bc_site_email.txt',
+         readme='README.md',
+         terms_article='bc_qa2.html',
          df='data-files',
          sender='dconnolly@kumc.edu',
          cc=['%s@kumc.edu' % who
              for who in ['dconnolly',
                          'tmcmahon',
                          'vleonardo']]):
+  body = argv[1]
+  cli_sites = argv[2:]
   for item in csv.DictReader(open(report_mail)):
     site = item['site']
+
+    if cli_sites and site not in cli_sites:
+      continue
+
     subject = 'Breast Cancer QA report for %s' % site
     report = '%s/report-%s.html' % (df, site)
     mbox = item['email']
     send_mail(sender, [mbox] + cc, subject,
-              '%s,\nPlease acknowledge receipt.' % item['name'],
-              files=[report])
+              '%s,\n' % (item['name'], body),
+              files=[readme, terms_article, report])
 
 
 def send_mail(send_from, send_to, subject, text, files=None,
@@ -51,4 +60,4 @@ def send_mail(send_from, send_to, subject, text, files=None,
 
 
 if __name__ == '__main__':
-  main()
+  main(sys.argv)
