@@ -29,6 +29,17 @@ strip.counts <- function(text) {
 }
 
 
+# nice HTML tables
+library("xtable")
+ht <- function(x, caption=NULL) {
+  print(xtable(x, caption=caption),
+        type='html',
+        NA.string='NA',
+        caption.placement='top',
+        html.table.attributes='border=1')
+}
+
+
 v.enc.nominal <- function(conn, var.path, var.name) {
   sql.summary <- '
   select f.encounter_num, f.patient_num, substr(cd.concept_path, length(:path)) tail
@@ -83,6 +94,20 @@ v.enc <- function(conn, var.path, var.name) {
   '
   per.enc <- dbGetPreparedQuery(conn, sql.summary, bind.data=data.frame(path=var.path))
   # per.enc$start_date <- as.POSIXct(per.enc$start_date)
+  
+  names(per.enc)[3] <- var.name
+  per.enc
+}
+
+v.enc.text <- function(conn, var.path, var.name) {
+  sql.summary <- '
+  select f.encounter_num, f.patient_num, f.tval_char
+  from observation_fact f
+  join concept_dimension cd
+  on cd.concept_cd = f.concept_cd
+  where cd.concept_path like (? || \'%\')
+  '
+  per.enc <- dbGetPreparedQuery(conn, sql.summary, bind.data=data.frame(path=var.path))
   
   names(per.enc)[3] <- var.name
   per.enc
