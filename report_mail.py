@@ -26,6 +26,8 @@ def main(argv,
 
     if cli_sites and site not in cli_sites:
       continue
+    if 'test' in body:
+      cc = []
 
     subject = 'Breast Cancer QA report for %s' % site
     report = '%s/report-%s.html' % (df, site)
@@ -50,8 +52,12 @@ def send_mail(send_from, send_to, subject, text, files=None,
 
     for f in files or []:
         with open(f, "rb") as fil:
-            msg.attach(MIMEText(
-                fil.read(), 'html'))
+          attachment = MIMEText(
+            fil.read(),
+            '.html' if f.endswith('.html') else 'plain')
+          attachment['Content-Disposition'] = (
+            'attachment; filename="%s"' % basename(f))
+          msg.attach(attachment)
 
     print "sending to", send_to, subject
     smtp = smtplib.SMTP(server)
