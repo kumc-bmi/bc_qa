@@ -31,7 +31,7 @@ def main(argv,
     report = '%s/report-%s.html' % (df, site)
     mbox = item['email']
     send_mail(sender, [mbox] + cc, subject,
-              '%s,\n' % (item['name'], body),
+              '%s,\n%s' % (item['name'], body),
               files=[readme, terms_article, report])
 
 
