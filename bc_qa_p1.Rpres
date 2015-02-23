@@ -9,7 +9,7 @@ transition: fade
 Graphs by Site
 ========================================================
 
-Generated 20 Feb 2015
+Generated `r Sys.Date()`
 
 Modelled after Graphs by Elizabeth A. Chrischilles, PhD 18 Feb 2015
 
@@ -47,7 +47,7 @@ site.code <- factor(fetch$dataset$site)
 
 ```{r echo=FALSE}
 query.site <- function(q, site) {
-  conn <- site.data(site)
+  conn <- fetch$site.data(site)
   dbGetQuery(conn, q)
 }
 
@@ -81,26 +81,33 @@ patients <- rbind(
 ```
 
 ```{r echo=FALSE}
-tumor.sites <- function() {
-  site.code <- factor(current$site)
+site.tumor.data <- lapply(site.code, function(s) {
+  message('working on site: ', s)
+  bc.exclusions(fetch$site.data(s))
+  })
+names(site.tumor.data) <- levels(site.code)
+
+rbind.sites <- function(df.site) {
   df <- NULL
-  for (ix in 1:nrow(current)) {
-    site <- current$site[ix]
-    message('working on site: ', ix, ' ', site)
-    tumor.site <- bc.exclusions(site.data(site))
-    if (nrow(tumor.site) > 0) {
-      tumor.site$site <- site.code[ix]
-      names <- names(tumor.site)
+  for (ix in 1:length(site.code)) {
+    site <- site.code[ix]
+
+    x <- df.site[[site]]
+
+    if (nrow(x) > 0) {
+      x$site <- site
+      names <- names(x)
       if (is.null(df)) {
-        df <- tumor.site
+        df <- x
         } else {
-          df <- rbind(df, tumor.site)
+          df <- rbind(df, x)
           }
       }
     }
   df
 }
-tumor.all <- tumor.sites()
+
+tumor.all <- rbind.sites(site.tumor.data)
 ```
 
 ```{r echo=FALSE}
@@ -177,16 +184,62 @@ style.dodge(fig2)
 ```
 
 
+Number in “Final” Survey-Eligible Cohort by Site*
+=================================================
+
+
+```{r echo=FALSE}
+site.survey.sample <- lapply(site.code, function(s) {
+  message('working on site: ', s)
+  check.cases(site.tumor.data[[s]])
+  })
+names(site.survey.sample) <- levels(site.code)
+
+patients.eligible <- function(last.crit) rbind(
+  query.each.site(
+    'Number of patients (data dim.)',
+    'select count(distinct patient_num) from observation_fact'),
+  data.frame(
+    site=site.code,
+    key='Number after exclusions',
+    result=unlist(lapply(site.code, function(s) {
+      qty <- count.cases(check.cases(site.tumor.data[[s]]))
+      qty['cumulative', last.crit]
+      
+      }))))
+patients.eligible.stage <- patients.eligible('stage.ok')
+patients.eligible.prior <- patients.eligible('no.prior')
+```
+
+```{r echo=FALSE}
+
+fig2 <- ggplot(subset(patients.eligible.stage,
+                      key %in% c('Number of patients (data dim.)', 'Number after exclusions')),
+               aes(x=site, y=result, fill=key))
+style.dodge(fig2)
+```
+
+Number in “Final” Survey-Eligible Cohort by Site*
+=================================================
+
+*not excluding prior diagnosis
+
+*TODO: Percent eligible for survey*
+
+*TODO: what's the difference between "after exclusions" and "eligible for survey"?*
+
 Number in “Final” Survey-Eligible Cohort by Site
 ================================================
 
-*TODO: formulate exclusion criteria*
+```{r echo=FALSE}
 
-Number of patients (data dim.)
-Number after exclusions
-Percent eligible for survey
+fig2 <- ggplot(subset(patients.eligible.prior,
+                      key %in% c('Number of patients (data dim.)', 'Number after exclusions')),
+               aes(x=site, y=result, fill=key))
+style.dodge(fig2)
+```
 
-*TODO: what's the difference between "after exclusions" and "eligible for survey"?*
+excluding prior diagnosis this time
 
 Number of Breast Cancer Patients with EMR Vital Status by Site
 ==============================================================
@@ -208,7 +261,7 @@ var204 <- bcterm$term204  # anachonism
 
 site.tumor.var <- function(naaccr.name) {
   function(s) {
-    df <- v.enc.nominal(site.data(s),
+    df <- v.enc.nominal(fetch$site.data(s),
                         unique(var204$concept_path[grep(naaccr.name, var204$name)]),
                         'x')
     nrow(df)
