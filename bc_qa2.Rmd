@@ -15,23 +15,18 @@ source('bc_qa_txform.R')
 
 Query sent to GPC sites 12/23/2014:
 
-  - [GPC Honest Brokers: Time to run the breast cancer survey query][23dec]
-    Tamara McMahon
+  - [GPC Honest Brokers: Time to run the breast cancer survey query][23dec]  
+    Tamara McMahon  
     Tue Dec 23 16:17:23 CST 2014 
 
 [23dec]: http://listserv.kumc.edu/pipermail/gpc-honest-brokers/2014-December/000002.html
 
-As noted in [ticket:204][204], the query is also on babel.
+As noted in [ticket:204][204], the query is on babel, where a few revisions have been incorporated.
 
 [204]: https://informatics.gpcnetwork.org/trac/Project/ticket/204
 
-From a KUMC data file, we extracted the variable table using:
+`Breast_Cancer_20150223.xml` is the query definition as of this writing, and `bc-variable.csv` is derived from it via `qterms.py`.
 
-    sqlite3 -header -csv kumcBC.db 'select * from variable' >bc-variable.csv 
-
-and attached it to #204 as [bc-variable.csv][222b] on Feb 9.
-
-[222b]:  https://informatics.gpcnetwork.org/trac/Project/attachment/ticket/222/bc-variable.csv
 
 ```{r}
 bcterm <- list()
@@ -44,13 +39,6 @@ term204 <- term204[, c('id', 'concept_path', 'name')]
 
 term204$naaccr.code <- substr(term204$name, 1, 4)
 ```
-
-*Oops... an Abridged term got left in*
-```{r}
-term204$concept_path[term204$naaccr.code == '0240'] <-
-  '\\i2b2\\naaccr\\S:2 Demographic\\0240 Date of Birth\\'
-```
-
 
 *We seem to have `r length(which(duplicated(term204$concept_path)))` duplicates:*
 
@@ -79,6 +67,26 @@ These are the `r nrow(term204)` query terms:
 ht(
   term204[, c('concept_path', 'name')]
   )
+```
+
+### Alignment by "patching"
+
+We can accomodate analagous paths to a certain extent; e.g. the "Abridged" NAACCR hierarchy:
+
+```{r echo=FALSE}
+bcterm$fixes <- read.csv(textConnection(
+    'from,to
+\\i2b2\\Abridged\\Demographics,\\i2b2\\naaccr\\S:2 Demographic
+\\I2B2\\Cancer Cases\\0,\\i2b2\\naaccr\\S:
+\\I2B2\\Cancer Cases\\1,\\i2b2\\naaccr\\S:1
+\\I2B2\\Cancer Cases\\SEER Site Summary,\\i2b2\\naaccr\\SEER Site
+\\I2B2\\Demographics,\\i2b2\\Demographics
+Type and Behav ICD-O-3,Type&Behav ICD-O-3
+'))
+```
+
+```{r}
+bcterm$fixes
 ```
 
 ## BreastCancer Diagnosis
@@ -114,7 +122,7 @@ In [Share Thoughts on Breast Cancer Study][18Dec] GPC Global Webinar, December 1
 
 Note that stage (AJCC, SS2000) and Vital Status are combinations of terms:
 
-```{r}
+```{r echo=FALSE}
 t.excl <- data.frame(
   naaccr.code=c('0220',
                 '0240',

@@ -32,17 +32,8 @@ ht <- function(x,
 }
 
 
-patch.umn <- function(col) {
-  fixes <- read.csv(textConnection(
-    'from,to
-\\I2B2\\Cancer Cases\\0,\\i2b2\\naaccr\\S:
-\\I2B2\\Cancer Cases\\1,\\i2b2\\naaccr\\S:1
-\\I2B2\\Cancer Cases\\SEER Site Summary,\\i2b2\\naaccr\\SEER Site
-\\i2b2\\Abridged\\Demographics,\\i2b2\\naaccr\\S:2 Demographic
-\\I2B2\\Demographics,\\i2b2\\Demographics
-Type and Behav ICD-O-3,Type&Behav ICD-O-3
-'))
-  
+patch.umn <- function(col,
+                      fixes=bcterm$fixes) {
   expr <- col
   for (ix in 1:nrow(fixes)) {
     expr = paste0("replace(", expr, ", '", fixes$from[ix], "', '", fixes$to[ix], "')")

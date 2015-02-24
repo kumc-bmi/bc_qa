@@ -14,13 +14,13 @@ Breast Cancer QA for `r SITE`
 
 **NOTE: Selected cohort and issues are summarized at the end of this report.**
 
-This report is generated using [bc_qa][] version `r system('hg id', intern=TRUE)`
+This report is generated using [bc_qa][] version `r system('hg id', intern=TRUE)`.
 For context, see [227].
 
 [227]: https://informatics.gpcnetwork.org/trac/Project/ticket/227
 [bc_qa]: https://bitbucket.org/gpcnetwork/bc_qa
 
-*Load query terms and exclusion criteria from earlier article.*
+*Load query terms and exclusion criteria from Query Terms and Exclusion Criteria article.*
 
 ```{r terms}
 load("bc_terms_results.RData")
@@ -61,8 +61,6 @@ ht(
 
 ### Variable Terms: Aligned and Misaligned
 
-*in progress: normalize `\I2B2\Cancer Cases\NN` to `\i2b2\naaccr\S:NN` at the start of paths.*
-
 ```{r, echo=FALSE}
 v <- dbGetQuery(conn.site,
 paste0("
@@ -73,6 +71,7 @@ from variable
 # Some sites have really long variable names
 v$name <- substr(v$name, 1, 40)
 v.ok <- v$patched_path %in% bcterm$term204$concept_path
+v$patched_path[v$patched_path == v$concept_path] <- NA
 v.good <- v[v.ok, ]
 v.bad <- v[! v.ok, ]
 
