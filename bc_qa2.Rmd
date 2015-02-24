@@ -75,17 +75,18 @@ We can accomodate analagous paths to a certain extent; e.g. the "Abridged" NAACC
 
 ```{r echo=FALSE}
 bcterm$fixes <- read.csv(textConnection(
-    'from,to
-\\naaccr\\,\\i2b2\\naaccr\\
-\\Demographics\\,\\i2b2\\Demographics\\
-\\i2b2\\i2b2\\,\\i2b2\\
-\\02 Demographic\\,\\S:2 Demographic\\
-\\i2b2\\Abridged\\Demographics,\\i2b2\\naaccr\\S:2 Demographic
-\\I2B2\\Cancer Cases\\0,\\i2b2\\naaccr\\S:
-\\I2B2\\Cancer Cases\\1,\\i2b2\\naaccr\\S:1
-\\I2B2\\Cancer Cases\\SEER Site Summary,\\i2b2\\naaccr\\SEER Site
-\\I2B2\\Demographics,\\i2b2\\Demographics
-Type and Behav ICD-O-3,Type&Behav ICD-O-3
+    'from,to,note
+\\naaccr\\,\\i2b2\\naaccr\\,MCW terms have a different prefix
+\\Demographics\\,\\i2b2\\Demographics\\,MCW ...
+\\i2b2\\i2b2\\,\\i2b2\\,undo MCW patch for other sites
+\\02 Demographic\\,\\S:2 Demographic\\, MCW NAACCR
+\\i2b2\\Abridged\\Demographics,\\i2b2\\naaccr\\S:2 Demographic,Abridged
+\\I2B2\\Cancer Cases\\0,\\i2b2\\naaccr\\S:,UMN capitalization and section markup
+\\I2B2\\Cancer Cases\\1,\\i2b2\\naaccr\\S:1,UMN
+\\I2B2\\Cancer Cases\\SEER Site Summary,\\i2b2\\naaccr\\SEER Site,UMN
+\\I2B2\\Demographics,\\i2b2\\Demographics,UMN
+Type and Behav ICD-O-3,Type&Behav ICD-O-3,i2b2 ampersand-in-XML work-arounds
+Type/Behav ICD-O-3,Type&Behav ICD-O-3,ampersand
 '))
 ```
 
