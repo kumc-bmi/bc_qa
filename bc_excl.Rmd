@@ -7,6 +7,13 @@ conn.site <- input$conn
 dataset <- input$about
 
 SITE <- dataset$site
+
+version.bc_qa <- ''
+try (
+  version.bc_qa <- paste(' version', system('hg id', intern=TRUE)),
+  silent=TRUE
+  )
+
 ```
 
 Breast Cancer QA for `r SITE`
@@ -14,7 +21,8 @@ Breast Cancer QA for `r SITE`
 
 **NOTE: Selected cohort and issues are summarized at the end of this report.**
 
-This report is generated using [bc_qa][] version `r system('hg id', intern=TRUE)`.
+This report is generated using [bc_qa][]`r version.bc_qa`.
+
 For context, see [227].
 
 [227]: https://informatics.gpcnetwork.org/trac/Project/ticket/227
