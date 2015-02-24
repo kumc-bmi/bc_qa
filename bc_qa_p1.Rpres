@@ -1,7 +1,7 @@
 GPC Breast Cancer Data by Site
 ==============================
 author: Dan Connolly
-date: 20 Feb 2015
+date: Feb 2015
 width: 1536
 height: 864
 transition: fade
@@ -23,19 +23,9 @@ load("bc_terms_results.RData")
 
 library(ggplot2)
 library(grid)
+library(RSQLite)
 ```
 
-
-Needed for Exclusions
-=====================
-
- - Primary site
- - Sex
- - Sequence Number
- - Diagnostic Confirmation
- - Morphology Code
- - Derived AJCC-7 Grp and/or SS2000
- - Vital Status
 
 Patients
 ========
@@ -45,40 +35,6 @@ current <- fetch$dataset  # anachronism
 site.code <- factor(fetch$dataset$site)
 ```
 
-```{r echo=FALSE}
-query.site <- function(q, site) {
-  conn <- fetch$site.data(site)
-  dbGetQuery(conn, q)
-}
-
-query.each.site <- function(key, q,
-                            current=fetch$dataset) {
-  data.frame(
-    site=site.code,
-    key=key,
-    result=unlist(lapply(current$site, function(s) query.site(q, s)))
-    )
-}
-
-patients <- rbind(
-  query.each.site(
-    'data',
-    'select count(distinct patient_num) from observation_fact'),
-  query.each.site(
-    'patient_dimension',
-    'select count(*) from patient_dimension'),
-  query.each.site(
-    'tumor',
-    "
-    select count(distinct encounter_num)
-    from observation_fact f
-    join concept_dimension cd
-    on cd.concept_cd = f.concept_cd
-    where cd.concept_path like '%naaccr%'
-    "
-    ))
-
-```
 
 ```{r echo=FALSE}
 site.tumor.data <- lapply(site.code, function(s) {
@@ -111,6 +67,36 @@ tumor.all <- rbind.sites(site.tumor.data)
 ```
 
 ```{r echo=FALSE}
+query.site <- function(q, site) {
+  conn <- fetch$site.data(site)
+  dbGetQuery(conn, q)
+}
+
+query.each.site <- function(key, q,
+                            current=fetch$dataset) {
+  data.frame(
+    site=site.code,
+    key=key,
+    result=unlist(lapply(current$site, function(s) query.site(q, s)))
+    )
+}
+
+patients <- rbind(
+  query.each.site(
+    'data',
+    'select count(distinct patient_num) from observation_fact'),
+  query.each.site(
+    'patient_dimension',
+    'select count(*) from patient_dimension'),
+  data.frame(
+    site=site.code,
+    key='tumor',
+    result=unlist(lapply(site.code, function(s) length(which(tumor.all$site == s))))
+    ))
+
+```
+
+```{r echo=FALSE}
 pat.per.site <- function(df) {
   as.vector(table(unique(df[, c('site', 'patient_num')])$site))
   }
@@ -135,20 +121,6 @@ patients.vital <- rbind(
 
 ```
 
-```{r eval=FALSE, echo=FALSE}
-#Scratchpad...
-
-var.site <- function(naaccr.name, var.name) {
-  function(site) {
-    conn <- site.data(site)
-    v.enc(conn, var204$concept_path[grep(naaccr.name, var204$name)], var.name)
-    }
-  }
-
-dx.site <- var.site('0390 Date of Diagnosis', 'dx')
-site$tumor <- unlist(lapply(site.code,
-                   function (s) nrow(dx.site(s))))
-```
 
 Number of Breast Cancer Patients and Tumors by Site
 ===================================================
@@ -166,21 +138,54 @@ style.dodge <- function(fig) {
     geom_text(data=fig$data, aes(label = result),
                   position = position_dodge(width=0.9), angle=45)
   }
-style.dodge(fig1)
+style.dodge(fig1) + labs(title="Data from all participating sites (Yay!)")
 ```
 
-**TODO: tumors in date range**
-**TODO: how did they count tumors?**
 
+Exclusion Criteria
+=====================
 
-Number with Vital Status, by Site
-=================================
+In [Share Thoughts on Breast Cancer Study][18Dec] GPC Global Webinar, December 18, 2014, on Slide 8 *Selection Criteria*:
 
-```{r echo=FALSE}
+[18Dec]: http://listserv.kumc.edu/pipermail/gpc-all/attachments/20141215/f655d41b/attachment-0001.pptx
 
-fig2 <- ggplot(subset(patients.vital, key %in% c('patient_dimension', 'w/Vital from SEER/EHR')),
-               aes(x=site, y=result, fill=key))
-style.dodge(fig2)
+> Exclude from the SURVEY sample if:
+>  - Sex not equal to female
+>  - Less than 18 years of age
+>  - Prior cancer diagnosis
+>  - Breast cancer was not microscopically confirmed
+>  - Only tumor morphology was lobular carcinoma in situ
+>  - Stage IV breast cancer
+>  - Known to be deceased
+>  - Non-English speaking (for now)
+
+Needed for Exclusions
+=====================
+
+ - Primary site
+ - Sex
+ - Sequence Number
+ - Diagnostic Confirmation
+ - Morphology Code
+ - Derived AJCC-7 Grp and/or SS2000
+ - Vital Status
+
+Query Term Details
+==================
+
+```{r echo=FALSE, results='asis'}
+ht(caption="Exclusion Criteria Terms (Primary)",
+   bcterm$excl)
+```
+
+*TODO: Language*  
+
+Query Term Details
+==================
+
+```{r echo=FALSE, results='asis'}
+ht(caption="Exclusion Criteria Terms (All)",
+   bcterm$excl.all)
 ```
 
 
@@ -209,6 +214,7 @@ patients.eligible <- function(last.crit) rbind(
       }))))
 patients.eligible.stage <- patients.eligible('stage.ok')
 patients.eligible.prior <- patients.eligible('no.prior')
+# TODO: Percent eligible for survey
 ```
 
 ```{r echo=FALSE}
@@ -216,17 +222,40 @@ patients.eligible.prior <- patients.eligible('no.prior')
 fig2 <- ggplot(subset(patients.eligible.stage,
                       key %in% c('Number of patients (data dim.)', 'Number after exclusions')),
                aes(x=site, y=result, fill=key))
-style.dodge(fig2)
+style.dodge(fig2) + labs(title="*not excluding prior diagnosis")
 ```
 
-Number in “Final” Survey-Eligible Cohort by Site*
-=================================================
 
-*not excluding prior diagnosis
+Eligibility Criteria by Site: Cumulative
+=========================================
 
-*TODO: Percent eligible for survey*
+```{r echo=FALSE}
+x <- do.call(rbind.data.frame,
+              lapply(site.code, function(site) {
+                qty <- count.cases(check.cases(site.tumor.data[[site]]))
+                columns <- factor(row.names(qty),
+                                  levels=c('independent', 'cumulative'),
+                                  labels=c('independent', 'cumulative'),
+                                  ordered=TRUE)
+                qty <- cbind(columns, site, qty)
+                qty
+                }))
+x <- x[order(x$columns, x$site), ]
+row.names(x) <- 1:nrow(x)
+``` 
 
-*TODO: what's the difference between "after exclusions" and "eligible for survey"?*
+```{r echo=FALSE, results='asis'}
+ht(x[x$columns == 'cumulative', ])
+```
+
+
+Eligibility Criteria by Site: Independent
+=========================================
+
+```{r echo=FALSE, results='asis'}
+ht(x[x$columns == 'independent', ])
+```
+
 
 Number in “Final” Survey-Eligible Cohort by Site
 ================================================
@@ -236,10 +265,9 @@ Number in “Final” Survey-Eligible Cohort by Site
 fig2 <- ggplot(subset(patients.eligible.prior,
                       key %in% c('Number of patients (data dim.)', 'Number after exclusions')),
                aes(x=site, y=result, fill=key))
-style.dodge(fig2)
+style.dodge(fig2) + labs(title="Excluding prior diagnosis (and 0380 seq.no=NA)")
 ```
 
-excluding prior diagnosis this time
 
 Number of Breast Cancer Patients with EMR Vital Status by Site
 ==============================================================
@@ -248,6 +276,22 @@ Number of Breast Cancer Patients with EMR Vital Status by Site
 
 ```{r echo=FALSE}
 fig2 <- ggplot(subset(patients.vital, key %in% c('w/Vital from EHR (data)', 'vital: patient_dimension')),
+               aes(x=site, y=result, fill=key))
+style.dodge(fig2)
+```
+
+
+Number in “Final” Survey-Eligible Cohort by Site*
+=================================================
+
+*What's the difference between "after exclusions" and "eligible for survey"?*
+
+Number with Vital Status, by Site
+=================================
+
+```{r echo=FALSE}
+
+fig2 <- ggplot(subset(patients.vital, key %in% c('patient_dimension', 'w/Vital from SEER/EHR')),
                aes(x=site, y=result, fill=key))
 style.dodge(fig2)
 ```
@@ -287,3 +331,55 @@ Number of Tumors Overall and With Primary Site, by Site
 fig5 <- ggplot(tumor.by.site, aes(x=site, y=result, fill=key))
 style.dodge(fig5)
 ```
+
+Query Term Details
+==================
+
+
+
+Number of Tumors Overall and With SEER Site Breast, by Site
+===========================================================
+
+```{r echo=FALSE}
+tumor.by.site <- rbind.data.frame(
+  subset(patients, key == 'tumor'),
+  
+  data.frame(
+    site=site.code,
+    key='w/SEER Site',
+    result=unlist(lapply(site.code, site.tumor.var('Breast'))))
+  )
+```
+
+```{r echo=FALSE}
+fig5 <- ggplot(tumor.by.site, aes(x=site, y=result, fill=key))
+style.dodge(fig5) + labs(title="SEER Site subsumes Primary site, no?")
+```
+
+```{r echo=FALSE}
+bcterm$bc.dx.path
+```
+
+Counting Tumors?
+================
+
+Like this?
+
+```
+select distinct encounter_num, patient_num
+from observation_fact f
+```
+
+Note: to exclude stuff like age-at-visit for visits unrelated to a tumor:
+
+```
+...
+join concept_dimension cd on cd.concept_cd = f.concept_cd
+where cd.concept_path like '%naaccr%'
+   or concept_path like '%\\0390 Date of Diagnosis%'")
+```
+
+Tumors in Date Range?
+=====================
+
+**tumors in date range? What does that mean, exactly?**
