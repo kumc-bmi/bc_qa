@@ -25,13 +25,19 @@ An initial QA report was sent to each site 23 Feb 2014.
 
 In future iterations, sites are encouraged to run this report on their own before sumitting:
 
- 1. Build *Query Terms and Exclusion Criteria* article
-    - Run (i.e. knit) `bc_qa2.Rmd`
-    - output: `bc_terms_results.RData`
+ 1. Get the `bc_qa` code
+    - Visit [bc_qa downloads][dl] and get a zip file, or
+    - clone the https://bitbucket.org/gpcnetwork/bc_qa repository
+ 2. Build *Query Terms and Exclusion Criteria* article
+    1. In RStudio, `install.packages(pkgs=c('RSQLite', 'ggplot2', 'xtable'))`
+    2. Open `bc_qa2.Rmd` and Knit HTML
+       - output: `bc_terms_results.RData`
  3. Build *QA for SITE* article
     1. Use [DataBuilder][] or equivalent to generate sqlite file.
     2. Copy `dataset-example.R` to `dataset.R` and edit filename etc.
-    3. Run (i.e. knit) `bc_excl.Rmd`
+    3. Knit `bc_excl.Rmd`
+
+[dl]: https://bitbucket.org/gpcnetwork/bc_qa/downloads
 
 
 [DataBuilder]: https://informatics.gpcnetwork.org/trac/Project/wiki/BuilderSaga
