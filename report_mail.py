@@ -11,7 +11,7 @@ from email.utils import COMMASPACE, formatdate
 
 def main(argv,
          report_mail='bc_site_email.txt',
-         readme='README.md',
+         readme='README.html',
          terms_article='bc_qa2.html',
          df='data-files',
          sender='dconnolly@kumc.edu',
