@@ -91,7 +91,7 @@ patients <- rbind(
   data.frame(
     site=site.code,
     key='tumor',
-    result=unlist(lapply(site.code, function(s) length(which(tumor.all$site == s))))
+    result=unlist(lapply(site.code, function(s) length(unique(tumor.all$encounter_num[tumor.all$site == s]))))
     ))
 
 ```
@@ -308,7 +308,7 @@ site.tumor.var <- function(naaccr.name) {
     df <- v.enc.nominal(fetch$site.data(s),
                         unique(var204$concept_path[grep(naaccr.name, var204$name)]),
                         'x')
-    nrow(df)
+    length(unique(df$encounter_num))
     }
   }
 
@@ -331,10 +331,6 @@ Number of Tumors Overall and With Primary Site, by Site
 fig5 <- ggplot(tumor.by.site, aes(x=site, y=result, fill=key))
 style.dodge(fig5)
 ```
-
-Query Term Details
-==================
-
 
 
 Number of Tumors Overall and With SEER Site Breast, by Site
