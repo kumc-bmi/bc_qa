@@ -53,6 +53,10 @@ reproduce the analysis of data from all sites:
  3. Build any *QA for SITE* articles you like, using `dataset.R` as below.
  4. Build *Data by Site* presentation
     - Open `bc_qa_p1.Rpres` in R Studio and use the presentation tab.
+ 5. To mail results to all sites
+    1. comment out `SITE <- ...` in `dataset.R` and run `report-all-sites.R`.
+    2. Move the `report-SITE.html` files to `data-files`.
+    3. Use `report_mail.py` to mail the reports.
 
 
 ```
