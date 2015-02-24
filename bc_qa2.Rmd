@@ -71,13 +71,15 @@ ht(
 
 ### Alignment by "patching"
 
+
 We can accomodate analagous paths to a certain extent; e.g. the "Abridged" NAACCR hierarchy:
 
 ```{r echo=FALSE}
 bcterm$fixes <- read.csv(textConnection(
     'from,to,note
 \\naaccr\\,\\i2b2\\naaccr\\,MCW terms have a different prefix
-\\Demographics\\,\\i2b2\\Demographics\\,MCW ...
+\\Demographics\\Vital Status\\,\\i2b2\\Demographics\\Vital Status\\,MCW ...
+\\Demographics\\Language\\,\\i2b2\\Demographics\\Language\\,MCW ...
 \\i2b2\\i2b2\\,\\i2b2\\,undo MCW patch for other sites
 \\02 Demographic\\,\\S:2 Demographic\\, MCW NAACCR
 \\i2b2\\Abridged\\Demographics,\\i2b2\\naaccr\\S:2 Demographic,Abridged
