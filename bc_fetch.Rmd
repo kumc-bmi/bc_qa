@@ -15,9 +15,10 @@ Data files were submitted to redcap:
 
 *TODO: attach data dictionary to ticket so others can try this code.*
 
-Generate an API key and put it in the auxilary `bcread_api_key.R` file a la:
+Generate an API key and put it, along with your choice of data file directory, in the auxilary `bcread_api_key.R` file a la:
 
 ```{r eval=FALSE}
+v.dbdatafiledir <- '~/bc-data-files'
 Sys.setenv(BCREAD='ABC...')
 'BCREAD'
 ```
@@ -58,9 +59,9 @@ env.key.bc <- source('bcread_api_key.R')$value
 
 runDir <- getwd()
 
-setwd("~/projects/bc_qa/data-files")
+setwd(v.dbdatafiledir)
 # get rid of existing data files
-system("rm *")
+# system("rm *")
 fetch <- bc_access(env.key.bc, src=runDir, pyenv='/home/dconnolly/pyenv/bcqa')
 fetch$dataDir <- getwd()
 
