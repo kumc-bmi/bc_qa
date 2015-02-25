@@ -48,6 +48,5 @@ id,item_key,concept_path,name_char,name
 46,\\KUMC_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0670 RX Hosp--Surg Prim Site\,\i2b2\naaccr\S:6 Hospital-Specific\0670 RX Hosp--Surg Prim Site\,"0670 RX Hosp--Surg Prim Site [79,401 facts; 73,772 patients]",0670 RX Hosp--Surg Prim Site 
 47,\\KUMC_naaccr\i2b2\naaccr\S:1 Cancer Identification\0400 Primary Site\,\i2b2\naaccr\S:1 Cancer Identification\0400 Primary Site\,"0400 Primary Site [79,401 facts; 73,772 patients]",0400 Primary Site 
 48,\\KUMC_naaccr\i2b2\naaccr\S:2 Demographic\0240 Date of Birth\,\i2b2\naaccr\S:2 Demographic\0240 Date of Birth\,"0240 Date of Birth [79,448 facts; 73,809 patients]",0240 Date of Birth 
-49,\\KUMC_Demographics\i2b2\Demographics\Vital Status\Deceased\,\i2b2\Demographics\Vital Status\Deceased\,"Deceased [34,300 facts; 34,300 patients]",Deceased 
-50,\\KUMC_Demographics\i2b2\Demographics\Vital Status\Deceased per SSA\,\i2b2\Demographics\Vital Status\Deceased per SSA\,"Deceased per SSA [193,510 facts; 193,510 patients]",Deceased per SSA 
-51,\\KUMC_Demographics\i2b2\Demographics\Language\,\i2b2\Demographics\Language\,"Language [2,051,675 facts; 2,051,675 patients]",Language 
+49,\\KUMC_Demographics\i2b2\Demographics\Language\,\i2b2\Demographics\Language\,"Language [2,051,675 facts; 2,051,675 patients]",Language 
+50,\\KUMC_Demographics\i2b2\Demographics\Vital Status\,\i2b2\Demographics\Vital Status\,"Vital Status [2,245,185 facts; 2,051,675 patients]",Vital Status 

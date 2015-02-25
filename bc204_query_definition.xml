@@ -142,7 +142,7 @@
 		<item>
 			<hlevel>3</hlevel>
 			<item_name>0521 Morph--Type&amp;Behav ICD-O-3 [78,982 facts; 73,452 patients]</item_name>
-			<item_key>\\KUMC_naaccr\i2b2\naaccr\S:1 Cancer Identification\0521 Morph--Type&Behav ICD-O-3\</item_key>
+			<item_key>\\KUMC_naaccr\i2b2\naaccr\S:1 Cancer Identification\0521 Morph--Type&amp;Behav ICD-O-3\</item_key>
 			<tooltip>KUMC - Cancer Cases \ 01 Cancer Identification</tooltip>
 			<class>ENC</class>
 			<item_icon>FA</item_icon>
