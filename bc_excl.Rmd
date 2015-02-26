@@ -1,3 +1,7 @@
+```{r echo=FALSE}
+library(ggplot2)
+```
+
 ```{r input, echo=FALSE}
 input <- source('dataset.R')$value
 
@@ -445,6 +449,7 @@ data.frame(qty=prop, row.names=names(prop))
 
 ### Prior Diagnosis: Sequence Number
 
+
 ```{r}
 tumor.site <- with.var(tumor.site, conn.site,
                        bcterm$excl['seq.no', 'concept_path'], 'seq.no')
@@ -454,6 +459,62 @@ prop <- enum.sum(tumor.site, 'seq.no')
 pie(prop)
 data.frame(qty=prop, row.names=names(prop))
 
+```
+
+
+While looking at sequence number, let's consider patients who have multiple otherwise-qualifying tumors.
+We show such cases left-to-right in order of their earliest diagnosis, with a segment connecting the first
+and last date of (qualifying) diagnosis. The color of the dot at the recent end of the segment indicates
+its sequence number (if available?). Note that in several cases, the tumors are diagnosed on the same day,
+so the choice of which tumor to use to color the dot is arbitrary.
+
+```{r echo=FALSE}
+survey.sample <- check.cases(tumor.site)
+
+reduce.logical <- function(data) {
+  x <- rep(TRUE, nrow(data))
+  for (col in names(data)) {
+    y <- data[, col]
+    y[is.na(y)] <- TRUE
+    x <- x & y
+    }
+  x
+  }
+but.prior <- subset(survey.sample, select=-c(encounter_num, patient_num, age, no.prior))
+maybe.prior <- reduce.logical(but.prior)
+
+tumor.per.pat <- data.frame(table(tumor.site$patient_num[maybe.prior]))
+
+focus <- subset(tumor.site,
+       patient_num %in% subset(tumor.per.pat, Freq > 1)$Var1 &
+         maybe.prior,
+       select=c(patient_num, date.dx, seq.no, primary.site))
+x <- data.frame(
+  patient_num=unique(focus$patient_num))
+x <- merge(x, aggregate(date.dx ~ patient_num, focus, min))
+names(x)[2] <- 'first'
+x <- merge(x, aggregate(date.dx ~ patient_num, focus, max))
+x <- merge(x, focus[, c('patient_num', 'date.dx', 'seq.no')])
+names(x)[2] <- 'last'
+x <- x[order(x$first), ]
+x$span <- min(x$first) + (x$last - x$first)
+x$ix <- 1:nrow(x)
+```
+
+```{r seq.dates, echo=FALSE, fig.width=12, fig.height=8}
+ggplot(x, aes(x=ix, xend=ix, y=first, yend=last, fill=seq.no)) +
+  geom_segment() +
+  geom_point(aes(x=ix, y=last, color=seq.no)) +
+#  geom_bar(aes(x=ix, y=span), stat="identity") +
+#  coord_cartesian(ylim=c(min(x$first), max(x$last))) +
+  labs(x="Otherwise Qualified Cases", y="time",
+       title="First and last diagnosis date")
+```
+
+Details of these cases:
+
+```{r}
+focus
 ```
 
 ## Summary and Issues for `r SITE`

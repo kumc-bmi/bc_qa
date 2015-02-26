@@ -226,8 +226,8 @@ count.cases <- function(survey.sample) {
   names(survey.sample.size) <- c('total', names(survey.sample[, col.crit]))
   survey.sample.size$total <- c(rep(length(unique(survey.sample$patient_num)), 2),
                                 rep(nrow(survey.sample), 2))
-  row.names(survey.sample.size) <- c('independent', 'cumulative',
-                                     'ind.tumor', 'cum.tumor')
+  row.names(survey.sample.size) <- c('ind.pat', 'ind.tumor',
+                                     'cum.pat', 'cum.tumor')
   
   cum.crit <- rep(TRUE, nrow(survey.sample))
   
@@ -235,10 +235,10 @@ count.cases <- function(survey.sample) {
   for (col in col.crit) {
     crit.name <- names(survey.sample)[col]
     crit <- survey.sample[, col]
-    survey.sample.size['independent', crit.name] <- length(unique(patient_num[crit]))
+    survey.sample.size['ind.pat', crit.name] <- length(unique(patient_num[crit]))
     survey.sample.size['ind.tumor', crit.name] <- length(which(crit))
     cum.crit <- cum.crit & crit
-    survey.sample.size['cumulative', crit.name] <- length(unique(patient_num[cum.crit]))
+    survey.sample.size['cum.pat', crit.name] <- length(unique(patient_num[cum.crit]))
     survey.sample.size['cum.tumor', crit.name] <- length(which(cum.crit))
   }
 
