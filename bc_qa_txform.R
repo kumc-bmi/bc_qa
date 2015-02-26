@@ -152,7 +152,9 @@ bc.exclusions <- function(conn.site,
   # Combinations
   tumor.site$vital <- vital.combine(tumor.site)
   tumor.site$stage <- stage.combine(tumor.site)
-
+  
+  message('TODO: check bc.exclusions(conn.site) against tumor.site')
+  
   tumor.site
 }
 
@@ -219,22 +221,26 @@ check.morph <- function(tumor.site,
 }
 
 count.cases <- function(survey.sample) {
-  # skip encounter_num, patient_num, date.birth, date.diagnosis
-  col.crit <- 5:length(survey.sample)
+  # skip encounter_num, patient_num, age
+  col.crit <- 4:length(survey.sample)
 
   survey.sample.size <- as.data.frame(array(NA, c(4, length(col.crit) + 1)))
   names(survey.sample.size) <- c('total', names(survey.sample[, col.crit]))
-  survey.sample.size$total <- c(rep(length(unique(survey.sample$patient_num)), 2),
-                                rep(nrow(survey.sample), 2))
-  row.names(survey.sample.size) <- c('ind.pat', 'ind.tumor',
-                                     'cum.pat', 'cum.tumor')
+
+  row.names(survey.sample.size) <- c('ind.pat', 'cum.pat',
+                                     'ind.tumor', 'cum.tumor')
+  
+  patient_num <- survey.sample[, 'patient_num']
+  
+  survey.sample.size$total <- c(rep(length(unique(patient_num)), 2),
+                                rep(length(patient_num), 2))
   
   cum.crit <- rep(TRUE, nrow(survey.sample))
   
-  patient_num <- survey.sample[, 'patient_num']
   for (col in col.crit) {
     crit.name <- names(survey.sample)[col]
     crit <- survey.sample[, col]
+    crit[is.na(crit)] <- TRUE
     survey.sample.size['ind.pat', crit.name] <- length(unique(patient_num[crit]))
     survey.sample.size['ind.tumor', crit.name] <- length(which(crit))
     cum.crit <- cum.crit & crit
