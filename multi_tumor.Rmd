@@ -40,24 +40,11 @@ survey.sample <- check.cases(tumor.site)
 ```
 
 
-```{r reduce.logical, echo=FALSE}
-# move to bc_qa_txform.R?
-reduce.logical <- function(data) {
-  x <- rep(TRUE, nrow(data))
-  for (col in names(data)) {
-    y <- data[, col]
-    y[is.na(y)] <- TRUE
-    x <- x & y
-    }
-  x
-  }
-```
-
 ```{r}
 but.prior <- subset(survey.sample,
-                    select=-c(encounter_num, patient_num, age, no.prior,
+                    select=-c(encounter_num, patient_num, age, no.prior
                               # tried skipping demographics to look at MCRF data...
-                              adult, female, not.dead, english
+                              # adult, female, not.dead, english
                               ))
 maybe.prior <- reduce.logical(but.prior)
 
