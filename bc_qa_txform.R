@@ -155,18 +155,25 @@ age.in.years <- function(date.birth, as.of=Sys.Date()) {
 
 bc.exclusions <- function(conn.site,
                           var.incl=bcterm$t.incl,
-                          var.excl=bcterm$excl.all) {
+                          var.excl=bcterm$excl.all,
+                          dx.path=subset(bcterm$term204, grepl('0390 Date of Diagnosis', concept_path))$concept_path) {
   # All dates of diagnosis
-  tumor.site <- v.enc(conn.site,
-                      subset(bcterm$term204, grepl('0390 Date of Diagnosis', concept_path)
-                      )$concept_path,
-                      'date.dx')
+  tumor.site <- v.enc(conn.site, dx.path, 'date.dx')
+
   # Per-encounter date var.
   tumor.site <- with.var(tumor.site, conn.site,
-                         bcterm$excl['date.birth', 'concept_path'], 'date.birth',
+                         var.excl['date.birth', 'concept_path'], 'date.birth',
                          get.var=v.enc)
+  
+  # Handle multiple vital status per patient (e.g. dead per EHR, dead per SSA)
+  vital.agg <- mk.agg.by.pat(
+    # regexp to extract D from \\Deceased ...\\
+    '.(.).*')
+  tumor.site <- with.var.pat(tumor.site, conn.site,
+                             var.excl['vital.ehr', 'concept_path'], 'vital.ehr',
+                             get.var=vital.agg)
   # Per-patient variables
-  for (v in c('vital.ehr', 'language')) {
+  for (v in c('language')) {
     tumor.site <- with.var.pat(tumor.site, conn.site, var.excl[v,]$concept_path, v)
   }
 
@@ -185,7 +192,7 @@ bc.exclusions <- function(conn.site,
   tumor.site$vital <- vital.combine(tumor.site)
   tumor.site$stage <- stage.combine(tumor.site)
   
-  message('TODO: check bc.exclusions(conn.site) against tumor.site')
+  # message('TODO: check bc.exclusions(conn.site) against tumor.site')
   
   tumor.site
 }
