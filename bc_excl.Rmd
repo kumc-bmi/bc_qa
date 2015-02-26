@@ -157,7 +157,9 @@ if (nrow(bad.concept.path) > 0) {
 
 ```{r}
 tumor.site <- v.enc(conn.site,
-                    subset(bcterm$term204, grepl('0390 Date of Diagnosis', concept_path)
+                    subset(bcterm$term204,
+                           # some sites don't have '0390 Date of Diagnosis'??
+                           grepl('0400 Primary Site', concept_path)
                            )$concept_path,
                     'date.dx')
 
@@ -481,7 +483,10 @@ reduce.logical <- function(data) {
     }
   x
   }
-but.prior <- subset(survey.sample, select=-c(encounter_num, patient_num, age, no.prior))
+but.prior <- subset(survey.sample,
+                    select=-c(encounter_num, patient_num, age, no.prior,
+                              # Let's skip demographics, for now
+                              adult, female, not.dead, english))
 maybe.prior <- reduce.logical(but.prior)
 
 tumor.per.pat <- data.frame(table(tumor.site$patient_num[maybe.prior]))
