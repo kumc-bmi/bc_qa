@@ -138,40 +138,71 @@ bad.concept.path <-
 ```
 
 ```{r echo=FALSE, results='asis'}
-ht(
-  bad.concept.path,
-  caption="Facts not aligned to Query Terms"
-  )
+if (nrow(bad.concept.path) > 0) {
+  ht(
+    bad.concept.path,
+    caption="Facts not aligned to Query Terms"
+    )
+  } else {
+    "No mis-aligned facts."
+  }
 ```
 
-## Analytic Dataset: One Record per Tumor
+## Analytic Dataset: Tumors, Inclusion Criteria
 
 ```{r}
-tumor.site <- dbGetQuery(conn.site,
-                         "select distinct encounter_num,
-                         patient_num from observation_fact f
-                         join concept_dimension cd
-                         on cd.concept_cd = f.concept_cd
-                         where concept_path like '%naaccr%'
-                         or concept_path like '%\\0390 Date of Diagnosis%'")
+tumor.site <- v.enc(conn.site,
+                    subset(bcterm$term204, grepl('0390 Date of Diagnosis', concept_path)
+                           )$concept_path,
+                    'date.dx')
 
-bcterm$bc.dx.path
 tumor.site <- with.var(tumor.site, conn.site,
-                       bcterm$bc.dx.path, 'bc.dx',
-                       get.var=v.enc)
+                       bcterm$t.incl[1,]$concept_path, 'seer.breast')
+qty.seer.breast <- length(which(!is.na(tumor.site$seer.breast)))
+
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$t.incl[2,]$concept_path, 'primary.site')
+qty.primary.breast <- length(grep('^.C50', tumor.site$primary.site))
 ```
 
-We find `r nrow(tumor.site)` NAACCR-related encounters, `r length(which(!is.na(tumor.site$bc.dx)))` of which have breast cancer diagnoses; let's look at the first few:
+We find `r nrow(tumor.site)` tumors diagnosed, `r qty.primary.breast` of which have a primary site of breast cancer, and `r qty.seer.breast` are breast cancer by the SEER Site Recode.
+
+Let's look at the first few. For nominal variables, note we **rely only on concept paths**; for conciseness, we focus on segments of the concept path that distinguish it from the variable's concept path. For date-valued variables, we use the i2b2 `start_date`.
+
 
 ```{r}
 head(tumor.site)
+
+tumor.site[duplicated(tumor.site$encounter_num), ]
+```
+
+### Date of Diagnosis
+
+How long ago were they diagnosed? (**Note: these are de-identified dates.**)
+
+```{r}
+if (any(!is.na(tumor.site$date.dx))) {
+  hist(age.in.years(tumor.site$date.dx),
+       main="Time since diagnosis",
+       xlab="years")
+  summary(age.in.years(tumor.site$date.dx))
+  }
 ```
 
 
+```{r}
+if (any(!is.na(tumor.site$date.dx))) {
+  recent <- subset(tumor.site, date.dx >=
+        subset(bcterm$dx.date, txform == 'deid' & label == 'expanded')$start
+      )
+  hist(age.in.years(recent$date.dx),
+       main="Time since diagnosis (Recent Only)",
+       xlab="years")
+  summary(age.in.years(recent$date.dx))
+  }
+```
 
 ### Sex, Age
-
-Let's be careful to continue to rely only on paths. For nominal variables, we focus on segments of the concept path that distinguish it from the variable. For date-valued variables, we use the i2b2 `start_date`.
 
 ```{r}
 tumor.site <- with.var(tumor.site, conn.site,
@@ -213,7 +244,7 @@ if (any(!is.na(tumor.site$date.birth))) {
   summary(age.by.pat$age)
   
   age.at.dx <- age.in.years(tumor.site$date.birth,
-                            as.of=as.POSIXct(tumor.site$bc.dx))
+                            as.of=tumor.site$date.dx)
   hist(age.at.dx)
   }
 
@@ -238,11 +269,8 @@ To match between the tumor registry and the EHR, we can only join on patient num
 
 ```{r}
 tumor.site <- with.var.pat(tumor.site, conn.site,
-                           bcterm$excl.all['deceased.ehr', 'concept_path'],
-                           'deceased.ehr')
-tumor.site <- with.var.pat(tumor.site, conn.site,
-                           bcterm$excl.all['deceased.ssa', 'concept_path'],
-                           'deceased.ssa')
+                           bcterm$excl.all['vital.ehr', 'concept_path'],
+                           'vital.ehr')
 tumor.site$vital <- vital.combine(tumor.site)
 
 head(tumor.site)
@@ -256,18 +284,10 @@ pie(prop)
 data.frame(qty=prop, row.names=names(prop))
 ```
 
-#### Vital Status: Deceased (from EHR)
+#### Vital Status: EHR
 
 ```{r}
-prop <- enum.sum(tumor.site, 'deceased.ehr')
-pie(prop)
-data.frame(qty=prop, row.names=names(prop))
-```
-
-#### Vital Status: Deceased (from SSA)
-
-```{r}
-prop <- enum.sum(tumor.site, 'deceased.ssa')
+prop <- enum.sum(tumor.site, 'vital.ehr')
 pie(prop)
 data.frame(qty=prop, row.names=names(prop))
 ```
@@ -280,14 +300,37 @@ pie(prop)
 data.frame(qty=prop, row.names=names(prop))
 ```
 
-### Language *TODO*
+### Language
+
+```{r}
+tumor.site <- with.var.pat(tumor.site, conn.site,
+                           bcterm$excl.all['language', 'concept_path'],
+                           'language')
+message('@@TODO: re-code UNKNOWN as NA?')
+```
+
+```{r}
+prop <- enum.sum(tumor.site, 'language')
+pie(prop)
+data.frame(qty=prop, row.names=names(prop))
+```
 
 ### Demographic Eligibility
 
 ```{r}
 survey.sample <- check.demographics(tumor.site)
-table(unique(survey.sample[, c('patient_num', 'female', 'adult', 'not.dead')])[, -1])
+
+# No person is both dead and alive etc., right?
+stopifnot(
+  length(duplicated(unique(
+    survey.sample[, c('patient_num', 'female', 'adult', 'not.dead', 'english')])$patient_num)) == 0)
+
+dem.states <- table(unique(survey.sample[, c('patient_num', 'female', 'adult', 'not.dead', 'english')])[, -1])
+plot(dem.states,
+     main="Demographic Eligibility")
+dem.states
 ```
+
 ### Diagnostic Confirmation
 
 ```{r}
@@ -345,7 +388,8 @@ prop[, c('name', 'qty')]
 #### Only tumor morphology was lobular carcinoma in situ?
 
 ```{r}
-survey.sample$other.morph <- survey.sample$patient_num %in% check.morph(tumor.site, '8520/2')
+x <- tumor.site[!survey.sample$patient_num %in% check.morph(tumor.site, '8520/2'), ]
+x[order(x$patient_num, x$date.dx), c('patient_num', 'encounter_num', 'date.dx', 'primary.site', 'morphology')]
 ```
 
 ### Stage
@@ -425,6 +469,10 @@ ht(
 ```{r echo=FALSE}
 survey.sample <- check.cases(tumor.site)
 survey.sample.size <- count.cases(survey.sample)
+```
+
+```{r}
+message('TODO: check bc.exclusions(conn.site) against tumor.site')
 ```
 
 ```{r echo=FALSE, results='asis'}

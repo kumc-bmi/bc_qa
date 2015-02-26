@@ -42,8 +42,9 @@ patch.umn <- function(col,
 }
 
 sql.fact <- function(var.col) {
+  # use distinct in case of modifiers
   paste0("
-  select f.encounter_num, f.patient_num, ", var.col, "
+  select distinct f.encounter_num, f.patient_num, ", var.col, "
   from observation_fact f
   join concept_dimension cd
   on cd.concept_cd = f.concept_cd
@@ -72,15 +73,18 @@ with.var <- function(data, conn, path, name,
 
 with.var.pat <- function(data, conn, path, name,
                          get.var=v.enc.nominal) {
-  merge(data, get.var(conn, path, name),
+  v <- get.var(conn, path, name)
+  drop.enc <- subset(v, select=-c(encounter_num))  # http://stackoverflow.com/a/5234201
+  merge(data, unique(drop.enc),
+        by='patient_num',
         all.x=TRUE)  # don't prune on join mis-matches
 }
 
 
 v.enc <- function(conn, var.path, var.name) {
-  per.enc <- dbGetPreparedQuery(conn, sql.fact("strftime('%Y-%m-%d %H:%M:%S', f.start_date)"),
+  per.enc <- dbGetPreparedQuery(conn, sql.fact("strftime('%Y-%m-%d', f.start_date) start_date"),
                                 bind.data=data.frame(path=var.path))
-  # per.enc$start_date <- as.POSIXct(per.enc$start_date)
+  per.enc$start_date <- as.Date(per.enc$start_date)
   
   names(per.enc)[3] <- var.name
   per.enc
@@ -111,42 +115,38 @@ show.issues <- function(tumor.site, var.excl,
 
 age.in.years <- function(date.birth, as.of=Sys.Date()) {
   as.numeric(difftime(as.of,
-                      as.POSIXct(date.birth),
+                      date.birth,
                       units="days")) / 365.25
   
 }
 
 
 bc.exclusions <- function(conn.site,
-                          dx_path=bcterm$bc.dx.path,
+                          var.incl=bcterm$t.incl,
                           var.excl=bcterm$excl.all) {
-  # All NAACCR-related encounters
-  tumor.site <- dbGetQuery(conn.site,
-                           "select distinct encounter_num,
-                         patient_num from observation_fact f
-                         join concept_dimension cd
-                         on cd.concept_cd = f.concept_cd
-                         where cd.concept_path like '%naaccr%'
-                           or concept_path like '%\\0390 Date of Diagnosis%'")
-  # Breast cancer diagnosis
-  tumor.site <- with.var(tumor.site, conn.site,
-                         bcterm$bc.dx.path, 'bc.dx',
-                         get.var=v.enc)
-
-  # Per-encounter nominal variables
-  for (v in rownames(var.excl)) {
-    if (! v %in% c('stage', 'deceased', 'deceased.ehr', 'deceased.ssa', 'date.birth'))
-    tumor.site <- with.var(tumor.site, conn.site, var.excl[v,]$concept_path, v)
-  }
-  
+  # All dates of diagnosis
+  tumor.site <- v.enc(conn.site,
+                      subset(bcterm$term204, grepl('0390 Date of Diagnosis', concept_path)
+                      )$concept_path,
+                      'date.dx')
   # Per-encounter date var.
   tumor.site <- with.var(tumor.site, conn.site,
                          bcterm$excl['date.birth', 'concept_path'], 'date.birth',
                          get.var=v.enc)
-
   # Per-patient variables
-  for (v in c('deceased.ehr', 'deceased.ssa')) {
-      tumor.site <- with.var.pat(tumor.site, conn.site, var.excl[v,]$concept_path, v)
+  for (v in c('vital.ehr', 'language')) {
+    tumor.site <- with.var.pat(tumor.site, conn.site, var.excl[v,]$concept_path, v)
+  }
+
+  # Inclusion criteria
+  for (v in rownames(var.incl)) {
+      tumor.site <- with.var(tumor.site, conn.site, var.incl[v,]$concept_path, v)
+  }
+
+  # Per-encounter nominal variables
+  for (v in rownames(var.excl)) {
+    if (! v %in% c('stage', 'vital.ehr', 'language', 'date.birth'))
+    tumor.site <- with.var(tumor.site, conn.site, var.excl[v,]$concept_path, v)
   }
 
   # Combinations
@@ -159,8 +159,8 @@ bc.exclusions <- function(conn.site,
 vital.combine <- function(tumor.site) {
   factor(
     ifelse(grepl('^.0', tumor.site$vital.tr) |
-             !is.na(tumor.site$deceased.ehr) |
-             !is.na(tumor.site$deceased.ssa), 'Y',
+             # TODO: update per GPC demographics paths, when resolved
+             grepl('Deceased', tumor.site$vital.ehr), 'Y',
            ifelse(grepl('^.1', tumor.site$vital.tr), 'N', NA)
     ))
   
@@ -177,6 +177,7 @@ check.demographics <- function(tumor.site) {
   }
   survey.sample$female <- grepl('2', tumor.site$sex)
   survey.sample$not.dead <- ! tumor.site$vital == 'Y'
+  survey.sample$english <- tumor.site$language == '\\ENGLISH\\'
   survey.sample
 }
 
@@ -193,9 +194,13 @@ stage.combine <- function(tumor.site) {
   )
 }
 
-check.cases <- function(tumor.site) {
+check.cases <- function(tumor.site,
+                        recent.threshold=subset(bcterm$dx.date, txform == 'deid' & label == 'expanded')$start) {
   survey.sample <- check.demographics(tumor.site)
-  survey.sample$bc.dx <- !is.na(tumor.site$bc.dx)
+  survey.sample$recent.dx <- tumor.site$date.dx >= recent.threshold
+  survey.sample$bc.dx <-
+    !is.na(tumor.site$seer.breast) | grepl('^.C50', tumor.site$primary.site)
+  message('TODO: for primary site C50, exclude by histology')
   survey.sample$confirmed <- grepl('\\1', tumor.site$confirm, fixed=TRUE)
   survey.sample$other.morph <- survey.sample$patient_num %in% check.morph(tumor.site)
   survey.sample$stage.ok <- ! tumor.site$stage == 'IV'
@@ -214,11 +219,15 @@ check.morph <- function(tumor.site,
 }
 
 count.cases <- function(survey.sample) {
-  col.crit <- 4:length(survey.sample)  # skip encounter_num, patient_num, age
+  # skip encounter_num, patient_num, date.birth, date.diagnosis
+  col.crit <- 5:length(survey.sample)
 
-  survey.sample.size <- as.data.frame(array(NA, c(2, length(col.crit))))
-  names(survey.sample.size) <- names(survey.sample[, col.crit])
-  row.names(survey.sample.size) <- c('independent', 'cumulative')
+  survey.sample.size <- as.data.frame(array(NA, c(4, length(col.crit) + 1)))
+  names(survey.sample.size) <- c('total', names(survey.sample[, col.crit]))
+  survey.sample.size$total <- c(rep(length(unique(survey.sample$patient_num)), 2),
+                                rep(nrow(survey.sample), 2))
+  row.names(survey.sample.size) <- c('independent', 'cumulative',
+                                     'ind.tumor', 'cum.tumor')
   
   cum.crit <- rep(TRUE, nrow(survey.sample))
   
@@ -227,8 +236,10 @@ count.cases <- function(survey.sample) {
     crit.name <- names(survey.sample)[col]
     crit <- survey.sample[, col]
     survey.sample.size['independent', crit.name] <- length(unique(patient_num[crit]))
+    survey.sample.size['ind.tumor', crit.name] <- length(which(crit))
     cum.crit <- cum.crit & crit
     survey.sample.size['cumulative', crit.name] <- length(unique(patient_num[cum.crit]))
+    survey.sample.size['cum.tumor', crit.name] <- length(which(cum.crit))
   }
 
   survey.sample.size

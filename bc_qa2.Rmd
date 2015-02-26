@@ -110,7 +110,7 @@ Type/Behav ICD-O-3,Type&Behav ICD-O-3,ampersand
 bcterm$fixes
 ```
 
-## Inclusion Criteria: Breast Cancer Diagnosis
+## Inclusion Criteria: Recent Breast Cancer Diagnosis
 
 The SEER definition of breast cancer is defined as the relevant primary site excluding
 certain histologies. If the pre-computed combination is not available, we can compute it.
@@ -120,9 +120,43 @@ t.incl <- term204[
   grepl('SEER Site\\Breast', term204$concept_path, fixed=TRUE) |
   grepl('0400 Primary Site', term204$concept_path, fixed=TRUE),
   c('naaccr.code', 'name', 'concept_path')]
-
+rownames(t.incl) <- c('seer.breast', 'primary.site')
 t.incl
 bcterm$t.incl <- t.incl
+```
+
+```{r}
+dx.date <- read.csv(textConnection('
+txform,label,start,end
+id,original,2013-05-01,2014-05-01
+deid,original,2012-05-01,2014-05-01
+id,expanded,2013-01-01,2014-05-01
+deid,expanded,2012-01-01,2014-05-01'))
+dx.date$start <- as.Date(dx.date$start)
+dx.date$end <- as.Date(dx.date$end)
+
+dx.date
+
+bcterm$dx.date <- dx.date
+```
+
+```{r eval=FALSE, echo=FALSE}
+#@@ TODO http://www.r-fiddle.org/#/fiddle?id=e78ubsxJ&version=1
+library(ggplot2)
+library(reshape)
+
+ggplot(dx.date,
+       aes(x = factor(paste(txform, label)),
+           ymin=start, ymax=end, y=start,
+           fill=factor(paste(txform, label))
+           ),
+       flatten=0) +
+  geom_bar(stat = "identity") +
+  coord_cartesian(ylim=c(as.Date('2010-01-01'),
+                         as.Date('2015-01-01'))) +
+  theme(legend.position = "none",
+        axis.title.y=element_blank(),
+        axis.title.x=element_blank())
 ```
 
 ## Exclusion Criteria
