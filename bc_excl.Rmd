@@ -183,6 +183,12 @@ head(tumor.site)
 tumor.site[duplicated(tumor.site$encounter_num), ]
 ```
 
+```{r precompute, echo=FALSE}
+tumor.site.pre <- bc.exclusions(conn.site)
+survey.sample <- check.cases(tumor.site.pre)
+survey.sample.size <- count.cases(survey.sample)
+```
+
 ### Date of Diagnosis
 
 How long ago were they diagnosed? (**Note: these are de-identified dates.**)
@@ -207,6 +213,15 @@ if (any(!is.na(tumor.site$date.dx))) {
        xlab="years")
   summary(age.in.years(recent$date.dx))
   }
+```
+
+**The Breast Cancer Cohort Characterization — Survey Sample report has `enddate <- as.POSIXct("2014-12-31")`. Why? The survey period ends 2014-05-01, and date shifting only goes backwards, no?**
+
+How many patients with breast cancer diagnoses in the date range had 1 vs. more tumors?
+
+```{r}
+focus <- subset(survey.sample, bc.dx & recent.dx)
+addmargins(table(as.data.frame(table(focus$patient_num))$Freq))
 ```
 
 ### Sex, Age
@@ -307,10 +322,13 @@ data.frame(qty=prop, row.names=names(prop))
 #### Vital Status: All Sources
 
 ```{r}
-prop <- enum.sum(tumor.site, 'vital')
+vital.per.pat <- unique(subset(tumor.site, select=c(patient_num, vital)))
+prop <- table(vital.per.pat$vital, dnn=c('Alive'), useNA="ifany")
 pie(prop)
-data.frame(qty=prop, row.names=names(prop))
+as.data.frame(addmargins(prop))
 ```
+
+#### Survival *TODO*
 
 ### Language
 
@@ -404,7 +422,8 @@ prop[, c('name', 'qty')]
 #### Only tumor morphology was lobular carcinoma in situ?
 
 ```{r}
-x <- tumor.site[!survey.sample$patient_num %in% check.morph(tumor.site, '8520/2'), ]
+m <- excl.pat.morph(tumor.site, '8520/2')
+x <- tumor.site[!m$ok & !is.na(m$ok), ]
 x[order(x$patient_num, x$date.dx), c('patient_num', 'encounter_num', 'date.dx', 'primary.site', 'morphology')]
 ```
 
@@ -415,6 +434,7 @@ tumor.site <- with.var(tumor.site, conn.site,
                        bcterm$excl.all['stage.ss', 'concept_path'], 'stage.ss')
 tumor.site <- with.var(tumor.site, conn.site,
                        bcterm$excl.all['stage.ajcc', 'concept_path'], 'stage.ajcc')
+tumor.site$stage.ajcc[grepl("999|900|888", tumor.site$stage.ajcc)] <- NA
 tumor.site$stage <- stage.combine(tumor.site)
 
 head(tumor.site[, c(-3:-8)])
@@ -455,6 +475,17 @@ In [SS2000][], 7 is D Distant; per wikipedia, that's metastatic, i.e. stage 4.
 prop <- enum.sum(tumor.site, 'stage')
 pie(prop)
 data.frame(qty=prop, row.names=names(prop))
+```
+
+Cross-table of AJCC7 and SS2000 (for in-date-range breast cancer tumors):
+
+```{r}
+survey.sample <- check.cases(tumor.site.pre)
+stopifnot(all(tumor.site$patient_num == survey.sample$patient_num))
+with(
+  subset(tumor.site, survey.sample$bc.dx & survey.sample$recent.dx),
+  addmargins(table(stage.ajcc, stage.ss, useNA="ifany"))
+  )
 ```
 
 ### Prior Diagnosis: Sequence Number
@@ -512,7 +543,6 @@ style.dodge(
   ggplot(x, aes(x=variable, y=result, fill=kind))
   )
 ```
-
 
 ## Summary and Issues for `r SITE`
 

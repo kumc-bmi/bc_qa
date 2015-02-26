@@ -1,3 +1,5 @@
+# TODO? use tumor rather than tumor.site for parameters
+
 builder.summary <- function(conn,
                             v.name.max=50) {
   sql.summary <- '
@@ -51,6 +53,7 @@ sql.fact <- function(var.col) {
   where ", patch.umn("cd.concept_path"),
          # patch for Abridged stuff
   " like (replace(:path, '\\i2b2\\Abridged\\Demographics', '%') || \'%\')
+  order by f.patient_num, f.encounter_num
   ")
 }
 
@@ -97,7 +100,7 @@ with.var <- function(data, conn, path, name,
   out <- merge(data, get.var(conn, path, name),
         all.x=TRUE)  # don't prune on join mis-matches
   stopifnot(nrow(out) == nrow(data))
-  out
+  out[order(out$patient_num, out$encounter_num), ]
 }
 
 with.var.pat <- function(data, conn, path, name,
@@ -187,7 +190,9 @@ bc.exclusions <- function(conn.site,
     if (! v %in% c('stage', 'vital.ehr', 'language', 'date.birth'))
     tumor.site <- with.var(tumor.site, conn.site, var.excl[v,]$concept_path, v)
   }
-
+  tumor.site$stage.ajcc[grepl("999|900|888", tumor.site$stage.ajcc)] <- NA
+  tumor.site$stage.ss[grepl("9", tumor.site$stage.ss)] <- NA
+  
   # Combinations
   tumor.site$vital <- vital.combine(tumor.site)
   tumor.site$stage <- stage.combine(tumor.site)
@@ -198,26 +203,28 @@ bc.exclusions <- function(conn.site,
 }
 
 vital.combine <- function(tumor.site) {
-  factor(
     ifelse(grepl('^.0', tumor.site$vital.tr) |
              # TODO: update per GPC demographics paths, when resolved
-             grepl('D', tumor.site$vital.ehr), 'Y',
-           ifelse(grepl('^.1', tumor.site$vital.tr), 'N', NA)
-    ))
-  
+             grepl('D', tumor.site$vital.ehr), FALSE,
+           ifelse(grepl('^.1', tumor.site$vital.tr), TRUE, NA)
+    )
 }
 
 check.demographics <- function(tumor.site) {
   survey.sample <- tumor.site[, c('encounter_num', 'patient_num')]
+  survey.sample$not.dead <- tumor.site$vital
+
   survey.sample$age <- NA
   survey.sample$adult <- FALSE
-  
   if (any(!is.na(tumor.site$date.birth))) {
     survey.sample$age <- try(age.in.years(tumor.site$date.birth))
     survey.sample$adult <- survey.sample$age >= 18
   }
+
+  # "Breast Cancer Cohort Characterization — Survey Sample" report
+  # also requies EMR sex = female
   survey.sample$female <- grepl('2', tumor.site$sex)
-  survey.sample$not.dead <- ! tumor.site$vital == 'Y'
+
   # TODO: standardize on GPC language paths
   survey.sample$english <- tolower(tumor.site$language) == '\\english\\'
   survey.sample
@@ -238,34 +245,59 @@ stage.combine <- function(tumor.site) {
 
 check.cases <- function(tumor.site,
                         recent.threshold=subset(bcterm$dx.date, txform == 'deid' & label == 'expanded')$start) {
-  survey.sample <- check.demographics(tumor.site)
-  survey.sample$recent.dx <- tumor.site$date.dx >= recent.threshold
+  survey.sample <- tumor.site[, c('encounter_num', 'patient_num')]
   survey.sample$bc.dx <-
     !is.na(tumor.site$seer.breast) | grepl('^.C50', tumor.site$primary.site)
   message('TODO: for primary site C50, exclude by histology')
-  survey.sample$confirmed <- grepl('\\1', tumor.site$confirm, fixed=TRUE)
-  survey.sample$other.morph <- survey.sample$patient_num %in% check.morph(tumor.site)
-  survey.sample$stage.ok <- ! tumor.site$stage == 'IV'
+  survey.sample$recent.dx <- tumor.site$date.dx >= recent.threshold
+
+  # TODO: parse codes out of paths
+  survey.sample$confirmed <- grepl('^\\\\[124]', tumor.site$confirm)
+  survey.sample$other.morph <- excl.pat.morph(tumor.site)$ok
+  survey.sample$stage.ok <- TRUE
+  survey.sample$stage.ok[tumor.site$stage == 'IV'
+                         # "Breast Cancer Cohort Characterization -- Survey Sample" report
+                         # Excludes unknown stage too.
+                         | is.na(tumor.site$stage.ajcc) | is.na(tumor.site$stage.ss)] <- FALSE
   survey.sample$no.prior <- grepl('0[01]', tumor.site$seq.no)
-  survey.sample
+  survey.sample <- merge(survey.sample, check.demographics(tumor.site),
+                         all.x=TRUE)
+  survey.sample[order(survey.sample$patient_num, survey.sample$encounter_num),
+                c('patient_num', 'encounter_num',
+                  'bc.dx', 'recent.dx',
+                  # In order from "Breast Cancer Cohort Characterization -- Survey Sample" report
+                  'female',
+                  'no.prior',
+                  'confirmed',
+                  'other.morph',
+                  'stage.ok',
+                  'not.dead',
+                  # That report doesn't seem to include age.
+                  'age',
+                  'adult')]
 }
 
-check.morph <- function(tumor.site,
-                        morph='8520/2') {
-  morph.by.pat <- unique(tumor.site[, c('patient_num', 'morphology')])
-  morph.by.pat$other.morph <-
-    (duplicated(morph.by.pat$patient_num) |
-       !grepl(morph, morph.by.pat$morphology, fixed=TRUE))
-  
-  morph.by.pat$patient_num[morph.by.pat$other.morph]
+excl.pat.morph <- function(tumor.site,
+                           morph='8520/2') {
+  t <- subset(tumor.site, select=c(patient_num, morphology))
+  t$other <- ifelse(is.na(t$morphology), NA,
+                    ifelse(grepl(morph, t$morphology, fixed=TRUE), 0, 1))
+  ok <- aggregate(other ~ patient_num, data=t, max)
+  # table(ok$other)
+  t$ok <- NA
+  t$ok[t$patient_num %in% ok$patient_num[ok$other == 1]] <- TRUE
+  t$ok[t$patient_num %in% ok$patient_num[ok$other == 0]] <- FALSE
+  # addmargins(table(t$ok))
+  t
 }
 
 count.cases <- function(survey.sample) {
-  # skip encounter_num, patient_num, age
-  col.crit <- 4:length(survey.sample)
-
-  survey.sample.size <- as.data.frame(array(NA, c(4, length(col.crit) + 1)))
-  names(survey.sample.size) <- c('total', names(survey.sample[, col.crit]))
+  # encounter_num, patient_num, age are not (logical) criteria
+  crit.names <- names(subset(survey.sample,
+                             select=-c(encounter_num, patient_num, age)))
+  
+  survey.sample.size <- as.data.frame(array(NA, c(4, length(crit.names) + 1)))
+  names(survey.sample.size) <- c('total', crit.names)
 
   row.names(survey.sample.size) <- c('ind.pat', 'cum.pat',
                                      'ind.tumor', 'cum.tumor')
@@ -277,9 +309,8 @@ count.cases <- function(survey.sample) {
   
   cum.crit <- rep(TRUE, nrow(survey.sample))
   
-  for (col in col.crit) {
-    crit.name <- names(survey.sample)[col]
-    crit <- survey.sample[, col]
+  for (crit.name in crit.names) {
+    crit <- survey.sample[, crit.name]
     crit[is.na(crit)] <- TRUE
     survey.sample.size['ind.pat', crit.name] <- length(unique(patient_num[crit]))
     survey.sample.size['ind.tumor', crit.name] <- length(which(crit))
