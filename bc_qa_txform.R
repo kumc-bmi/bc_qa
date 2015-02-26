@@ -211,7 +211,8 @@ check.demographics <- function(tumor.site) {
   }
   survey.sample$female <- grepl('2', tumor.site$sex)
   survey.sample$not.dead <- ! tumor.site$vital == 'Y'
-  survey.sample$english <- tumor.site$language == '\\ENGLISH\\'
+  # TODO: standardize on GPC language paths
+  survey.sample$english <- tolower(tumor.site$language) == '\\english\\'
   survey.sample
 }
 
