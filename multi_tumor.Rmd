@@ -1,22 +1,32 @@
-```{r echo=FALSE}
+```{r libraries, echo=FALSE}
 library(ggplot2)
 library(reshape)
+
+source('bc_qa_txform.R')
 ```
 
-```{r input, echo=FALSE}
+
+```{r wrap, echo=FALSE}
+# Don't wrap so much
+options(width=300)
+```
+
+
+```{r site.input, echo=FALSE}
 input <- source('dataset.R')$value
 
 conn.site <- input$conn
 
 # about has $record_id $site name, $bc_db filename, $content_length, submitter $name, $issues_other
 dataset <- input$about
-
-load("bc_terms_results.RData")
-source('bc_qa_txform.R')
-
-tumor.site <- bc.exclusions(conn.site)
 ```
 
+```{r terms, echo=FALSE}
+load("bc_terms_results.RData")
+```
+
+Multi-tumor patients at `r dataset$site`
+========================================
 
 While looking at sequence number, let's consider patients who have multiple otherwise-qualifying tumors.
 We show such cases left-to-right in order of their earliest diagnosis, with a segment connecting the first
@@ -24,9 +34,14 @@ and last date of (qualifying) diagnosis. The color of the dot at the recent end 
 its sequence number (if available?). Note that in several cases, the tumors are diagnosed on the same day,
 so the choice of which tumor to use to color the dot is arbitrary.
 
-```{r echo=FALSE}
+```{r}
+tumor.site <- bc.exclusions(conn.site)
 survey.sample <- check.cases(tumor.site)
+```
 
+
+```{r reduce.logical, echo=FALSE}
+# move to bc_qa_txform.R?
 reduce.logical <- function(data) {
   x <- rep(TRUE, nrow(data))
   for (col in names(data)) {
@@ -36,6 +51,9 @@ reduce.logical <- function(data) {
     }
   x
   }
+```
+
+```{r}
 but.prior <- subset(survey.sample,
                     select=-c(encounter_num, patient_num, age, no.prior,
                               # tried skipping demographics to look at MCRF data...
@@ -49,6 +67,11 @@ focus <- subset(tumor.site,
        patient_num %in% subset(tumor.per.pat, Freq > 1)$Var1 &
          maybe.prior,
        select=c(patient_num, date.dx, seq.no, primary.site))
+```
+
+```{r}
+#TODO: clean up this code a bit.
+
 x <- data.frame(
   patient_num=unique(focus$patient_num))
 x <- merge(x, aggregate(date.dx ~ patient_num, focus, min))
