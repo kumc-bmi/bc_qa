@@ -54,30 +54,62 @@ sql.fact <- function(var.col) {
   ")
 }
 
-v.enc.nominal <- function(conn, var.path, var.name) {
-  sql <- sql.fact(paste0("substr(", patch.umn('cd.concept_path'), ", length(:path)) tail"))
+v.enc.nominal <- function(conn, var.path, var.name,
+                          # default factor.pattern picks out last path segment
+                          factor.pattern='\\\\([^\\]+)\\\\$') {
+  sql <- sql.fact("cd.concept_path")
   per.enc <- dbGetPreparedQuery(conn, sql, bind.data=data.frame(path=var.path))
-  per.enc$tail <- as.factor(per.enc$tail)
+  
+  p <- per.enc$concept_path
+  # pick out part matched by factor.pattern
+  per.enc$concept_path <- as.factor(substr(p, regexpr(factor.pattern, p), nchar(p)))
   
   names(per.enc)[3] <- var.name
-  per.enc
+  
+  # Eliminate dups in case of polyhierarchy
+  unique(per.enc)
+}
+
+
+mk.agg.by.pat <- function(code.pattern, sep='|') {
+  function(conn, var.path, var.name) {
+    pat.obs <- dbGetQuery(conn, "
+                        select distinct patient_num, substr(cd.concept_path, length(:v)) tail
+                        from observation_fact f
+                        join concept_dimension cd
+                        on cd.concept_cd = f.concept_cd
+                        where cd.concept_path like (:v || '%')
+                        ", bind.data=data.frame(v=var.path))
+    pat.obs$code <- gsub(code.pattern, '\\1', pat.obs$tail)
+    # concatenate (c) all the observations for a patient
+    pat.obs.agg <- aggregate(code ~ patient_num, pat.obs, function(...) paste(c(...), collapse=sep))
+    pat.obs.agg$code <- as.factor(pat.obs.agg$code)
+    names(pat.obs.agg)[2] <- var.name
+    pat.obs.agg$encounter_num <- NA  # expected by with.var.pat
+    # print(head(pat.obs.agg))
+    pat.obs.agg
+  }
 }
 
 
 with.var <- function(data, conn, path, name,
                      get.var=v.enc.nominal) {
-  merge(data, get.var(conn, path, name),
+  out <- merge(data, get.var(conn, path, name),
         all.x=TRUE)  # don't prune on join mis-matches
+  stopifnot(nrow(out) == nrow(data))
+  out
 }
-
 
 with.var.pat <- function(data, conn, path, name,
                          get.var=v.enc.nominal) {
   v <- get.var(conn, path, name)
   drop.enc <- subset(v, select=-c(encounter_num))  # http://stackoverflow.com/a/5234201
-  merge(data, unique(drop.enc),
+  out <- merge(data, unique(drop.enc),
         by='patient_num',
         all.x=TRUE)  # don't prune on join mis-matches
+  # message(nrow(out), ' =? ', nrow(data))
+  stopifnot(nrow(out) == nrow(data))
+  out
 }
 
 
@@ -162,7 +194,7 @@ vital.combine <- function(tumor.site) {
   factor(
     ifelse(grepl('^.0', tumor.site$vital.tr) |
              # TODO: update per GPC demographics paths, when resolved
-             grepl('Deceased', tumor.site$vital.ehr), 'Y',
+             grepl('D', tumor.site$vital.ehr), 'Y',
            ifelse(grepl('^.1', tumor.site$vital.tr), 'N', NA)
     ))
   

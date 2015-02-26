@@ -275,9 +275,14 @@ head(tumor.site)
 To match between the tumor registry and the EHR, we can only join on patient num.
 
 ```{r}
+vital.agg <- mk.agg.by.pat(
+  # regexp to extract D from \\Deceased ...\\
+  '.(.).*')
+
 tumor.site <- with.var.pat(tumor.site, conn.site,
                            bcterm$excl.all['vital.ehr', 'concept_path'],
-                           'vital.ehr')
+                           'vital.ehr',
+                           get.var=vital.agg)
 tumor.site$vital <- vital.combine(tumor.site)
 
 head(tumor.site)
@@ -369,25 +374,27 @@ pie(prop)
 Those codes aren't very satisfying; let's put the names back on:
 
 ```{r echo=FALSE}
-# Put the names back on
-enum.name <- function(x, path.var) {
-  df <- data.frame(
-    concept_path=paste0(path.var,
-                        # chop off 1st character
-                        substr(x, 2, length(x))))
-  
-  df <- merge(df,
-              dbGetQuery(conn.site,
-                         'select name_char, concept_path from concept_dimension'),
-              by='concept_path',
-              all.x=TRUE)
-  df$name_char
+# Find names of concepts whose paths end with tail
+enum.name <- function(x) {
+  names <- lapply(x, function(tail) {
+    name_char <- dbGetQuery(conn.site,
+               "select distinct name_char
+               from concept_dimension
+               where substr(concept_path, length(concept_path) - length(:tail) + 1) = :tail",
+               bind.data=data.frame(tail=tail))
+    if (nrow(name_char) < 1) {
+      '?'
+    } else {
+      name_char[1, 1]
+    }
+  })
+  unlist(names)
 }
 ```
 
 ```{r}
 prop <- data.frame(qty=prop, row.names=names(prop))
-prop$name <- enum.name(row.names(prop), bcterm$excl['morphology', 'concept_path'])
+prop$name <- enum.name(row.names(prop))
 prop <- prop[prop$qty> 0, ]
 pie(prop$qty, labels=prop$name)
 prop[, c('name', 'qty')]
@@ -485,8 +492,9 @@ reduce.logical <- function(data) {
   }
 but.prior <- subset(survey.sample,
                     select=-c(encounter_num, patient_num, age, no.prior,
-                              # Let's skip demographics, for now
-                              adult, female, not.dead, english))
+                              # tried skipping demographics to look at MCRF data...
+                              adult, female, not.dead, english
+                              ))
 maybe.prior <- reduce.logical(but.prior)
 
 tumor.per.pat <- data.frame(table(tumor.site$patient_num[maybe.prior]))
