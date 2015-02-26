@@ -225,8 +225,6 @@ check.demographics <- function(tumor.site) {
   # also requies EMR sex = female
   survey.sample$female <- grepl('2', tumor.site$sex)
 
-  # TODO: standardize on GPC language paths
-  survey.sample$english <- tolower(tumor.site$language) == '\\english\\'
   survey.sample
 }
 
@@ -254,11 +252,8 @@ check.cases <- function(tumor.site,
   # TODO: parse codes out of paths
   survey.sample$confirmed <- grepl('^\\\\[124]', tumor.site$confirm)
   survey.sample$other.morph <- excl.pat.morph(tumor.site)$ok
-  survey.sample$stage.ok <- TRUE
-  survey.sample$stage.ok[tumor.site$stage == 'IV'
-                         # "Breast Cancer Cohort Characterization -- Survey Sample" report
-                         # Excludes unknown stage too.
-                         | is.na(tumor.site$stage.ajcc) | is.na(tumor.site$stage.ss)] <- FALSE
+  survey.sample$stage.ok <- TRUE  # absent info, assume OK
+  survey.sample$stage.ok[tumor.site$stage == 'IV'] <- FALSE
   survey.sample$no.prior <- grepl('0[01]', tumor.site$seq.no)
   survey.sample <- merge(survey.sample, check.demographics(tumor.site),
                          all.x=TRUE)
@@ -320,4 +315,15 @@ count.cases <- function(survey.sample) {
   }
 
   survey.sample.size
+}
+
+
+reduce.logical <- function(data) {
+  x <- rep(TRUE, nrow(data))
+  for (col in names(data)) {
+    y <- data[, col]
+    y[is.na(y)] <- TRUE
+    x <- x & y
+  }
+  x
 }

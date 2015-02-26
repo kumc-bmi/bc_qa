@@ -350,7 +350,7 @@ data.frame(qty=prop, row.names=names(prop))
 ```{r}
 survey.sample <- check.demographics(tumor.site)
 
-dem.states <- unique(survey.sample[, c('patient_num', 'female', 'adult', 'not.dead', 'english')])
+dem.states <- unique(survey.sample[, c('patient_num', 'female', 'adult', 'not.dead')])
 
 # No person is both dead and alive etc., right?
 stopifnot(
@@ -435,6 +435,7 @@ tumor.site <- with.var(tumor.site, conn.site,
 tumor.site <- with.var(tumor.site, conn.site,
                        bcterm$excl.all['stage.ajcc', 'concept_path'], 'stage.ajcc')
 tumor.site$stage.ajcc[grepl("999|900|888", tumor.site$stage.ajcc)] <- NA
+tumor.site$stage.ss[grepl("9", tumor.site$stage.ss)] <- NA
 tumor.site$stage <- stage.combine(tumor.site)
 
 head(tumor.site[, c(-3:-8)])
@@ -542,6 +543,16 @@ names(x)[3] <- 'result'
 style.dodge(
   ggplot(x, aes(x=variable, y=result, fill=kind))
   )
+```
+
+-----------
+
+```{r}
+crit <- subset(survey.sample, select=-c(encounter_num, patient_num, age))
+not.excl <- reduce.logical(crit)
+length(which(not.excl))
+tumor.ok <- tumor.site[not.excl, ]
+addmargins(table(tumor.ok$stage.ss, useNA="ifany"))
 ```
 
 ## Summary and Issues for `r SITE`
