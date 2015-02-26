@@ -320,12 +320,14 @@ data.frame(qty=prop, row.names=names(prop))
 ```{r}
 survey.sample <- check.demographics(tumor.site)
 
+dem.states <- unique(survey.sample[, c('patient_num', 'female', 'adult', 'not.dead', 'english')])
+
 # No person is both dead and alive etc., right?
 stopifnot(
-  length(duplicated(unique(
-    survey.sample[, c('patient_num', 'female', 'adult', 'not.dead', 'english')])$patient_num)) == 0)
+  length(which(duplicated(dem.states$patient_num)))
+  == 0)
 
-dem.states <- table(unique(survey.sample[, c('patient_num', 'female', 'adult', 'not.dead', 'english')])[, -1])
+dem.states <- table(dem.states[, -1])
 plot(dem.states,
      main="Demographic Eligibility")
 dem.states
