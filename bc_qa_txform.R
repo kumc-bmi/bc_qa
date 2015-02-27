@@ -43,10 +43,10 @@ patch.umn <- function(col,
   expr
 }
 
-sql.fact <- function(var.col) {
+sql.fact <- function(colsexpr) {
   # use distinct in case of modifiers
   paste0("
-  select distinct f.encounter_num, f.patient_num, ", var.col, "
+  select distinct ", colsexpr, "
   from observation_fact f
   join concept_dimension cd
   on cd.concept_cd = f.concept_cd
@@ -58,14 +58,15 @@ sql.fact <- function(var.col) {
 }
 
 v.enc.nominal <- function(conn, var.path, var.name,
-                          # default factor.pattern picks out last path segment
-                          factor.pattern='\\\\([^\\]+)\\\\$') {
-  sql <- sql.fact("cd.concept_path")
+                          # default: extract last path segment
+                          code.pattern='[^\\\\]+(?=\\\\$)') {
+  sql <- sql.fact("f.encounter_num, f.patient_num, cd.concept_path")
   per.enc <- dbGetPreparedQuery(conn, sql, bind.data=data.frame(path=var.path))
-  
+
   p <- per.enc$concept_path
-  # pick out part matched by factor.pattern
-  per.enc$concept_path <- as.factor(substr(p, regexpr(factor.pattern, p), nchar(p)))
+  pos.match <- regexpr(code.pattern, p, perl=TRUE)
+  per.enc$concept_path <- substr(p, pos.match, pos.match + attr(pos.match, 'match.length') - 1)
+  per.enc$concept_path[pos.match < 0] <- NA
   
   names(per.enc)[3] <- var.name
   
@@ -73,22 +74,31 @@ v.enc.nominal <- function(conn, var.path, var.name,
   unique(per.enc)
 }
 
-
-mk.agg.by.pat <- function(code.pattern, sep='|') {
+mk.agg.by.pat <- function(
+  # default: extract last path segment
+  code.pattern='[^\\\\]+(?=\\\\$)',
+  sep='|') {
   function(conn, var.path, var.name) {
-    pat.obs <- dbGetQuery(conn, "
-                        select distinct patient_num, substr(cd.concept_path, length(:v)) tail
-                        from observation_fact f
-                        join concept_dimension cd
-                        on cd.concept_cd = f.concept_cd
-                        where cd.concept_path like (:v || '%')
-                        ", bind.data=data.frame(v=var.path))
-    pat.obs$code <- gsub(code.pattern, '\\1', pat.obs$tail)
-    # concatenate (c) all the observations for a patient
-    pat.obs.agg <- aggregate(code ~ patient_num, pat.obs, function(...) paste(c(...), collapse=sep))
-    pat.obs.agg$code <- as.factor(pat.obs.agg$code)
+    pat.obs <- dbGetQuery(conn, sql.fact("f.patient_num, cd.concept_path"),
+                          bind.data=data.frame(path=var.path))
+    if (nrow(pat.obs) > 0) {
+      # pick out part matched by code.pattern
+      p <- pat.obs$concept_path
+      pos.match <- regexpr(code.pattern, p, perl=TRUE)
+      # message(paste(head(pos.match), collapse=", "),
+      #        "length: ", paste(head(attr(pos.match, 'match.length')), collapse=", "))
+      pat.obs$code <- substr(p, pos.match, pos.match + attr(pos.match, 'match.length') - 1)
+      pat.obs$code[pos.match < 0] <- NA
+      # concatenate (c) all the observations for a patient
+      pat.obs.agg <- aggregate(code ~ patient_num, pat.obs, function(...) paste(c(...), collapse=sep))
+      pat.obs.agg$code <- as.factor(pat.obs.agg$code)
+    } else{
+      pat.obs.agg <- data.frame(patient_num=NA, code=NA, encounter_num=NA)
+      pat.obs.agg <- pat.obs.agg[-1,]
+    }
     names(pat.obs.agg)[2] <- var.name
-    pat.obs.agg$encounter_num <- NA  # expected by with.var.pat
+    pat.obs.agg$encounter_num <- NA
+    
     # print(head(pat.obs.agg))
     pat.obs.agg
   }
@@ -117,16 +127,17 @@ with.var.pat <- function(data, conn, path, name,
 
 
 v.enc <- function(conn, var.path, var.name) {
-  per.enc <- dbGetPreparedQuery(conn, sql.fact("strftime('%Y-%m-%d', f.start_date) start_date"),
-                                bind.data=data.frame(path=var.path))
-  per.enc$start_date <- as.Date(per.enc$start_date)
+  per.enc <- dbGetPreparedQuery(
+    conn, sql.fact("f.encounter_num, f.patient_num, strftime('%Y-%m-%d', f.start_date) start_date"),
+    bind.data=data.frame(path=var.path))
+  per.enc$start_date <- try(as.Date(per.enc$start_date))
   
   names(per.enc)[3] <- var.name
   per.enc
 }
 
 v.enc.text <- function(conn, var.path, var.name) {
-  per.enc <- dbGetPreparedQuery(conn, sql.fact("f.tval_char"),
+  per.enc <- dbGetPreparedQuery(conn, sql.fact("f.encounter_num, f.patient_num, f.tval_char"),
                                 bind.data=data.frame(path=var.path))
   
   names(per.enc)[3] <- var.name
@@ -168,16 +179,12 @@ bc.exclusions <- function(conn.site,
                          var.excl['date.birth', 'concept_path'], 'date.birth',
                          get.var=v.enc)
   
-  # Handle multiple vital status per patient (e.g. dead per EHR, dead per SSA)
-  vital.agg <- mk.agg.by.pat(
-    # regexp to extract D from \\Deceased ...\\
-    '.(.).*')
-  tumor.site <- with.var.pat(tumor.site, conn.site,
-                             var.excl['vital.ehr', 'concept_path'], 'vital.ehr',
-                             get.var=vital.agg)
   # Per-patient variables
-  for (v in c('language')) {
-    tumor.site <- with.var.pat(tumor.site, conn.site, var.excl[v,]$concept_path, v)
+  # Handle multiple vital status per patient (e.g. dead per EHR, dead per SSA)
+  for (v in c('vital.ehr', 'language')) {
+    tumor.site <- with.var.pat(tumor.site, conn.site,
+                               var.excl[v, 'concept_path'], v,
+                               get.var=mk.agg.by.pat())
   }
 
   # Inclusion criteria
@@ -203,10 +210,10 @@ bc.exclusions <- function(conn.site,
 }
 
 vital.combine <- function(tumor.site) {
-    ifelse(grepl('^.0', tumor.site$vital.tr) |
+    ifelse(grepl('^0', tumor.site$vital.tr) |
              # TODO: update per GPC demographics paths, when resolved
              grepl('D', tumor.site$vital.ehr), FALSE,
-           ifelse(grepl('^.1', tumor.site$vital.tr), TRUE, NA)
+           ifelse(grepl('^1', tumor.site$vital.tr), TRUE, NA)
     )
 }
 
@@ -231,12 +238,12 @@ check.demographics <- function(tumor.site) {
 
 stage.combine <- function(tumor.site) {
   factor(
-    ifelse(grepl('^.7', tumor.site$stage.ajcc) |
-             grepl('^.7', tumor.site$stage.ss), 'IV',
-           ifelse(grepl('^.[1-6]', tumor.site$stage.ajcc) |
-                    grepl('^.[1-5]', tumor.site$stage.ss), 'I-III',
-                  ifelse(grepl('^.0', tumor.site$stage.ajcc) |
-                           grepl('^.0', tumor.site$stage.ss), '0',
+    ifelse(grepl('^7', tumor.site$stage.ajcc) |
+             grepl('^7', tumor.site$stage.ss), 'IV',
+           ifelse(grepl('^[1-6]', tumor.site$stage.ajcc) |
+                    grepl('^[1-5]', tumor.site$stage.ss), 'I-III',
+                  ifelse(grepl('^0', tumor.site$stage.ajcc) |
+                           grepl('^0', tumor.site$stage.ss), '0',
                          ifelse(is.na(tumor.site$stage.ajcc) & is.na(tumor.site$stage.ss), NA, '?'))))
   )
 }
@@ -245,12 +252,12 @@ check.cases <- function(tumor.site,
                         recent.threshold=subset(bcterm$dx.date, txform == 'deid' & label == 'expanded')$start) {
   survey.sample <- tumor.site[, c('encounter_num', 'patient_num')]
   survey.sample$bc.dx <-
-    !is.na(tumor.site$seer.breast) | grepl('^.C50', tumor.site$primary.site)
+    !is.na(tumor.site$seer.breast) | grepl('^C50', tumor.site$primary.site)
   message('TODO: for primary site C50, exclude by histology')
   survey.sample$recent.dx <- tumor.site$date.dx >= recent.threshold
 
   # TODO: parse codes out of paths
-  survey.sample$confirmed <- grepl('^\\\\[124]', tumor.site$confirm)
+  survey.sample$confirmed <- grepl('^[124]', tumor.site$confirm)
   survey.sample$other.morph <- excl.pat.morph(tumor.site)$ok
   survey.sample$stage.ok <- TRUE  # absent info, assume OK
   survey.sample$stage.ok[tumor.site$stage == 'IV'] <- FALSE

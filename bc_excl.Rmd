@@ -259,10 +259,10 @@ This function summarizes a nominal (enumerated) variable:
 ```{r}
 enum.sum <- function(data, v,
                      key='patient_num') {
-  summary(unique(data[, c(key, v)])[[v]])
+  table(unique(data[, c(key, v)])[[v]], useNA="ifany")
 }
 
-enum.sum(tumor.site, 'sex')
+as.data.frame(addmargins(enum.sum(tumor.site, 'sex')))
 ```
 
 Let's visualize the breakdown:
@@ -270,7 +270,7 @@ Let's visualize the breakdown:
 ```{r}
 prop <- enum.sum(tumor.site, 'sex')
 pie(prop)
-data.frame(qty=prop, row.names=names(prop))
+as.data.frame(addmargins(prop))
 ```
 
 
@@ -307,9 +307,7 @@ head(tumor.site)
 To match between the tumor registry and the EHR, we can only join on patient num.
 
 ```{r}
-vital.agg <- mk.agg.by.pat(
-  # regexp to extract D from \\Deceased ...\\
-  '.(.).*')
+vital.agg <- mk.agg.by.pat()
 
 tumor.site <- with.var.pat(tumor.site, conn.site,
                            bcterm$excl.all['vital.ehr', 'concept_path'],
@@ -325,7 +323,7 @@ head(tumor.site)
 ```{r}
 prop <- enum.sum(tumor.site, 'vital.tr')
 pie(prop)
-data.frame(qty=prop, row.names=names(prop))
+as.data.frame(addmargins(prop))
 ```
 
 #### Vital Status: EHR
@@ -333,7 +331,7 @@ data.frame(qty=prop, row.names=names(prop))
 ```{r}
 prop <- enum.sum(tumor.site, 'vital.ehr')
 pie(prop)
-data.frame(qty=prop, row.names=names(prop))
+as.data.frame(addmargins(prop))
 ```
 
 #### Vital Status: All Sources
@@ -350,16 +348,20 @@ as.data.frame(addmargins(prop))
 ### Language
 
 ```{r}
+lang.agg <- mk.agg.by.pat()
+
 tumor.site <- with.var.pat(tumor.site, conn.site,
                            bcterm$excl.all['language', 'concept_path'],
-                           'language')
-message('@@TODO: re-code UNKNOWN as NA?')
+                           'language',
+                           get.var=lang.agg)
+
+message('TODO: re-code UNKNOWN language as NA?')
 ```
 
 ```{r}
 prop <- enum.sum(tumor.site, 'language')
 pie(prop)
-data.frame(qty=prop, row.names=names(prop))
+as.data.frame(addmargins(prop))
 ```
 
 ### Demographic Eligibility
@@ -390,7 +392,7 @@ head(tumor.site[, c(-3:-6)])
 
 prop <- enum.sum(tumor.site, 'confirm')
 pie(prop)
-data.frame(qty=prop, row.names=names(prop))
+as.data.frame(addmargins(prop))
 ```
 
 
@@ -411,12 +413,12 @@ Those codes aren't very satisfying; let's put the names back on:
 ```{r echo=FALSE}
 # Find names of concepts whose paths end with tail
 enum.name <- function(x) {
-  names <- lapply(x, function(tail) {
+  names <- lapply(x, function(code) {
     name_char <- dbGetQuery(conn.site,
                "select distinct name_char
                from concept_dimension
-               where substr(concept_path, length(concept_path) - length(:tail) + 1) = :tail",
-               bind.data=data.frame(tail=tail))
+               where concept_path like ('%' || :code || '%')",
+               bind.data=data.frame(code=code))
     if (nrow(name_char) < 1) {
       '?'
     } else {
@@ -428,11 +430,9 @@ enum.name <- function(x) {
 ```
 
 ```{r}
-prop <- data.frame(qty=prop, row.names=names(prop))
-prop$name <- enum.name(row.names(prop))
-prop <- prop[prop$qty> 0, ]
-pie(prop$qty, labels=prop$name)
-prop[, c('name', 'qty')]
+names(prop) <- enum.name(names(prop))
+pie(prop)
+as.data.frame(addmargins(prop))
 ```
 
 
@@ -463,7 +463,7 @@ head(tumor.site[, c(-3:-8)])
 ```{r}
 prop <- enum.sum(tumor.site, 'stage.ss')
 pie(prop)
-data.frame(qty=prop, row.names=names(prop))
+as.data.frame(addmargins(prop))
 ```
 
 #### Stage: 3430 Derived AJCC-7
@@ -471,7 +471,7 @@ data.frame(qty=prop, row.names=names(prop))
 ```{r}
 prop <- enum.sum(tumor.site, 'stage.ajcc')
 pie(prop)
-data.frame(qty=prop, row.names=names(prop))
+as.data.frame(addmargins(prop))
 ```
 
 #### Stage: Combined
@@ -492,7 +492,7 @@ In [SS2000][], 7 is D Distant; per wikipedia, that's metastatic, i.e. stage 4.
 ```{r}
 prop <- enum.sum(tumor.site, 'stage')
 pie(prop)
-data.frame(qty=prop, row.names=names(prop))
+as.data.frame(addmargins(prop))
 ```
 
 Cross-table of AJCC7 and SS2000 (for in-date-range breast cancer tumors):
@@ -516,7 +516,7 @@ head(tumor.site[, c(-3:-12)])
 
 prop <- enum.sum(tumor.site, 'seq.no')
 pie(prop)
-data.frame(qty=prop, row.names=names(prop))
+as.data.frame(addmargins(prop))
 
 ```
 
