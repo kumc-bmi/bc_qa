@@ -48,7 +48,7 @@ rbind.sites <- function(df.site) {
   for (ix in 1:length(site.code)) {
     site <- site.code[ix]
 
-    x <- df.site[[site]]
+    x <- try(df.site[[site]])
 
     if (nrow(x) > 0) {
       x$site <- site
@@ -177,8 +177,6 @@ Query Term Details
 ht(caption="Exclusion Criteria Terms (Primary)",
    bcterm$excl)
 ```
-
-*TODO: Language*  
 
 Query Term Details
 ==================

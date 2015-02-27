@@ -174,14 +174,22 @@ if (nrow(bad.concept.path) > 0) {
 ## Analytic Dataset: Tumors, Inclusion Criteria
 
 ```{r}
-tumor.site <- v.enc(conn.site,
-                    subset(bcterm$term204,
-                           # some sites don't have '0390 Date of Diagnosis'??
-                           # Fall back to '0400 Primary Site'?
-                           grepl('0390 Date of Diagnosis', concept_path)
-                           )$concept_path,
-                    'date.dx')
+#tumor.site <- v.enc(conn.site,
+#                    subset(bcterm$term204, grepl('0390 Date of Diagnosis', concept_path))$concept_path, 'date.dx')
+#
+# some sites don't have '0390 Date of Diagnosis'??
+# Fall back to '0400 Primary Site'?
+# Fall back to "Cancer"
+tumor.site <- dbGetQuery(conn.site,
+                         "select distinct encounter_num, patient_num
+                         from observation_fact f
+                         join concept_dimension cd
+                         on f.concept_cd = cd.concept_cd
+                         where concept_path like '%Cancer%'")
 
+tumor.site <- with.var(tumor.site, conn.site,
+                       subset(bcterm$term204, grepl('0390 Date of Diagnosis', concept_path))$concept_path, 'date.dx',
+                       get.var=v.enc)
 tumor.site <- with.var(tumor.site, conn.site,
                        bcterm$t.incl[1,]$concept_path, 'seer.breast')
 qty.seer.breast <- length(which(!is.na(tumor.site$seer.breast)))

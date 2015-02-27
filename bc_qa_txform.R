@@ -171,9 +171,17 @@ bc.exclusions <- function(conn.site,
                           var.incl=bcterm$t.incl,
                           var.excl=bcterm$excl.all,
                           dx.path=subset(bcterm$term204, grepl('0390 Date of Diagnosis', concept_path))$concept_path) {
+  # KLUDGE to get *something* from completely mis-aligned sites.
+  tumor.site <- dbGetQuery(conn.site,
+                           "select distinct encounter_num, patient_num
+                         from observation_fact f
+                           join concept_dimension cd
+                           on f.concept_cd = cd.concept_cd
+                           where concept_path like '%Cancer%'")
+  
   # All dates of diagnosis
-  tumor.site <- v.enc(conn.site, dx.path, 'date.dx')
-
+  tumor.site <- with.var(tumor.site, conn.site, dx.path, 'date.dx',
+                         get.var=v.enc)
   # Per-encounter date var.
   tumor.site <- with.var(tumor.site, conn.site,
                          var.excl['date.birth', 'concept_path'], 'date.birth',
@@ -211,6 +219,9 @@ bc.exclusions <- function(conn.site,
 
 
 dx.span <- function(tumor) {
+  stopifnot(nrow(tumor) > 0)
+  stopifnot(any(!is.na(tumor$dx.date)))
+
   x <- aggregate(date.dx ~ patient_num, tumor, min)
   stopifnot(nrow(x) == length(unique(tumor$patient_num)))
 
@@ -281,7 +292,7 @@ check.cases <- function(tumor.site,
   survey.sample$stage.ok <- TRUE  # absent info, assume OK
   survey.sample$stage.ok[tumor.site$stage == 'IV'] <- FALSE
 
-  survey.sample$span <- dx.span(tumor.site)$span
+  survey.sample$span <- tryCatch(dx.span(tumor.site)$span, error=function(e) NA)
   month <- as.difftime(30, units="days")
   survey.sample$no.prior <- grepl('0[01]', tumor.site$seq.no) | survey.sample$span < 4 * month
   survey.sample <- merge(survey.sample, check.demographics(tumor.site),
@@ -305,10 +316,15 @@ check.cases <- function(tumor.site,
 excl.pat.morph <- function(tumor.site,
                            morph='8520/2') {
   t <- subset(tumor.site, select=c(patient_num, morphology))
-  t$other <- ifelse(is.na(t$morphology), NA,
-                    ifelse(grepl(morph, t$morphology, fixed=TRUE), 0, 1))
-  ok <- aggregate(other ~ patient_num, data=t, max)
-  # table(ok$other)
+  if (any(!is.na(t$morphology))) {
+    t$other <- ifelse(is.na(t$morphology), NA,
+                      ifelse(grepl(morph, t$morphology, fixed=TRUE), 0, 1))
+    message('@@excl.pat.morph', format(table(t$other)))
+    ok <- aggregate(other ~ patient_num, data=t, max)
+    # table(ok$other)    
+  } else {
+    ok <- data.frame(patient_num=NA, other=NA)
+  }
   t$ok <- NA
   t$ok[t$patient_num %in% ok$patient_num[ok$other == 1]] <- TRUE
   t$ok[t$patient_num %in% ok$patient_num[ok$other == 0]] <- FALSE
