@@ -562,10 +562,10 @@ style.dodge(
   )
 ```
 
------------
+#### Double-check Stage Distribution
 
 ```{r}
-crit <- subset(survey.sample, select=-c(encounter_num, patient_num, age))
+crit <- subset(survey.sample, select=-c(encounter_num, patient_num, age, span))
 not.excl <- reduce.logical(crit)
 length(which(not.excl))
 if (any(not.excl)) {

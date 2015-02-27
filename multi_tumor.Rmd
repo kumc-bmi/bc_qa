@@ -3,6 +3,7 @@ library(ggplot2)
 library(reshape)
 
 source('bc_qa_txform.R')
+
 ```
 
 
@@ -42,7 +43,7 @@ survey.sample <- check.cases(tumor.site)
 
 ```{r}
 but.prior <- subset(survey.sample,
-                    select=-c(encounter_num, patient_num, age, no.prior
+                    select=-c(encounter_num, patient_num, age, span, no.prior
                               # tried skipping demographics to look at MCRF data...
                               # adult, female, not.dead, english
                               ))
@@ -53,31 +54,25 @@ tumor.per.pat <- data.frame(table(tumor.site$patient_num[maybe.prior]))
 focus <- subset(tumor.site,
        patient_num %in% subset(tumor.per.pat, Freq > 1)$Var1 &
          maybe.prior,
-       select=c(patient_num, date.dx, seq.no, primary.site))
+       select=c(encounter_num, patient_num, date.dx, seq.no, primary.site))
 ```
 
 ```{r}
-#TODO: clean up this code a bit.
+x <- unique(dx.span(focus)[, c('patient_num', 'first', 'last', 'span')])
 
-x <- data.frame(
-  patient_num=unique(focus$patient_num))
-x <- merge(x, aggregate(date.dx ~ patient_num, focus, min))
-names(x)[2] <- 'first'
-x <- merge(x, aggregate(date.dx ~ patient_num, focus, max))
+x <- merge(x, focus[, c('patient_num', 'date.dx', 'seq.no')],
+           by.x=c('patient_num', 'first'), by.y=c('patient_num', 'date.dx'))
 
-x <- merge(x, focus[, c('patient_num', 'date.dx', 'seq.no')])
-names(x)[2] <- 'last'
 if (!any(!is.na(x$seq.no))) { x$seq.no <- '?' } # ggplot barfs if all fill=seq.no are NA
 
 x <- x[order(x$first), ]
-x$span <- min(x$first) + (x$last - x$first)
 x$ix <- 1:nrow(x)
 ```
 
 ```{r seq.dates, echo=FALSE, fig.width=12, fig.height=8}
 ggplot(x, aes(x=ix, xend=ix, y=first, yend=last, fill=seq.no)) +
   geom_segment() +
-  geom_point(aes(x=ix, y=last, color=seq.no)) +
+  geom_point(aes(x=ix, y=first, color=seq.no)) +
 #  geom_bar(aes(x=ix, y=span), stat="identity") +
 #  coord_cartesian(ylim=c(min(x$first), max(x$last))) +
   labs(x="Otherwise Qualified Cases", y="time",

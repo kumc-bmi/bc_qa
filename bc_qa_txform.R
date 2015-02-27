@@ -203,10 +203,28 @@ bc.exclusions <- function(conn.site,
   # Combinations
   tumor.site$vital <- vital.combine(tumor.site)
   tumor.site$stage <- stage.combine(tumor.site)
-  
+
   # message('TODO: check bc.exclusions(conn.site) against tumor.site')
   
   tumor.site
+}
+
+
+dx.span <- function(tumor) {
+  x <- aggregate(date.dx ~ patient_num, tumor, min)
+  stopifnot(nrow(x) == length(unique(tumor$patient_num)))
+
+  names(x)[2] <- 'first'
+  x <- merge(x, aggregate(date.dx ~ patient_num, tumor, max))
+
+  names(x)[3] <- 'last'
+  x$span <- x$last - x$first
+
+  t <- merge(tumor[, c('encounter_num', 'patient_num')], x,
+             all.x=TRUE)
+  # message(nrow(tumor), ' x ', nrow(x), ' =?= ', nrow(t))
+  stopifnot(nrow(t) == nrow(tumor))
+  t
 }
 
 vital.combine <- function(tumor.site) {
@@ -255,13 +273,16 @@ check.cases <- function(tumor.site,
     !is.na(tumor.site$seer.breast) | grepl('^C50', tumor.site$primary.site)
   message('TODO: for primary site C50, exclude by histology')
   survey.sample$recent.dx <- tumor.site$date.dx >= recent.threshold
-
+  
   survey.sample$confirmed <- TRUE
   survey.sample$confirmed[! grepl('[124]', tumor.site$confirm)] <- FALSE
   survey.sample$other.morph <- excl.pat.morph(tumor.site)$ok
   survey.sample$stage.ok <- TRUE  # absent info, assume OK
   survey.sample$stage.ok[tumor.site$stage == 'IV'] <- FALSE
-  survey.sample$no.prior <- grepl('0[01]', tumor.site$seq.no)
+
+  survey.sample$span <- dx.span(tumor.site)$span
+  month <- as.difftime(30, units="days")
+  survey.sample$no.prior <- grepl('0[01]', tumor.site$seq.no) | survey.sample$span > 4 * month
   survey.sample <- merge(survey.sample, check.demographics(tumor.site),
                          all.x=TRUE)
   survey.sample[order(survey.sample$patient_num, survey.sample$encounter_num),
@@ -269,6 +290,7 @@ check.cases <- function(tumor.site,
                   'bc.dx', 'recent.dx',
                   # In order from "Breast Cancer Cohort Characterization -- Survey Sample" report
                   'female',
+                  'span',
                   'no.prior',
                   'confirmed',
                   'other.morph',
@@ -296,7 +318,7 @@ excl.pat.morph <- function(tumor.site,
 count.cases <- function(survey.sample) {
   # encounter_num, patient_num, age are not (logical) criteria
   crit.names <- names(subset(survey.sample,
-                             select=-c(encounter_num, patient_num, age)))
+                             select=-c(encounter_num, patient_num, age, span)))
   
   survey.sample.size <- as.data.frame(array(NA, c(4, length(crit.names) + 1)))
   names(survey.sample.size) <- c('total', crit.names)
