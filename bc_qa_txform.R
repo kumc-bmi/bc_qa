@@ -257,7 +257,7 @@ check.cases <- function(tumor.site,
   survey.sample$recent.dx <- tumor.site$date.dx >= recent.threshold
 
   survey.sample$confirmed <- TRUE
-  survey.sample$confirmed[! tumor.site$confirm %in% c('1', '2', '4')] <- FALSE
+  survey.sample$confirmed[! grepl('[124]', tumor.site$confirm)] <- FALSE
   survey.sample$other.morph <- excl.pat.morph(tumor.site)$ok
   survey.sample$stage.ok <- TRUE  # absent info, assume OK
   survey.sample$stage.ok[tumor.site$stage == 'IV'] <- FALSE
