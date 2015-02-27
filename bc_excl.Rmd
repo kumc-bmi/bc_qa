@@ -175,7 +175,8 @@ if (nrow(bad.concept.path) > 0) {
 tumor.site <- v.enc(conn.site,
                     subset(bcterm$term204,
                            # some sites don't have '0390 Date of Diagnosis'??
-                           grepl('0400 Primary Site', concept_path)
+                           # Fall back to '0400 Primary Site'?
+                           grepl('0390 Date of Diagnosis', concept_path)
                            )$concept_path,
                     'date.dx')
 
