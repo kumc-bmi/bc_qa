@@ -142,7 +142,8 @@ sql.qterm.table <- (
 bad.concept.path <-
   dbGetQuery(conn.site,
              paste(
-             "select count(distinct patient_num) qty_pat,
+             "select dataset.* from (
+             select count(distinct patient_num) qty_pat,
                      count(distinct encounter_num) qty_enc,
                      count(*) qty_fact,
                      substr(cd.name_char, 1, 30) name_char,
@@ -150,11 +151,12 @@ bad.concept.path <-
              from observation_fact f
              join concept_dimension cd
              on cd.concept_cd = f.concept_cd
-             where not exists (select t204.concept_path from
-             (", sql.qterm.table, ") t204
-             where", patch.umn('concept_path'), "
-              like (t204.concept_path || '%'))
              group by cd.concept_path
+             ) dataset
+             left join (", sql.qterm.table, ") t204
+             on ", patch.umn('dataset.concept_path'), "
+              like (t204.concept_path || '%')
+             where t204.concept_path is null
              "))
 ```
 
@@ -200,12 +202,6 @@ head(tumor.site)
 tumor.site[duplicated(tumor.site$encounter_num), ]
 ```
 
-```{r precompute, echo=FALSE}
-tumor.site.pre <- bc.exclusions(conn.site)
-survey.sample <- check.cases(tumor.site.pre)
-survey.sample.size <- count.cases(survey.sample)
-```
-
 ### Date of Diagnosis
 
 How long ago were they diagnosed? (**Note: these are de-identified dates.**)
@@ -230,15 +226,6 @@ if (any(!is.na(tumor.site$date.dx))) {
        xlab="years")
   summary(age.in.years(recent$date.dx))
   }
-```
-
-**The Breast Cancer Cohort Characterization — Survey Sample report has `enddate <- as.POSIXct("2014-12-31")`. Why? The survey period ends 2014-05-01, and date shifting only goes backwards, no?**
-
-How many patients with breast cancer diagnoses in the date range had 1 vs. more tumors?
-
-```{r}
-focus <- subset(survey.sample, bc.dx & recent.dx)
-addmargins(table(as.data.frame(table(focus$patient_num))$Freq))
 ```
 
 ### Sex, Age
@@ -379,7 +366,7 @@ stopifnot(
 dem.states <- table(dem.states[, -1])
 plot(dem.states,
      main="Demographic Eligibility")
-dem.states
+addmargins(dem.states)
 ```
 
 ### Diagnostic Confirmation
@@ -508,16 +495,6 @@ pie(prop)
 as.data.frame(addmargins(prop))
 ```
 
-Cross-table of AJCC7 and SS2000 (for in-date-range breast cancer tumors):
-
-```{r}
-survey.sample <- check.cases(tumor.site.pre)
-stopifnot(all(tumor.site$patient_num == survey.sample$patient_num))
-with(
-  subset(tumor.site, survey.sample$bc.dx & survey.sample$recent.dx),
-  addmargins(table(stage.ajcc, stage.ss, useNA="ifany"))
-  )
-```
 
 ### Prior Diagnosis: Sequence Number
 

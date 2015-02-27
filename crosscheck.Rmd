@@ -1,0 +1,29 @@
+BC Data Cross-Check
+===================
+
+```{r precompute, echo=FALSE}
+tumor.site.pre <- bc.exclusions(conn.site)
+survey.sample <- check.cases(tumor.site.pre)
+survey.sample.size <- count.cases(survey.sample)
+```
+
+**The Breast Cancer Cohort Characterization — Survey Sample report has `enddate <- as.POSIXct("2014-12-31")`. Why? The survey period ends 2014-05-01, and date shifting only goes backwards, no?**
+
+How many patients with breast cancer diagnoses in the date range had 1 vs. more tumors?
+
+```{r}
+focus <- subset(survey.sample, bc.dx & recent.dx)
+addmargins(table(as.data.frame(table(focus$patient_num))$Freq))
+```
+
+
+Cross-table of AJCC7 and SS2000 (for in-date-range breast cancer tumors):
+
+```{r}
+survey.sample <- check.cases(tumor.site.pre)
+stopifnot(all(tumor.site$patient_num == survey.sample$patient_num))
+with(
+  subset(tumor.site, survey.sample$bc.dx & survey.sample$recent.dx),
+  addmargins(table(stage.ajcc, stage.ss, useNA="ifany"))
+  )
+```
