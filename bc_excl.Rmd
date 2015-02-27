@@ -568,8 +568,10 @@ style.dodge(
 crit <- subset(survey.sample, select=-c(encounter_num, patient_num, age))
 not.excl <- reduce.logical(crit)
 length(which(not.excl))
-tumor.ok <- tumor.site[not.excl, ]
-addmargins(table(tumor.ok$stage.ss, useNA="ifany"))
+if (any(not.excl)) {
+  tumor.ok <- tumor.site[not.excl, ]
+  addmargins(table(tumor.ok$stage.ss, useNA="ifany"))
+  }
 ```
 
 ## Summary and Issues for `r SITE`
