@@ -41,7 +41,7 @@ def main(argv, stdin, stdout, mkTeam, projectAccess, checkDB, unzip):
 
     if cli['export']:
         project = projectAccess(cli)
-        records = project.export_records()
+        records = project.export_records(export_survey_fields=True)
         export_csv(records, stdout)
     elif cli['fetch']:
         project = projectAccess(cli)

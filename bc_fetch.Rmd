@@ -76,7 +76,7 @@ text.to.csv <- function(text)
            stringsAsFactors=FALSE)
 
 fetch$form <- text.to.csv(fetch$form.data)
-fetch$form[, c('record_id', 'institution', 'name')]
+fetch$form[, c('record_id', 'institution', 'name', 'obsolete')]
 
 fetch$file <- text.to.csv(fetch$normalize.detail)
 fetch$file
@@ -87,11 +87,11 @@ Let's combine the info about datasets:
 ```{r}
 dataset <- merge(fetch$file, fetch$form,
                        by='record_id')
-names(dataset)
 dataset <- dataset[order(dataset$site),]
-
+# 'gpc_breast_cancer_deidentified_data_timestamp' is unwieldy
+names(dataset)[grep('timestamp', names(dataset))] <- 'timestamp'
 fetch$dataset <- dataset
-fetch$dataset[, c('record_id', 'obsolete', 'institution', 'site', 'name', 'bc_db', 'patient_qty')]
+fetch$dataset[, c('record_id', 'timestamp', 'site', 'name', 'bc_db', 'patient_qty')]
 ```
 
 We'll use this function to access the files:
