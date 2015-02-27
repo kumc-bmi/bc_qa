@@ -92,12 +92,12 @@ mk.agg.by.pat <- function(
       # concatenate (c) all the observations for a patient
       pat.obs.agg <- aggregate(code ~ patient_num, pat.obs, function(...) paste(c(...), collapse=sep))
       pat.obs.agg$code <- as.factor(pat.obs.agg$code)
+      pat.obs.agg$encounter_num <- NA
     } else{
       pat.obs.agg <- data.frame(patient_num=NA, code=NA, encounter_num=NA)
       pat.obs.agg <- pat.obs.agg[-1,]
     }
     names(pat.obs.agg)[2] <- var.name
-    pat.obs.agg$encounter_num <- NA
     
     # print(head(pat.obs.agg))
     pat.obs.agg
@@ -256,8 +256,8 @@ check.cases <- function(tumor.site,
   message('TODO: for primary site C50, exclude by histology')
   survey.sample$recent.dx <- tumor.site$date.dx >= recent.threshold
 
-  # TODO: parse codes out of paths
-  survey.sample$confirmed <- grepl('^[124]', tumor.site$confirm)
+  survey.sample$confirmed <- TRUE
+  survey.sample$confirmed[! tumor.site$confirm %in% c('1', '2', '4')] <- FALSE
   survey.sample$other.morph <- excl.pat.morph(tumor.site)$ok
   survey.sample$stage.ok <- TRUE  # absent info, assume OK
   survey.sample$stage.ok[tumor.site$stage == 'IV'] <- FALSE
