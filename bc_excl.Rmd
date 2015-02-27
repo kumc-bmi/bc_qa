@@ -54,7 +54,7 @@ options(width=300)
 ## Data Summary for `r SITE`
 
 ```{r about_dataset, echo=FALSE}
-dataset[, c('record_id', 'site', 'name', 'bc_db', 'content_length')]
+dataset[, c('record_id', 'site', 'name', 'bc_db', 'content_length', 'timestamp')]
 ```
 
 Issues noted by breast cancer research team via redcap:
@@ -84,13 +84,22 @@ from variable
 # Some sites have really long variable names
 v$name <- substr(v$name, 1, 40)
 v.ok <- v$patched_path %in% bcterm$term204$concept_path
+prefix.ok <-
+  function(needle, haystack=bcterm$term204$concept_path)
+    any(unlist(lapply(haystack,
+                      function(h) grepl(h, needle, fixed=TRUE))))
+v.close <- !v.ok
+v.close[!v.ok] <- unlist(lapply(v$patched_path[!v.ok], prefix.ok))
+           
 v$patched_path[v$patched_path == v$concept_path] <- NA
 v.good <- v[v.ok, ]
-v.bad <- v[! v.ok, ]
+v.too.narrow <- v[v.close, ]
+v.bad <- v[!v.ok & !v.close, ]
 
 data.frame(
   qty=nrow(v),
   qty.good=nrow(v.good),
+  qty.too.narrow=nrow(v.too.narrow),
   qty.bad=nrow(v.bad))
 ```
 
@@ -98,6 +107,13 @@ data.frame(
 ht(
   caption="Aligned Query Terms",
   v.good
+  )
+```
+
+```{r echo=FALSE, results='asis'}
+ht(
+  caption="Overly-specific Query Terms",
+  v.too.narrow
   )
 ```
 
