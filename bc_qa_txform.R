@@ -59,7 +59,7 @@ sql.fact <- function(colsexpr) {
 
 v.enc.nominal <- function(conn, var.path, var.name,
                           # default: extract last path segment
-                          code.pattern='[^\\\\]+(?=\\\\$)') {
+                          code.pattern='[^\\\\]+(?=\\\\+$)') {
   sql <- sql.fact("f.encounter_num, f.patient_num, cd.concept_path")
   per.enc <- dbGetPreparedQuery(conn, sql, bind.data=data.frame(path=var.path))
 
@@ -270,8 +270,8 @@ check.cases <- function(tumor.site,
                         recent.threshold=subset(bcterm$dx.date, txform == 'deid' & label == 'expanded')$start) {
   survey.sample <- tumor.site[, c('encounter_num', 'patient_num')]
   survey.sample$bc.dx <-
-    !is.na(tumor.site$seer.breast) | grepl('^C50', tumor.site$primary.site)
-  message('TODO: for primary site C50, exclude by histology')
+    !is.na(tumor.site$seer.breast) | (
+      grepl('^C50', tumor.site$primary.site) & solid.histology(tumor.site$morphology))
   survey.sample$recent.dx <- tumor.site$date.dx >= recent.threshold
   
   survey.sample$confirmed <- TRUE
@@ -282,7 +282,7 @@ check.cases <- function(tumor.site,
 
   survey.sample$span <- dx.span(tumor.site)$span
   month <- as.difftime(30, units="days")
-  survey.sample$no.prior <- grepl('0[01]', tumor.site$seq.no) | survey.sample$span > 4 * month
+  survey.sample$no.prior <- grepl('0[01]', tumor.site$seq.no) | survey.sample$span < 4 * month
   survey.sample <- merge(survey.sample, check.demographics(tumor.site),
                          all.x=TRUE)
   survey.sample[order(survey.sample$patient_num, survey.sample$encounter_num),
@@ -313,6 +313,14 @@ excl.pat.morph <- function(tumor.site,
   t$ok[t$patient_num %in% ok$patient_num[ok$other == 0]] <- FALSE
   # addmargins(table(t$ok))
   t
+}
+
+solid.histology <- function(codes) {
+  hist <- substr(as.character(codes), 1, 4)
+  mesothelioma <- codes >= '9050' & codes <= '9055'
+  Kaposi_sarcoma <- codes == '9140'
+  lymphoma <- codes >= '9590' & codes < '9992'
+  ! mesothelioma & ! Kaposi_sarcoma & ! lymphoma
 }
 
 count.cases <- function(survey.sample) {

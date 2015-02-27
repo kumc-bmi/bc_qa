@@ -436,6 +436,19 @@ as.data.frame(addmargins(prop))
 ```
 
 
+#### Solid Tumor Histologies
+
+```{r}
+solid.histology
+
+t <- data.frame(
+  primary.breast=grepl('^C50', tumor.site$primary.site),
+  solid=solid.histology(tumor.site$morphology),
+  seer.breast=!is.na(tumor.site$seer.breast)
+  )
+table(t)
+```
+
 #### Only tumor morphology was lobular carcinoma in situ?
 
 ```{r}
