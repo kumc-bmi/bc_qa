@@ -130,7 +130,7 @@ v.enc <- function(conn, var.path, var.name) {
   per.enc <- dbGetPreparedQuery(
     conn, sql.fact("f.encounter_num, f.patient_num, strftime('%Y-%m-%d', f.start_date) start_date"),
     bind.data=data.frame(path=var.path))
-  per.enc$start_date <- try(as.Date(per.enc$start_date))
+  per.enc$start_date <- tryCatch(as.Date(per.enc$start_date), error=function(e) NA)
   
   names(per.enc)[3] <- var.name
   per.enc
@@ -242,7 +242,7 @@ check.demographics <- function(tumor.site) {
   survey.sample$age <- NA
   survey.sample$adult <- FALSE
   if (any(!is.na(tumor.site$date.birth))) {
-    survey.sample$age <- try(age.in.years(tumor.site$date.birth))
+    survey.sample$age <- age.in.years(tumor.site$date.birth)
     survey.sample$adult <- survey.sample$age >= 18
   }
 
@@ -268,6 +268,7 @@ stage.combine <- function(tumor.site) {
 
 check.cases <- function(tumor.site,
                         recent.threshold=subset(bcterm$dx.date, txform == 'deid' & label == 'expanded')$start) {
+  stopifnot(nrow(tumor.site) > 0)
   survey.sample <- tumor.site[, c('encounter_num', 'patient_num')]
   survey.sample$bc.dx <-
     !is.na(tumor.site$seer.breast) | (
