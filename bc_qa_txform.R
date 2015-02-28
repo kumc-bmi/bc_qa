@@ -182,6 +182,17 @@ bc.exclusions <- function(conn.site,
   # All dates of diagnosis
   tumor.site <- with.var(tumor.site, conn.site, dx.path, 'date.dx',
                          get.var=v.enc)
+  # some sites don't have '0390 Date of Diagnosis'??
+  # Fall back to '0400 Primary Site' or SEER Site Breast
+  t <- merge(merge(tumor.site[, c('encounter_num', 'patient_num', 'date.dx')],
+                   v.enc(conn.site, var.incl[1,]$concept_path, 'date.seer'),
+                   all.x=TRUE),
+             v.enc(conn.site, var.incl[2,]$concept_path, 'date.primary'),
+             all.x=TRUE)
+  
+  tumor.site$date.dx[is.na(tumor.site$date.dx)] <- t$date.primary[is.na(tumor.site$date.dx)]
+  tumor.site$date.dx[is.na(tumor.site$date.dx)] <- t$date.seer[is.na(tumor.site$date.dx)]
+  
   # Per-encounter date var.
   tumor.site <- with.var(tumor.site, conn.site,
                          var.excl['date.birth', 'concept_path'], 'date.birth',
@@ -220,16 +231,18 @@ bc.exclusions <- function(conn.site,
 
 dx.span <- function(tumor) {
   stopifnot(nrow(tumor) > 0)
-  stopifnot(any(!is.na(tumor$dx.date)))
+  stopifnot(any(!is.na(tumor$date.dx)))
 
   x <- aggregate(date.dx ~ patient_num, tumor, min)
-  stopifnot(nrow(x) == length(unique(tumor$patient_num)))
+  # could be fewer if some pat have no date.dx
+  # message(nrow(x), ' <?= ', length(unique(tumor$patient_num)))
+  stopifnot(nrow(x) <= length(unique(tumor$patient_num)))
+  names(x)[2] <- 'first'  
 
-  names(x)[2] <- 'first'
   x <- merge(x, aggregate(date.dx ~ patient_num, tumor, max))
-
   names(x)[3] <- 'last'
   x$span <- x$last - x$first
+  x <- merge(x, as.data.frame(table(tumor.site$patient_num, dnn='patient_num')))
 
   t <- merge(tumor[, c('encounter_num', 'patient_num')], x,
              all.x=TRUE)
@@ -246,15 +259,20 @@ vital.combine <- function(tumor.site) {
     )
 }
 
-check.demographics <- function(tumor.site) {
+check.demographics <- function(tumor.site,
+                               adult.age.min=18) {
   survey.sample <- tumor.site[, c('encounter_num', 'patient_num')]
-  survey.sample$not.dead <- tumor.site$vital
+
+  vital <- aggregate(vital ~ patient_num, tumor.site, function(...) min(..., na.rm=TRUE))
+  pat.dead <- vital$patient_num[vital$vital == 0]
+  survey.sample$not.dead <- NA
+  survey.sample$not.dead[survey.sample$patient_num %in% pat.dead] <- FALSE
 
   survey.sample$age <- NA
   survey.sample$adult <- FALSE
   if (any(!is.na(tumor.site$date.birth))) {
     survey.sample$age <- age.in.years(tumor.site$date.birth)
-    survey.sample$adult <- survey.sample$age >= 18
+    survey.sample$adult <- survey.sample$age >= adult.age.min
   }
 
   # "Breast Cancer Cohort Characterization — Survey Sample" report

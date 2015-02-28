@@ -13,42 +13,42 @@ Generated `r Sys.Date()`
 
 Modelled after Graphs by Elizabeth A. Chrischilles, PhD 18 Feb 2015
 
-```{r echo=FALSE}
+```{r fig_size, echo=FALSE}
+library(knitr)
 opts_chunk$set(fig.width=8,fig.height=4.5,dpi=300,out.width="1920px",height="1080px")
+```
 
+```{r libraries, echo=FALSE}
 source('bc_qa_txform.R')
-
-load("bc_fetch_results.RData")
-load("bc_terms_results.RData")
 
 library(ggplot2)
 library(grid)
 library(RSQLite)
 ```
 
+```{r load_prev, echo=FALSE}
+load("bc_fetch_results.RData")
+load("bc_terms_results.RData")
+```
 
 Patients
 ========
 
-```{r echo=FALSE}
-current <- fetch$dataset  # anachronism
+```{r site.code, echo=FALSE}
 site.code <- factor(fetch$dataset$site)
+
+current <- fetch$dataset  # anachronism
 ```
 
 
-```{r echo=FALSE}
-site.tumor.data <- lapply(site.code, function(s) {
-  message('working on site: ', s)
-  bc.exclusions(fetch$site.data(s))
-  })
-names(site.tumor.data) <- levels(site.code)
+```{r rbind.sites, echo=FALSE}
 
 rbind.sites <- function(df.site) {
   df <- NULL
   for (ix in 1:length(site.code)) {
     site <- site.code[ix]
 
-    x <- try(df.site[[site]])
+    x <- df.site[[site]]
 
     if (nrow(x) > 0) {
       x$site <- site
@@ -62,11 +62,19 @@ rbind.sites <- function(df.site) {
     }
   df
 }
+```
+
+```{r tumor.all, echo=FALSE}
+site.tumor.data <- lapply(site.code, function(s) {
+  message('working on site: ', s)
+  bc.exclusions(fetch$site.data(s))
+  })
+names(site.tumor.data) <- levels(site.code)
 
 tumor.all <- rbind.sites(site.tumor.data)
 ```
 
-```{r echo=FALSE}
+```{r patients.queries, echo=FALSE}
 query.site <- function(q, site) {
   conn <- fetch$site.data(site)
   dbGetQuery(conn, q)
@@ -96,7 +104,7 @@ patients <- rbind(
 
 ```
 
-```{r echo=FALSE}
+```{r vital, echo=FALSE}
 pat.per.site <- function(df) {
   as.vector(table(unique(df[, c('site', 'patient_num')])$site))
   }
@@ -110,8 +118,8 @@ patients.vital <- rbind(
 
   data.frame(
     site=site.code,
-    key='w/Deceased from EHR (data)',
-    result=pat.per.site(tumor.all[!is.na(tumor.all$deceased.ehr), ])),
+    key='w/Vital from EHR (data)',
+    result=pat.per.site(tumor.all[!is.na(tumor.all$vital.ehr), ])),
 
   query.each.site(
     'vital: patient_dimension',
@@ -187,8 +195,8 @@ ht(caption="Exclusion Criteria Terms (All)",
 ```
 
 
-Number in “Final” Survey-Eligible Cohort by Site*
-=================================================
+Number in “Final” Survey-Eligible Cohort by Site
+================================================
 
 
 ```{r echo=FALSE}
@@ -197,8 +205,14 @@ site.survey.sample <- lapply(site.code, function(s) {
   check.cases(site.tumor.data[[s]])
   })
 names(site.survey.sample) <- levels(site.code)
+site.survey.sample.size <- lapply(site.code, function(s) {
+  count.cases(site.survey.sample[[s]])
+  })
+names(site.survey.sample.size) <- levels(site.code)
+```
 
-patients.eligible <- function(last.crit) rbind(
+```{r echo=FALSE}
+patients.eligible <- rbind(
   query.each.site(
     'Number of patients (data dim.)',
     'select count(distinct patient_num) from observation_fact'),
@@ -206,21 +220,18 @@ patients.eligible <- function(last.crit) rbind(
     site=site.code,
     key='Number after exclusions',
     result=unlist(lapply(site.code, function(s) {
-      qty <- count.cases(check.cases(site.tumor.data[[s]]))
-      qty['cumulative', last.crit]
-      
+      qty <- site.survey.sample.size[[s]]
+      qty['cum.pat', length(qty)]
       }))))
-patients.eligible.stage <- patients.eligible('stage.ok')
-patients.eligible.prior <- patients.eligible('no.prior')
 # TODO: Percent eligible for survey
 ```
 
 ```{r echo=FALSE}
 
-fig2 <- ggplot(subset(patients.eligible.stage,
+fig2 <- ggplot(subset(patients.eligible,
                       key %in% c('Number of patients (data dim.)', 'Number after exclusions')),
                aes(x=site, y=result, fill=key))
-style.dodge(fig2) + labs(title="*not excluding prior diagnosis")
+style.dodge(fig2)
 ```
 
 
@@ -230,7 +241,7 @@ Eligibility Criteria by Site: Cumulative
 ```{r echo=FALSE}
 x <- do.call(rbind.data.frame,
               lapply(site.code, function(site) {
-                qty <- count.cases(check.cases(site.tumor.data[[site]]))
+                qty <- site.survey.sample.size[[site]][c('ind.pat', 'cum.pat'), ]
                 columns <- factor(row.names(qty),
                                   levels=c('independent', 'cumulative'),
                                   labels=c('independent', 'cumulative'),

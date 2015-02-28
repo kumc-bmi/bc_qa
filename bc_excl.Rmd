@@ -176,9 +176,6 @@ if (nrow(bad.concept.path) > 0) {
 ```{r}
 #tumor.site <- v.enc(conn.site,
 #                    subset(bcterm$term204, grepl('0390 Date of Diagnosis', concept_path))$concept_path, 'date.dx')
-#
-# some sites don't have '0390 Date of Diagnosis'??
-# Fall back to '0400 Primary Site'?
 # Fall back to "Cancer"
 tumor.site <- dbGetQuery(conn.site,
                          "select distinct encounter_num, patient_num
@@ -190,6 +187,17 @@ tumor.site <- dbGetQuery(conn.site,
 tumor.site <- with.var(tumor.site, conn.site,
                        subset(bcterm$term204, grepl('0390 Date of Diagnosis', concept_path))$concept_path, 'date.dx',
                        get.var=v.enc)
+# some sites don't have '0390 Date of Diagnosis'??
+# Fall back to '0400 Primary Site' or SEER Site Breast
+t <- merge(merge(tumor.site[, c('encounter_num', 'patient_num', 'date.dx')],
+                 v.enc(conn.site, bcterm$t.incl[1,]$concept_path, 'date.seer'),
+                 all.x=TRUE),
+           v.enc(conn.site, bcterm$t.incl[2,]$concept_path, 'date.primary'),
+           all.x=TRUE)
+
+tumor.site$date.dx[is.na(tumor.site$date.dx)] <- t$date.primary[is.na(tumor.site$date.dx)]
+tumor.site$date.dx[is.na(tumor.site$date.dx)] <- t$date.seer[is.na(tumor.site$date.dx)]
+
 tumor.site <- with.var(tumor.site, conn.site,
                        bcterm$t.incl[1,]$concept_path, 'seer.breast')
 qty.seer.breast <- length(which(!is.na(tumor.site$seer.breast)))
@@ -199,7 +207,7 @@ tumor.site <- with.var(tumor.site, conn.site,
 qty.primary.breast <- length(grep('^.C50', tumor.site$primary.site))
 ```
 
-We find `r nrow(tumor.site)` tumors diagnosed, `r qty.primary.breast` of which have a primary site of breast cancer, and `r qty.seer.breast` are breast cancer by the SEER Site Recode.
+We find `r nrow(tumor.site)` tumors records, `r qty.primary.breast` of which have a primary site of breast cancer, and `r qty.seer.breast` are breast cancer by the SEER Site Recode.
 
 Let's look at the first few. For nominal variables, note we **rely only on concept paths**; for conciseness, we focus on segments of the concept path that distinguish it from the variable's concept path. For date-valued variables, we use the i2b2 `start_date`.
 
@@ -366,15 +374,13 @@ survey.sample <- check.demographics(tumor.site)
 
 dem.states <- unique(survey.sample[, c('patient_num', 'female', 'adult', 'not.dead')])
 
-# No person is both dead and alive etc., right?
-stopifnot(
-  length(which(duplicated(dem.states$patient_num)))
-  == 0)
+# Anybody reported alive at one point and dead at another, etc.?
+subset(tumor.site, patient_num %in% dem.states$patient_num[duplicated(dem.states$patient_num)])
 
-dem.states <- table(dem.states[, -1])
-plot(dem.states,
+dem.states.t <- table(dem.states[, -1], useNA="ifany")
+plot(dem.states.t,
      main="Demographic Eligibility")
-addmargins(dem.states)
+addmargins(dem.states.t)
 ```
 
 ### Diagnostic Confirmation
@@ -512,10 +518,18 @@ tumor.site <- with.var(tumor.site, conn.site,
                        bcterm$excl['seq.no', 'concept_path'], 'seq.no')
 head(tumor.site[, c(-3:-12)])
 
+
 prop <- enum.sum(tumor.site, 'seq.no')
 pie(prop)
 as.data.frame(addmargins(prop))
 
+recent.threshold <- subset(bcterm$dx.date, txform == 'deid' & label == 'expanded')$start
+
+x <- dx.span(tumor.site[tumor.site$date.dx >= recent.threshold, ])
+x <- x[x$Freq > 1, ]
+months.apart <- as.integer(as.numeric(x$span) / 30)
+hist(months.apart, breaks=-1:max(months.apart, na.rm=TRUE))
+as.data.frame(addmargins(table(months.apart)))
 ```
 
 ## Eligible Cohort
