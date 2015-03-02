@@ -74,6 +74,8 @@ ht(
 
 ### Variable Terms: Aligned and Misaligned
 
+Let's compare the variable table submitted vs. the terms in the query from on babel (per #204):
+
 ```{r, echo=FALSE}
 v <- dbGetQuery(conn.site,
 paste0("
@@ -204,7 +206,7 @@ qty.seer.breast <- length(which(!is.na(tumor.site$seer.breast)))
 
 tumor.site <- with.var(tumor.site, conn.site,
                        bcterm$t.incl[2,]$concept_path, 'primary.site')
-qty.primary.breast <- length(grep('^.C50', tumor.site$primary.site))
+qty.primary.breast <- length(grep('^C50', tumor.site$primary.site))
 ```
 
 We find `r nrow(tumor.site)` tumors records, `r qty.primary.breast` of which have a primary site of breast cancer, and `r qty.seer.breast` are breast cancer by the SEER Site Recode.
@@ -574,6 +576,35 @@ style.dodge(
   )
 ```
 
+
+### Eligible Cohort from `r SITE`
+
+```{r echo=FALSE, results='asis'}
+ht(
+  survey.sample.size[c('cum.pat'), ]
+  )
+```
+
+```{r}
+pat.per.site <- 200
+```
+
+Random sample of `r pat.per.site` remaining patients after exclusions:
+
+```{r}
+survey.sample$all.criteria <- reduce.logical(survey.sample)
+
+pat.not.excl <- subset(
+  unique(subset(tumor.site, select=c(patient_num, sex, vital, language, date.birth))),
+  patient_num %in% survey.sample$patient_num[survey.sample$all.criteria])
+
+pat.not.excl$age <- round(age.in.years(pat.not.excl$date.birth))
+
+pat.200 <- subset(pat.not.excl, patient_num %in% sample(pat.not.excl$patient_num, pat.per.site))
+
+pat.200
+```
+
 #### Double-check Stage Distribution
 
 ```{r}
@@ -593,14 +624,6 @@ ht(
   caption='Summary of exclusion criteria data',
   summary(tumor.site[, row.names(bcterm$excl)]),
   NA.string=''
-  )
-```
-
-### Eligible Cohort from `r SITE`
-
-```{r echo=FALSE, results='asis'}
-ht(
-  survey.sample.size[c('cum.pat'), ]
   )
 ```
 
