@@ -243,8 +243,8 @@ x <- do.call(rbind.data.frame,
               lapply(site.code, function(site) {
                 qty <- site.survey.sample.size[[site]][c('ind.pat', 'cum.pat'), ]
                 columns <- factor(row.names(qty),
-                                  levels=c('independent', 'cumulative'),
-                                  labels=c('independent', 'cumulative'),
+                                  levels=c('ind.pat', 'cum.pat'),
+                                  labels=c('ind.pat', 'cum.pat'),
                                   ordered=TRUE)
                 qty <- cbind(columns, site, qty)
                 qty
@@ -254,7 +254,7 @@ row.names(x) <- 1:nrow(x)
 ``` 
 
 ```{r echo=FALSE, results='asis'}
-ht(x[x$columns == 'cumulative', ])
+ht(x[x$columns == 'cum.pat', ])
 ```
 
 
@@ -262,19 +262,7 @@ Eligibility Criteria by Site: Independent
 =========================================
 
 ```{r echo=FALSE, results='asis'}
-ht(x[x$columns == 'independent', ])
-```
-
-
-Number in “Final” Survey-Eligible Cohort by Site
-================================================
-
-```{r echo=FALSE}
-
-fig2 <- ggplot(subset(patients.eligible.prior,
-                      key %in% c('Number of patients (data dim.)', 'Number after exclusions')),
-               aes(x=site, y=result, fill=key))
-style.dodge(fig2) + labs(title="Excluding prior diagnosis (and 0380 seq.no=NA)")
+ht(x[x$columns == 'ind.pat', ])
 ```
 
 
@@ -289,11 +277,6 @@ fig2 <- ggplot(subset(patients.vital, key %in% c('w/Vital from EHR (data)', 'vit
 style.dodge(fig2)
 ```
 
-
-Number in “Final” Survey-Eligible Cohort by Site*
-=================================================
-
-*What's the difference between "after exclusions" and "eligible for survey"?*
 
 Number with Vital Status, by Site
 =================================
@@ -340,6 +323,9 @@ Number of Tumors Overall and With Primary Site, by Site
 fig5 <- ggplot(tumor.by.site, aes(x=site, y=result, fill=key))
 style.dodge(fig5)
 ```
+```{r echo=FALSE}
+bcterm$t.incl[2, ]$concept_path
+```
 
 
 Number of Tumors Overall and With SEER Site Breast, by Site
@@ -358,33 +344,38 @@ tumor.by.site <- rbind.data.frame(
 
 ```{r echo=FALSE}
 fig5 <- ggplot(tumor.by.site, aes(x=site, y=result, fill=key))
-style.dodge(fig5) + labs(title="SEER Site subsumes Primary site, no?")
+style.dodge(fig5)
 ```
 
 ```{r echo=FALSE}
-bcterm$bc.dx.path
+bcterm$t.incl[1, ]$concept_path
 ```
 
-Counting Tumors?
-================
 
-Like this?
+BC Tumors in Date Range
+=======================
 
+```{r echo=FALSE}
+tumor.by.site <- rbind.data.frame(
+  subset(patients, key == 'tumor'),
+  
+  data.frame(
+    site=site.code,
+    key='BC',
+    result=unlist(lapply(site.code,
+                         function(s) site.survey.sample.size[[s]]['ind.tumor', 'bc.dx']))
+    ),
+  data.frame(
+    site=site.code,
+    key='In Range',
+    result=unlist(lapply(site.code,
+                         function(s) site.survey.sample.size[[s]]['ind.tumor', 'recent.dx']))
+    )
+  )
 ```
-select distinct encounter_num, patient_num
-from observation_fact f
+
+```{r echo=FALSE}
+fig6 <- ggplot(tumor.by.site, aes(x=site, y=result, fill=key))
+style.dodge(fig6)
 ```
 
-Note: to exclude stuff like age-at-visit for visits unrelated to a tumor:
-
-```
-...
-join concept_dimension cd on cd.concept_cd = f.concept_cd
-where cd.concept_path like '%naaccr%'
-   or concept_path like '%\\0390 Date of Diagnosis%'")
-```
-
-Tumors in Date Range?
-=====================
-
-**tumors in date range? What does that mean, exactly?**
