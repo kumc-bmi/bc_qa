@@ -269,13 +269,14 @@ ht(x[x$columns == 'ind.pat', ])
 Number of Breast Cancer Patients with EMR Vital Status by Site
 ==============================================================
 
-*Note: the EMR query term was deceased, not vital status.*
-
 ```{r echo=FALSE}
 fig2 <- ggplot(subset(patients.vital, key %in% c('w/Vital from EHR (data)', 'vital: patient_dimension')),
                aes(x=site, y=result, fill=key))
 style.dodge(fig2)
 ```
+
+
+*based on revised query: any vital status, not just deceased*
 
 
 Number with Vital Status, by Site
@@ -379,3 +380,17 @@ fig6 <- ggplot(tumor.by.site, aes(x=site, y=result, fill=key))
 style.dodge(fig6)
 ```
 
+exclude prior cancer diagnoses #235
+===================================
+
+@@ > 4 months
+
+Exclusion criteria and missing information
+==========================================
+
+ - for age
+   - age known to be >= 18
+   - age not known to be < 18
+ - is this sex criterion
+   - known to be female
+   - not known to be not female
