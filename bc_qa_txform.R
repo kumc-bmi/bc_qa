@@ -298,7 +298,9 @@ check.demographics <- function(tumor.site,
 
   # "Breast Cancer Cohort Characterization — Survey Sample" report
   # also requies EMR sex = female
-  survey.sample$female <- grepl('2', tumor.site$sex)
+  survey.sample$female <- NA
+  survey.sample$female[grepl('[^2]', tumor.site$sex)] <- FALSE
+  survey.sample$female[grepl('2', tumor.site$sex)] <- TRUE
 
   survey.sample
 }
@@ -414,6 +416,9 @@ reduce.logical <- function(data) {
   x <- rep(TRUE, nrow(data))
   for (col in names(data)) {
     y <- data[, col]
+    if (!is.logical(y)) {
+      next
+    }
     y[is.na(y)] <- TRUE
     x <- x & y
   }
