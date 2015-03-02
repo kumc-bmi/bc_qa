@@ -127,14 +127,27 @@ with.var.pat <- function(data, conn, path, name,
 
 
 v.enc <- function(conn, var.path, var.name) {
-  per.enc <- dbGetPreparedQuery(
-    conn, sql.fact("f.encounter_num, f.patient_num, strftime('%Y-%m-%d', f.start_date) start_date"),
-    bind.data=data.frame(path=var.path))
+  # In some files, we seem to get milliseconds since the unixepoch.
+  t.expr <- "f.start_date"
+  tryCatch(check.date(conn, t.expr), error=function(e) {
+    t.expr <<- "datetime(f.start_date / 1000, 'unixepoch')"
+    check.date(conn, t.expr)
+  })
+
+  q <- sql.fact(paste("f.encounter_num, f.patient_num, strftime('%Y-%m-%d', ", t.expr, ") start_date"))
+  per.enc <- dbGetPreparedQuery(conn, q, bind.data=data.frame(path=var.path))
   per.enc$start_date <- tryCatch(as.Date(per.enc$start_date), error=function(e) NA)
   
   names(per.enc)[3] <- var.name
   per.enc
 }
+
+check.date <- function(conn, t.expr) {
+  x <- dbGetQuery(conn, paste("select ", t.expr, " t from observation_fact f limit 10"))
+  as.Date(x$t)
+}
+
+
 
 v.enc.text <- function(conn, var.path, var.name) {
   per.enc <- dbGetPreparedQuery(conn, sql.fact("f.encounter_num, f.patient_num, f.tval_char"),
@@ -269,10 +282,11 @@ check.demographics <- function(tumor.site,
   survey.sample$not.dead[survey.sample$patient_num %in% pat.dead] <- FALSE
 
   survey.sample$age <- NA
-  survey.sample$adult <- FALSE
+  survey.sample$adult <- NA
   if (any(!is.na(tumor.site$date.birth))) {
     survey.sample$age <- age.in.years(tumor.site$date.birth)
-    survey.sample$adult <- survey.sample$age >= adult.age.min
+    survey.sample$adult[survey.sample$age < adult.age.min] <- FALSE
+    survey.sample$adult[survey.sample$age >= adult.age.min] <- TRUE
   }
 
   # "Breast Cancer Cohort Characterization — Survey Sample" report
@@ -337,7 +351,6 @@ excl.pat.morph <- function(tumor.site,
   if (any(!is.na(t$morphology))) {
     t$other <- ifelse(is.na(t$morphology), NA,
                       ifelse(grepl(morph, t$morphology, fixed=TRUE), 0, 1))
-    message('@@excl.pat.morph', format(table(t$other)))
     ok <- aggregate(other ~ patient_num, data=t, max)
     # table(ok$other)    
   } else {
