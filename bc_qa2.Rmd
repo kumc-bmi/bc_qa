@@ -95,12 +95,13 @@ bcterm$fixes <- read.csv(textConnection(
 \\Demographics\\Vital Status\\,\\i2b2\\Demographics\\Vital Status\\,MCW ...
 \\Demographics\\Language\\,\\i2b2\\Demographics\\Language\\,MCW ...
 \\i2b2\\i2b2\\,\\i2b2\\,undo MCW patch for other sites
-\\02 Demographic\\,\\S:2 Demographic\\, MCW NAACCR
 \\i2b2\\Abridged\\Demographics,\\i2b2\\naaccr\\S:2 Demographic,Abridged
 \\I2B2\\Cancer Cases\\0,\\i2b2\\naaccr\\S:,UMN capitalization and section markup
 \\I2B2\\Cancer Cases\\1,\\i2b2\\naaccr\\S:1,UMN
 \\I2B2\\Cancer Cases\\SEER Site Summary,\\i2b2\\naaccr\\SEER Site,UMN
 \\I2B2\\Demographics,\\i2b2\\Demographics,UMN
+\\01 Cancer Identification\\,\\S:1 Cancer Identification\\, MCW NAACCR
+\\02 Demographic\\,\\S:2 Demographic\\, MCW NAACCR
 Type and Behav ICD-O-3,Type&Behav ICD-O-3,i2b2 ampersand-in-XML work-arounds
 Type/Behav ICD-O-3,Type&Behav ICD-O-3,ampersand
 '))
@@ -108,6 +109,12 @@ Type/Behav ICD-O-3,Type&Behav ICD-O-3,ampersand
 
 ```{r}
 bcterm$fixes
+
+library(RSQLite)
+conn <- dbConnect(SQLite(), dbname=':memory:')
+dbGetQuery(conn, paste("select", patch.umn('?')),
+           bind.data='\\I2B2\\Cancer Cases\\02 Demographic\\0220 Sex\\')
+
 ```
 
 ## Inclusion Criteria: Recent Breast Cancer Diagnosis
