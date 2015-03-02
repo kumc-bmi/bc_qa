@@ -142,7 +142,7 @@ sql.qterm.table <- (
 bad.concept.path <-
   dbGetQuery(conn.site,
              paste(
-             "select dataset.* from (
+             "select dataset.*, ", patch.umn('dataset.concept_path'), " patched_path from (
              select count(distinct patient_num) qty_pat,
                      count(distinct encounter_num) qty_enc,
                      count(*) qty_fact,
