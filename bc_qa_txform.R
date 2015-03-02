@@ -127,12 +127,7 @@ with.var.pat <- function(data, conn, path, name,
 
 
 v.enc <- function(conn, var.path, var.name) {
-  # In some files, we seem to get milliseconds since the unixepoch.
-  t.expr <- "f.start_date"
-  tryCatch(check.date(conn, t.expr), error=function(e) {
-    t.expr <<- "datetime(f.start_date / 1000, 'unixepoch')"
-    check.date(conn, t.expr)
-  })
+  t.expr <- date.style(conn)
 
   q <- sql.fact(paste("f.encounter_num, f.patient_num, strftime('%Y-%m-%d', ", t.expr, ") start_date"))
   per.enc <- dbGetPreparedQuery(conn, q, bind.data=data.frame(path=var.path))
@@ -142,9 +137,21 @@ v.enc <- function(conn, var.path, var.name) {
   per.enc
 }
 
-check.date <- function(conn, t.expr) {
-  x <- dbGetQuery(conn, paste("select ", t.expr, " t from observation_fact f limit 10"))
-  as.Date(x$t)
+# In some files, we seem to get milliseconds since the unixepoch.
+# We got dates in a provider_id field in one file, but they don't make sense.
+date.style <- function(conn,
+                       styles=c("f.start_date",
+                                # "f.provider_id",
+                                "datetime(f.start_date / 1000, 'unixepoch')")) {
+  for (t.expr in styles) {
+    x <- dbGetQuery(conn, paste("select ", t.expr, " t from observation_fact f limit 10"))
+    # message('date style ', t.expr, ' got: ', x)
+    if (!is.null(tryCatch(as.Date(x$t), error=function(e) NULL))) {
+      return(t.expr)
+    }
+  }
+
+  stop("cannot parse dates")
 }
 
 
