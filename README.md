@@ -29,7 +29,7 @@ In future iterations, sites are encouraged to run this report on their own befor
     - Visit [bc_qa downloads][dl] and get a zip file, or
     - clone the https://bitbucket.org/gpcnetwork/bc_qa repository
  2. Build *Query Terms and Exclusion Criteria* article
-    1. In RStudio, `install.packages(pkgs=c('RSQLite', 'ggplot2', 'reshape', 'VennDiagram', 'xtable'))`
+    1. In RStudio, `install.packages(pkgs=c('RSQLite', 'ggplot2', 'reshape', 'xtable'))`
     2. Open `bc_qa2.Rmd` and Knit HTML
        - output: `bc_terms_results.RData`
  3. Build *QA for SITE* article
