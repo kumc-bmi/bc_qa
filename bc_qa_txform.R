@@ -79,7 +79,7 @@ mk.agg.by.pat <- function(
   code.pattern='[^\\\\]+(?=\\\\$)',
   sep='|') {
   function(conn, var.path, var.name) {
-    pat.obs <- dbGetQuery(conn, sql.fact("f.patient_num, cd.concept_path"),
+    pat.obs <- dbGetPreparedQuery(conn, sql.fact("f.patient_num, cd.concept_path"),
                           bind.data=data.frame(path=var.path))
     if (nrow(pat.obs) > 0) {
       # pick out part matched by code.pattern
