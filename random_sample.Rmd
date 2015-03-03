@@ -1,0 +1,30 @@
+Breast Cancer Sample for @@SITE
+===============================
+
+### Eligible Cohort from `r SITE`
+
+```{r echo=FALSE, results='asis'}
+ht(
+  survey.sample.size[c('cum.pat'), ]
+  )
+```
+
+```{r}
+pat.per.site <- 200
+```
+
+Random sample of `r pat.per.site` remaining patients after exclusions:
+
+```{r}
+survey.sample$all.criteria <- reduce.logical(survey.sample)
+
+pat.not.excl <- subset(
+  unique(subset(tumor.site, select=c(patient_num, sex, vital, language, date.birth))),
+  patient_num %in% survey.sample$patient_num[survey.sample$all.criteria])
+
+pat.not.excl$age <- round(age.in.years(pat.not.excl$date.birth))
+
+pat.200 <- subset(pat.not.excl, patient_num %in% sample(pat.not.excl$patient_num, pat.per.site))
+
+pat.200
+```
