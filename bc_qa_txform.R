@@ -74,6 +74,14 @@ v.enc.nominal <- function(conn, var.path, var.name,
   unique(per.enc)
 }
 
+drop.dup.enc <- function(x, label) {
+  oops <- x$encounter_num[duplicated(x$encounter_num)]
+  if (length(oops) > 0) {
+    message('dropping ', length(oops), ' encounters with multiple values for ', label)
+  }
+  x[!x$encounter_num %in% oops, ]
+}
+
 mk.agg.by.pat <- function(
   # default: extract last path segment
   code.pattern='[^\\\\]+(?=\\\\$)',
@@ -107,8 +115,9 @@ mk.agg.by.pat <- function(
 
 with.var <- function(data, conn, path, name,
                      get.var=v.enc.nominal) {
-  out <- merge(data, get.var(conn, path, name),
-        all.x=TRUE)  # don't prune on join mis-matches
+  y <- drop.dup.enc(get.var(conn, path, name), name)
+  out <- merge(data, y,
+               all.x=TRUE)  # don't prune on join mis-matches
   stopifnot(nrow(out) == nrow(data))
   out[order(out$patient_num, out$encounter_num), ]
 }
@@ -139,8 +148,11 @@ v.enc <- function(conn, var.path, var.name) {
 
 # In some files, we seem to get milliseconds since the unixepoch.
 # We got dates in a provider_id field in one file, but they don't make sense.
+# One file uses YYYYMMDD in nval_num, which is at least as reasonable as what HERON does.
 date.style <- function(conn,
-                       styles=c("f.start_date",
+                       styles=c(
+                         "substr(f.nval_num, 1, 4) || '-' || substr(f.nval_num, 5, 2) || '-' || substr(f.nval_num, 7, 2)",
+                         "f.start_date",
                                 # "f.provider_id",
                                 "datetime(f.start_date / 1000, 'unixepoch')")) {
   for (t.expr in styles) {
@@ -301,7 +313,9 @@ check.demographics <- function(tumor.site,
   survey.sample$female <- NA
   survey.sample$female[grepl('[^2]', tumor.site$sex)] <- FALSE
   survey.sample$female[grepl('2', tumor.site$sex)] <- TRUE
-
+  # non-HERON style, but pretty obvious
+  survey.sample$female[grepl('female', tumor.site$sex)] <- TRUE
+  
   survey.sample
 }
 
