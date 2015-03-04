@@ -594,18 +594,6 @@ ht(
   )
 ```
 
-#### Double-check Stage Distribution
-
-```{r}
-not.excl <- reduce.logical(survey.sample)
-length(which(not.excl))
-if (any(not.excl)) {
-  tumor.ok <- tumor.site[not.excl, ]
-  addmargins(table(tumor.ok$stage.ss, useNA="ifany"))
-  }
-```
-
-
 ### Issues for `r SITE`
 
 Mis-aligned query terms: `r nrow(v.bad)`.
