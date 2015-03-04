@@ -597,8 +597,7 @@ ht(
 #### Double-check Stage Distribution
 
 ```{r}
-crit <- subset(survey.sample, select=-c(encounter_num, patient_num, age, span))
-not.excl <- reduce.logical(crit)
+not.excl <- reduce.logical(survey.sample)
 length(which(not.excl))
 if (any(not.excl)) {
   tumor.ok <- tumor.site[not.excl, ]

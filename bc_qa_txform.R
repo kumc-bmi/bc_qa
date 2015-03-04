@@ -158,7 +158,7 @@ date.style <- function(conn,
   for (t.expr in styles) {
     x <- dbGetQuery(conn, paste("select ", t.expr, " t from observation_fact f limit 10"))
     # message('date style ', t.expr, ' got: ', x)
-    if (!is.null(tryCatch(as.Date(x$t), error=function(e) NULL))) {
+    if (all(!is.na(x$t)) && !is.null(tryCatch(as.Date(x$t), error=function(e) NULL))) {
       return(t.expr)
     }
   }
@@ -347,7 +347,6 @@ check.cases <- function(tumor.site,
   survey.sample$stage.ok <- TRUE  # absent info, assume OK
   survey.sample$stage.ok[tumor.site$stage == 'IV'] <- FALSE
 
-  survey.sample$span <- tryCatch(dx.span(tumor.site)$span, error=function(e) NA)
   survey.sample$no.prior <- grepl('0[01]', tumor.site$seq.no)
   survey.sample <- merge(survey.sample, check.demographics(tumor.site),
                          all.x=TRUE)
@@ -356,7 +355,6 @@ check.cases <- function(tumor.site,
                   'bc.dx', 'recent.dx',
                   # In order from "Breast Cancer Cohort Characterization -- Survey Sample" report
                   'female',
-                  'span',
                   'no.prior',
                   'confirmed',
                   'other.morph',
@@ -396,7 +394,7 @@ solid.histology <- function(codes) {
 count.cases <- function(survey.sample) {
   # encounter_num, patient_num, age are not (logical) criteria
   crit.names <- names(subset(survey.sample,
-                             select=-c(encounter_num, patient_num, age, span)))
+                             select=-c(encounter_num, patient_num, age)))
   
   survey.sample.size <- as.data.frame(array(NA, c(4, length(crit.names) + 1)))
   names(survey.sample.size) <- c('total', crit.names)
