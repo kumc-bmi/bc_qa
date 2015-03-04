@@ -334,8 +334,7 @@ check.cases <- function(tumor.site,
   survey.sample$stage.ok[tumor.site$stage == 'IV'] <- FALSE
 
   survey.sample$span <- tryCatch(dx.span(tumor.site)$span, error=function(e) NA)
-  month <- as.difftime(30, units="days")
-  survey.sample$no.prior <- grepl('0[01]', tumor.site$seq.no) | survey.sample$span < 4 * month
+  survey.sample$no.prior <- grepl('0[01]', tumor.site$seq.no)
   survey.sample <- merge(survey.sample, check.demographics(tumor.site),
                          all.x=TRUE)
   survey.sample[order(survey.sample$patient_num, survey.sample$encounter_num),
