@@ -182,6 +182,8 @@ In [Share Thoughts on Breast Cancer Study][18Dec] GPC Global Webinar, December 1
 >  - Known to be deceased
 >  - Non-English speaking (for now)
 
+*The BC team agreed 4 Mar to leave the Non-English constraint aside at this stage.*
+
 Note that stage (AJCC, SS2000) and Vital Status are combinations of terms:
 
 ```{r echo=FALSE}
@@ -203,8 +205,7 @@ t.excl <- rbind(
   merge(
     data.frame(
       concept_path=c(
-        '\\i2b2\\Demographics\\Vital Status\\',
-        '\\i2b2\\Demographics\\Language\\'
+        '\\i2b2\\Demographics\\Vital Status\\'
         )),
     term204,
     sort=FALSE
@@ -221,12 +222,12 @@ row.names(t.excl) <- c('sex', 'date.birth',
                        'confirm', 'morphology',
                        'stage.ss', 'stage.ajcc',
                        'seq.no',
-                       'vital.ehr', 'language',
+                       'vital.ehr',
                        'stage', 'vital')
 
 bcterm$excl.all <- t.excl
 
-bcterm$excl <- t.excl[c('sex', 'date.birth', 'vital', 'language',
+bcterm$excl <- t.excl[c('sex', 'date.birth', 'vital',
                         'confirm', 'morphology', 'stage', 'seq.no'), ]
 ```
 
