@@ -417,7 +417,7 @@ Those codes aren't very satisfying; let's put the names back on:
 # Find names of concepts whose paths end with tail
 enum.name <- function(x) {
   names <- lapply(x, function(code) {
-    name_char <- dbGetQuery(conn.site,
+    name_char <- dbGetPreparedQuery(conn.site,
                "select distinct name_char
                from concept_dimension
                where concept_path like ('%' || :code || '%')",
