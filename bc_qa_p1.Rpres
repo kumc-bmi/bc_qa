@@ -149,6 +149,13 @@ style.dodge <- function(fig) {
 style.dodge(fig1) + labs(title="Data from all participating sites (Yay!)")
 ```
 
+Data From All Sites
+===================
+
+```{r fetch, echo=FALSE, results='asis'}
+ht(fetch$dataset[, c('site', 'name', 'record_id', 'timestamp')])
+```
+
 
 Exclusion Criteria
 =====================
@@ -380,11 +387,6 @@ fig6 <- ggplot(tumor.by.site, aes(x=site, y=result, fill=key))
 style.dodge(fig6)
 ```
 
-exclude prior cancer diagnoses #235
-===================================
-
-@@ > 4 months
-
 Exclusion criteria and missing information
 ==========================================
 
@@ -394,3 +396,38 @@ Exclusion criteria and missing information
  - is this sex criterion
    - known to be female
    - not known to be not female
+   
+Changes Since Feb 24
+====================
+
+  73. refine path patching and incorporate updated BC query  [ef4729d3ff90/bc_qa]
+  77. a few more patches for MCW  [5d851387cd05/bc_qa]
+  83. SHARED: Breast Cancer Survey: Breast Cancer EMR Vital status [2-24-2015] by TM  [c1db46135346/bc_qa]
+  88. - Fall back to primary site; don't rely entirely on SEER Site = Breast  [38a0eff0cab3/bc_qa]
+  90. sequence number detail plot; cohort summary rownames  [94247428f737/bc_qa]
+  91. more cohort plots; do not exclude based on NA  [5f67474aaa62/bc_qa]
+  96. re-work path tail extraction; fixes cardinality of vital status, morphology  [c5d13a563b31/bc_qa]
+  97. normalize case when excluding non-english  [26326aa1c3ad/bc_qa]
+  
+Changes (cont)
+==============
+
+  101. - use "Breast Cancer Cohort Characterization — Survey Sample" order  [9e5dafdcb380/bc_qa]
+  103. reproduced cohort size after exclusions after flipping stage NA logic  [cbed62357e15/bc_qa]
+  104. fetch submission timestamps  [ce072d6441f3/bc_qa]
+  105. separate overly-precise query terms from mis-aligned query terms  [8e757183b2df/bc_qa]
+  106. undo hack to use Primary Site to look for date of diagnosis  [1cf120567e2e/bc_qa]
+  107. - handle multiple language values per patient  [7889d1373e52/bc_qa]
+  111. if all tumors are within 4 months of each other, no.prior = TRUE  [e59f9f7aeb97/bc_qa]
+
+Changes (cont)
+==============
+
+  112. - solid tumor histologies only  [f618c0d35c34/bc_qa]
+  116. - for date of diagnosis, fall back to date of primary site, seer  [2354d903692e/bc_qa]
+  117. - handle milliseconds-since-the-epoch dates  [ae55d71d8c4e/bc_qa]
+  118. show patched path for mis-aligned facts  [a3bf195be989/bc_qa]
+  122. default sex criterion to NA; do not require reduce.local() caller to filter non-logicals  [4006abae27f0/bc_qa]
+  124. - pick random sample per site  [0628f16207e4/bc_qa]
+  128. the 4 month option for no.prior was based on a misunderstanding  [49f3994857e0/bc_qa]
+  130. - drop.dup.enc deals with >1 value per tumor where 1 is expected  [9c01e4b505db/bc_qa]
