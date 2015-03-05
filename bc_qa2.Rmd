@@ -54,6 +54,11 @@ term204$naaccr.code <- ifelse(
   substr(term204$name, 1, 4),
     # No.
   NA)
+
+# Prune initial \i2b2\ segment, which gives no information.
+# See also ticket #201
+# https://informatics.gpcnetwork.org/trac/Project/ticket/201
+term204$concept_path <- gsub('^\\\\i2b2', '', term204$concept_path)
 ```
 
 *We seem to have `r length(which(duplicated(term204$concept_path)))` duplicates:*
@@ -93,23 +98,17 @@ We can accomodate analagous paths to a certain extent; e.g. the "Abridged" NAACC
 ```{r echo=FALSE}
 bcterm$fixes <- read.csv(textConnection(
     'from,to,note
-\\naaccr\\,\\i2b2\\naaccr\\,MCW terms have a different prefix
-\\Demographics\\Vital Status\\,\\i2b2\\Demographics\\Vital Status\\,MCW ...
-\\Demographics\\Language\\,\\i2b2\\Demographics\\Language\\,MCW ...
-\\i2b2\\i2b2\\,\\i2b2\\,undo MCW patch for other sites
-\\I2B2\\i2b2\\,\\i2b2\\,undo MCW patch for other sites
-\\i2b2\\Abridged\\Demographics,\\i2b2\\naaccr\\S:2 Demographic,Abridged
-\\I2B2\\Cancer Cases\\0,\\i2b2\\naaccr\\S:,UMN capitalization and section markup
-\\I2B2\\Cancer Cases\\1,\\i2b2\\naaccr\\S:1,UMN
-\\I2B2\\Cancer Cases\\SEER Site Summary,\\i2b2\\naaccr\\SEER Site,UMN
-\\I2B2\\Demographics,\\i2b2\\Demographics,UMN
-\\01 Cancer Identification\\,\\S:1 Cancer Identification\\, MCW NAACCR
-\\02 Demographic\\,\\S:2 Demographic\\, MCW NAACCR
+\\i2b2,,initial segment matching is tedious
+\\I2B2,,initial segment matching is tedious
+\\Abridged\\Demographics,\\naaccr\\S:2 Demographic,Abridged
+\\Cancer Cases\\0,\\naaccr\\S:,UMN capitalization and section markup
+\\Cancer Cases\\1,\\naaccr\\S:1,UMN
+\\Cancer Cases\\SEER Site Summary,\\naaccr\\SEER Site,UMN
 Type and Behav ICD-O-3,Type&Behav ICD-O-3,i2b2 ampersand-in-XML work-arounds
 Type/Behav ICD-O-3,Type&Behav ICD-O-3,ampersand
-0560 Hospital Sequence Number,0560 Sequence Number--Hospital,UMN
+S:1 Cancer Identification\\0560 Hospital Sequence Number,S:6 Hospital-Specific\\0560 Sequence Number--Hospital,UMN
 2869 CS Site-Specific Factor 15,2869 CS Site-Specific Factor15,UMN
-2876 CS Site-Specific Factor 22,2876 CS Site-Specific Factor22,UMN
+2876 CS Site-Specific Factor 22,2876 CS Site-Specific Factor22,UMN             
 2877 CS Site-Specific Factor 23,2877 CS Site-Specific Factor23,UMN
 '))
 ```
@@ -118,19 +117,21 @@ Type/Behav ICD-O-3,Type&Behav ICD-O-3,ampersand
 bcterm$fixes
 
 library(RSQLite)
-test.patch <- function(before, after) {
+test.patch <- function(before, expected) {
   conn <- dbConnect(SQLite(), dbname=':memory:')
   actual <- dbGetPreparedQuery(conn, paste("select", patch.umn(':x'), 'patched_path'),
                                bind.data=data.frame(x=before))
-  message("@@>", actual)
-  message("@@?", after)
-  stopifnot(actual == after)
+  #message("expected:", expected)
+  #message("  actual:", actual)
+  stopifnot(actual == expected)
   }
 
 test.patch('\\I2B2\\Cancer Cases\\02 Demographic\\0220 Sex\\',
-           '\\i2b2\\naaccr\\S:2 Demographic\\0220 Sex\\')
+           '\\naaccr\\S:2 Demographic\\0220 Sex\\')
 test.patch('\\I2B2\\Cancer Cases\\11 Stage/Prognostic Factors\\2876 CS Site-Specific Factor 22\\',
-           '\\i2b2\\naaccr\\S:11 Stage/Prognostic Factors\\2869 CS Site-Specific Factor 22\\')
+           '\\naaccr\\S:11 Stage/Prognostic Factors\\2876 CS Site-Specific Factor22\\')
+test.patch('\\Cancer Cases\\01 Cancer Identification\\0560 Hospital Sequence Number\\',
+           '\\naaccr\\S:6 Hospital-Specific\\0560 Sequence Number--Hospital\\')
 
 
 ```
@@ -224,7 +225,7 @@ t.excl <- rbind(
   merge(
     data.frame(
       concept_path=c(
-        '\\i2b2\\Demographics\\Vital Status\\'
+        '\\Demographics\\Vital Status\\'
         )),
     term204,
     sort=FALSE

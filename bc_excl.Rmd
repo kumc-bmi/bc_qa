@@ -83,6 +83,11 @@ select id, name, concept_path, ", patch.umn('concept_path'), " patched_path
 from variable
 "))
 
+# Prune initial \i2b2\ segment, which gives no information.
+# See also ticket #201
+# https://informatics.gpcnetwork.org/trac/Project/ticket/201
+v$concept_path <- gsub('^\\\\(i2b2|I2B2)', '', v$concept_path)
+
 # Some sites have really long variable names
 v$name <- substr(v$name, 1, 40)
 v.ok <- v$patched_path %in% bcterm$term204$concept_path
@@ -164,6 +169,8 @@ bad.concept.path <-
 
 ```{r echo=FALSE, results='asis'}
 if (nrow(bad.concept.path) > 0) {
+  bad.concept.path$concept_path <- gsub('^\\\\(i2b2|I2B2)', '', bad.concept.path$concept_path)
+  bad.concept.path$patched_path[bad.concept.path$patched_path == bad.concept.path$concept_path] <- NA
   ht(
     bad.concept.path,
     caption="Facts not aligned to Query Terms"
