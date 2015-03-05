@@ -23,9 +23,11 @@ Query sent to GPC sites 12/23/2014:
 
 As noted in [ticket:204][204], the query is on babel, where a few revisions have been incorporated. 
 `bc-variable.csv` is derived from the XML query definition via `qterms.py`.
+*Then 0560 Sequence Number–Hospital was added to `bc-variable.csv` manually, since it's not part
+of the ontology on babel. See [185][]*
 
 [204]: https://informatics.gpcnetwork.org/trac/Project/ticket/204
-
+[185]: https://informatics.gpcnetwork.org/trac/Project/ticket/185
 
 
 ```{r}
@@ -95,6 +97,7 @@ bcterm$fixes <- read.csv(textConnection(
 \\Demographics\\Vital Status\\,\\i2b2\\Demographics\\Vital Status\\,MCW ...
 \\Demographics\\Language\\,\\i2b2\\Demographics\\Language\\,MCW ...
 \\i2b2\\i2b2\\,\\i2b2\\,undo MCW patch for other sites
+\\I2B2\\i2b2\\,\\i2b2\\,undo MCW patch for other sites
 \\i2b2\\Abridged\\Demographics,\\i2b2\\naaccr\\S:2 Demographic,Abridged
 \\I2B2\\Cancer Cases\\0,\\i2b2\\naaccr\\S:,UMN capitalization and section markup
 \\I2B2\\Cancer Cases\\1,\\i2b2\\naaccr\\S:1,UMN
@@ -104,6 +107,10 @@ bcterm$fixes <- read.csv(textConnection(
 \\02 Demographic\\,\\S:2 Demographic\\, MCW NAACCR
 Type and Behav ICD-O-3,Type&Behav ICD-O-3,i2b2 ampersand-in-XML work-arounds
 Type/Behav ICD-O-3,Type&Behav ICD-O-3,ampersand
+0560 Hospital Sequence Number,0560 Sequence Number--Hospital,UMN
+2869 CS Site-Specific Factor 15,2869 CS Site-Specific Factor15,UMN
+2876 CS Site-Specific Factor 22,2876 CS Site-Specific Factor22,UMN
+2877 CS Site-Specific Factor 23,2877 CS Site-Specific Factor23,UMN
 '))
 ```
 
@@ -111,9 +118,20 @@ Type/Behav ICD-O-3,Type&Behav ICD-O-3,ampersand
 bcterm$fixes
 
 library(RSQLite)
-conn <- dbConnect(SQLite(), dbname=':memory:')
-dbGetQuery(conn, paste("select", patch.umn('?')),
-           bind.data='\\I2B2\\Cancer Cases\\02 Demographic\\0220 Sex\\')
+test.patch <- function(before, after) {
+  conn <- dbConnect(SQLite(), dbname=':memory:')
+  actual <- dbGetPreparedQuery(conn, paste("select", patch.umn(':x'), 'patched_path'),
+                               bind.data=data.frame(x=before))
+  message("@@>", actual)
+  message("@@?", after)
+  stopifnot(actual == after)
+  }
+
+test.patch('\\I2B2\\Cancer Cases\\02 Demographic\\0220 Sex\\',
+           '\\i2b2\\naaccr\\S:2 Demographic\\0220 Sex\\')
+test.patch('\\I2B2\\Cancer Cases\\11 Stage/Prognostic Factors\\2876 CS Site-Specific Factor 22\\',
+           '\\i2b2\\naaccr\\S:11 Stage/Prognostic Factors\\2869 CS Site-Specific Factor 22\\')
+
 
 ```
 
@@ -184,7 +202,7 @@ In [Share Thoughts on Breast Cancer Study][18Dec] GPC Global Webinar, December 1
 
 *The BC team agreed 4 Mar to leave the Non-English constraint aside at this stage.*
 
-Note that stage (AJCC, SS2000) and Vital Status are combinations of terms:
+Note that stage (AJCC, SS2000), sequence number, and Vital Status are combinations of terms:
 
 ```{r echo=FALSE}
 t.excl <- rbind(
@@ -197,7 +215,8 @@ t.excl <- rbind(
                     '0521',
                     '3020',
                     '3430',
-                    '0380')),
+                    '0380',
+                    '0560')),
     term204,
     sort=FALSE
     )[, c('naaccr.code', 'name', 'concept_path')],
@@ -213,7 +232,7 @@ t.excl <- rbind(
   
   data.frame(
     naaccr.code=NA,
-    name=c('stage', 'vital'),
+    name=c('stage', 'seq.no', 'vital'),
     concept_path=NA)
   )
 
@@ -221,9 +240,9 @@ row.names(t.excl) <- c('sex', 'date.birth',
                        'vital.tr',
                        'confirm', 'morphology',
                        'stage.ss', 'stage.ajcc',
-                       'seq.no',
+                       'seq.no.380', 'seq.no.560',
                        'vital.ehr',
-                       'stage', 'vital')
+                       'stage', 'seq.no', 'vital')
 
 bcterm$excl.all <- t.excl
 

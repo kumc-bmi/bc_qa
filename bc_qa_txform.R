@@ -245,7 +245,7 @@ bc.exclusions <- function(conn.site,
 
   # Per-encounter nominal variables
   for (v in rownames(var.excl)) {
-    if (! v %in% c('stage', 'vital.ehr', 'language', 'date.birth'))
+    if (! v %in% c('stage', 'seq.no', 'vital.ehr', 'language', 'date.birth'))
     tumor.site <- with.var(tumor.site, conn.site, var.excl[v,]$concept_path, v)
   }
   tumor.site$stage.ajcc[grepl("999|900|888", tumor.site$stage.ajcc)] <- NA
@@ -253,6 +253,7 @@ bc.exclusions <- function(conn.site,
   
   # Combinations
   tumor.site$vital <- vital.combine(tumor.site)
+  tumor.site$seq.no <- seq.no.combine(tumor.site)
   tumor.site$stage <- stage.combine(tumor.site)
 
   # message('TODO: check bc.exclusions(conn.site) against tumor.site')
@@ -330,6 +331,10 @@ stage.combine <- function(tumor.site) {
                            grepl('^0', tumor.site$stage.ss), '0',
                          ifelse(is.na(tumor.site$stage.ajcc) & is.na(tumor.site$stage.ss), NA, '?'))))
   )
+}
+
+seq.no.combine <- function(tumor.site) {
+  ifelse(!is.na(tumor.site$seq.no.380), tumor.site$seq.no.380, tumor.site$seq.no.560)
 }
 
 check.cases <- function(tumor.site,

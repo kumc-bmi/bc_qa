@@ -517,7 +517,10 @@ as.data.frame(addmargins(prop))
 
 ```{r}
 tumor.site <- with.var(tumor.site, conn.site,
-                       bcterm$excl['seq.no', 'concept_path'], 'seq.no')
+                       bcterm$excl.all['seq.no.380', 'concept_path'], 'seq.no.380')
+tumor.site <- with.var(tumor.site, conn.site,
+                       bcterm$excl.all['seq.no.560', 'concept_path'], 'seq.no.560')
+tumor.site$seq.no <- seq.no.combine(tumor.site)
 head(tumor.site[, c(-3:-12)])
 
 
@@ -525,13 +528,6 @@ prop <- enum.sum(tumor.site, 'seq.no')
 pie(prop)
 as.data.frame(addmargins(prop))
 
-recent.threshold <- subset(bcterm$dx.date, txform == 'deid' & label == 'expanded')$start
-
-x <- dx.span(tumor.site[tumor.site$date.dx >= recent.threshold, ])
-x <- x[x$Freq > 1, ]
-months.apart <- as.integer(as.numeric(x$span) / 30)
-hist(months.apart, breaks=-1:max(months.apart, na.rm=TRUE))
-as.data.frame(addmargins(table(months.apart)))
 ```
 
 ## Eligible Cohort
