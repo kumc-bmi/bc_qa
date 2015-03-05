@@ -20,7 +20,7 @@ def main(argv,
              'tmcmahon@kumc.edu',
              'e-chrischilles@uiowa.edu',
              'bradley-mcdowell@uiowa.edu',
-             'tshirema@kumc.edu',
+             'tshireman@kumc.edu',
              'vleonardo@kumc.edu']):
   body = argv[1]
   cli_sites = argv[2:]
