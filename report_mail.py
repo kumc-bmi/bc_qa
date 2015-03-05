@@ -15,10 +15,13 @@ def main(argv,
          terms_article='bc_qa2.html',
          df='data-files',
          sender='dconnolly@kumc.edu',
-         cc=['%s@kumc.edu' % who
-             for who in ['dconnolly',
-                         'tmcmahon',
-                         'vleonardo']]):
+         cc=['dconnolly@kumc.edu',
+             'jhe@kumc.edu',
+             'tmcmahon@kumc.edu',
+             'e-chrischilles@uiowa.edu',
+             'bradley-mcdowell@uiowa.edu',
+             'tshirema@kumc.edu',
+             'vleonardo@kumc.edu']):
   body = argv[1]
   cli_sites = argv[2:]
   for item in csv.DictReader(open(report_mail)):
