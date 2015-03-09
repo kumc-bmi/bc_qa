@@ -21,15 +21,15 @@ def main(argv,
              'bradley-mcdowell@uiowa.edu',
              'tshireman@kumc.edu',
              'vleonardo@kumc.edu']):
-  body = argv[1]
-  cli_sites = argv[2:]
-  for item in csv.DictReader(open(report_mail)):
-    site = item['site']
+    body = argv[1]
+    cli_sites = argv[2:]
+    for item in csv.DictReader(open(report_mail)):
+        site = item['site']
 
     if cli_sites and site not in cli_sites:
-      continue
+        continue
     if 'test' in body:
-      cc = []
+        cc = []
 
     subject = 'Breast Cancer QA report for %s' % site
     report = '%s/report-%s.html' % (df, site)
@@ -54,12 +54,12 @@ def send_mail(send_from, send_to, subject, text, files=None,
 
     for f in files or []:
         with open(f, "rb") as fil:
-          attachment = MIMEText(
-            fil.read(),
-            '.html' if f.endswith('.html') else 'plain')
-          attachment['Content-Disposition'] = (
-            'attachment; filename="%s"' % basename(f))
-          msg.attach(attachment)
+            attachment = MIMEText(
+                fil.read(),
+                '.html' if f.endswith('.html') else 'plain')
+            attachment['Content-Disposition'] = (
+                'attachment; filename="%s"' % basename(f))
+            msg.attach(attachment)
 
     print "sending to", send_to, subject
     smtp = smtplib.SMTP(server)
@@ -68,4 +68,4 @@ def send_mail(send_from, send_to, subject, text, files=None,
 
 
 if __name__ == '__main__':
-  main(sys.argv)
+    main(sys.argv)
