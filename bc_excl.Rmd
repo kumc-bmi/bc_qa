@@ -363,7 +363,7 @@ as.data.frame(addmargins(prop))
 lang.agg <- mk.agg.by.pat()
 
 tumor.site <- with.var.pat(tumor.site, conn.site,
-                           bcterm$excl.all['language', 'concept_path'],
+                           grep('[Ll]anguage', bcterm$term204$concept_path, value=TRUE),
                            'language',
                            get.var=lang.agg)
 

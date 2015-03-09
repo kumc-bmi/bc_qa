@@ -202,7 +202,8 @@ age.in.years <- function(date.birth, as.of=Sys.Date()) {
 bc.exclusions <- function(conn.site,
                           var.incl=bcterm$t.incl,
                           var.excl=bcterm$excl.all,
-                          dx.path=subset(bcterm$term204, grepl('0390 Date of Diagnosis', concept_path))$concept_path) {
+                          lang.path=grep('[Ll]anguage', bcterm$term204$concept_path, value=TRUE),
+                          dx.path=grep('0390 Date of Diagnosis', bcterm$term204$concept_path, value=TRUE)) {
   # KLUDGE to get *something* from completely mis-aligned sites.
   tumor.site <- dbGetQuery(conn.site,
                            "select distinct encounter_num, patient_num
@@ -232,12 +233,18 @@ bc.exclusions <- function(conn.site,
   
   # Per-patient variables
   # Handle multiple vital status per patient (e.g. dead per EHR, dead per SSA)
-  for (v in c('vital.ehr', 'language')) {
+  term.pat <- data.frame(
+    concept_path=c(var.excl['vital.ehr', 'concept_path'], lang.path),
+    name=c('vital.ehr', 'language'),
+    row.names='name'
+    )
+  for (v in rownames(term.pat)) {
+    message('@@', term.pat[v, 'concept_path'])
     tumor.site <- with.var.pat(tumor.site, conn.site,
-                               var.excl[v, 'concept_path'], v,
+                               term.pat[v, 'concept_path'], v,
                                get.var=mk.agg.by.pat())
   }
-
+  
   # Inclusion criteria
   for (v in rownames(var.incl)) {
       tumor.site <- with.var(tumor.site, conn.site, var.incl[v,]$concept_path, v)
