@@ -1,30 +1,126 @@
-Breast Cancer Sample for @@SITE
-===============================
+# Breast Cancer - Sample Cohort
+```{r echo=FALSE}
+# ============================================================================
+###  Generates file of randomized eligible patients
+# Input Dataframes
+#   dataset       - desriptors for site's input dataset 
+#   tumor.site    - pt tumors listing
+#   survey.sample - complex frame created by bc_excl
 
-### Eligible Cohort from `r SITE`
+# Considerations (Potential Enhancements)
+#    - Writes file to current working directly
+#    - Rates are embedded and could be loaded from an external file
+# 
+# Note - script was modeled after 'multitumor.rmd'
+# ============================================================================
+```
 
-```{r echo=FALSE, results='asis'}
+```{r Initialize settings and libraries, echo=FALSE}
+# library(ggplot2)
+library(reshape)
+
+# Don't wrap so much
+options(width=300)
+opts_chunk$set(echo=FALSE)
+```
+
+
+```{r Load BC functions}
+source('bc_qa_txform.R')  
+```
+
+### Loading query terms
+
+```{r}
+load("bc_terms_results.RData")
+```
+
+### Loading 'dataset' object
+
+```{r}
+input <- source('dataset.R')$value
+
+conn.site <- input$conn
+
+# about has $record_id $site name, $bc_db filename, $content_length, submitter $name, $issues_other
+dataset <- input$about
+```
+
+### Loading patient data for `r dataset$site`
+
+```{r}
+tumor.site <- bc.exclusions(conn.site)
+survey.sample <- check.cases(tumor.site)
+survey.sample.size <- count.cases(survey.sample)
+```
+
+### Load specified sampling rates for GPC sites 
+
+```{r echo=TRUE}
+# Rates as of 4-Mar BC Conf Call
+site.sample.rates <-       data.frame(site="KUMC",    rate=0.4)
+site.sample.rates <- rbind(site.sample.rates, 
+                           data.frame(site="MCRF",    rate=0.75))
+site.sample.rates <- rbind(site.sample.rates, 
+                           data.frame(site="MCW",     rate=0.75))
+site.sample.rates <- rbind(site.sample.rates, 
+                           data.frame(site="UIOWA",   rate=100))
+site.sample.rates <- rbind(site.sample.rates, 
+                           data.frame(site="UMN",     rate=0.55))
+site.sample.rates <- rbind(site.sample.rates, 
+                           data.frame(site="UNMC",    rate=100))
+site.sample.rates <- rbind(site.sample.rates, 
+                           data.frame(site="UTHSCSA", rate=100))
+site.sample.rates <- rbind(site.sample.rates, 
+                           data.frame(site="UTSW",    rate=0.90))
+site.sample.rates <- rbind(site.sample.rates, 
+                           data.frame(site="WISC",    rate=0.8))
+v.site.rate <- site.sample.rates$rate[site.sample.rates$site==dataset$site]
+site.sample.rates
+```
+
+```{r echo=TRUE,results='asis'}
 ht(
   survey.sample.size[c('cum.pat'), ]
   )
 ```
 
-```{r}
-pat.per.site <- 200
+
+```{r Identify eligible patients (pts not excluded),echo=TRUE}
+survey.sample$all.criteria <- reduce.logical(survey.sample)
+v.eligible.pt.cnt <- nrow(survey.sample[survey.sample$all.criteria,])
 ```
 
-Random sample of `r pat.per.site` remaining patients after exclusions:
+### Eligible patients identified after exclusions: `r v.eligible.pt.cnt`
 
-```{r}
-survey.sample$all.criteria <- reduce.logical(survey.sample)
+### Applying a sampling rate of `r paste0(v.site.rate*100,"%")` for `r dataset$site`
 
-pat.not.excl <- subset(
-  unique(subset(tumor.site, select=c(patient_num, sex, vital, language, date.birth))),
-  patient_num %in% survey.sample$patient_num[survey.sample$all.criteria])
+``` {r}
+# Get add'l fields for 'not excluded' pts
+pat.not.excl <- 
+  subset(unique(subset(tumor.site, 
+                       select=c(patient_num,sex,vital,language,date.birth))),
+                       patient_num %in% survey.sample$patient_num[survey.sample$all.criteria])
 
 pat.not.excl$age <- round(age.in.years(pat.not.excl$date.birth))
 
-pat.200 <- subset(pat.not.excl, patient_num %in% sample(pat.not.excl$patient_num, pat.per.site))
-
-pat.200
+randomized.pts.selected <- subset(pat.not.excl, 
+                                  patient_num %in% sample(pat.not.excl$patient_num,                             
+                                                          size=v.eligible.pt.cnt*v.site.rate))
+head(randomized.pts.selected)
+nrow(randomized.pts.selected)
 ```
+
+### Number of eligible patients randomly selected: `r nrow(randomized.pts.selected)`
+
+```{r Send patient sampling to CSV file}
+# Writes to current working directory
+v.sample.fullfilename <- paste0("~/GPC-Development/bc-pt-samples/",
+                                dataset$site,"-",
+                                dataset$record_id,"-BC-deid-pt-sample.csv")
+write.csv(randomized.pts.selected, 
+          file = paste0(v.sample.fullfilename),
+          row.names=FALSE)
+```
+
+### Patient sample: `r v.sample.fullfilename`
