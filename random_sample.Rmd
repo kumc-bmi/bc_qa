@@ -98,8 +98,7 @@ nrow(randomized.pts.selected)
 ### Number of eligible patients randomly selected: `r nrow(randomized.pts.selected)`
 
 ```{r Send patient sampling to CSV file}
-# Writes to current working directory
-v.sample.fullfilename <- paste0("~/GPC-Development/bc-pt-samples/",
+v.sample.fullfilename <- paste0(fetch$dataDir,
                                 dataset$site,"-",
                                 dataset$record_id,"-BC-deid-pt-sample.csv")
 write.csv(randomized.pts.selected, 
