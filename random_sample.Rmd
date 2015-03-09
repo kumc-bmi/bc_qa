@@ -89,7 +89,7 @@ ht(
 ```
 
 
-### Eligible patients identified after exclusions
+### Applying exclusion criteria
 
 ```{r Identify eligible patients (pts not excluded),echo=TRUE}
 # Get add'l fields for 'not excluded' pts
@@ -116,7 +116,7 @@ head(randomized.pts.selected)
 nrow(randomized.pts.selected)
 ```
 
-### Number of eligible patients randomly selected: `r nrow(randomized.pts.selected)`
+### Number of eligible patients randomly selected: `r nrow(randomized.pts.selected)` out of `r v.eligible.pt.cnt`
 
 ```{r Send patient sampling to CSV file}
 v.sample.fullfilename <- file.path(fetch$dataDir,
