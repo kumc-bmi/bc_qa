@@ -239,7 +239,6 @@ bc.exclusions <- function(conn.site,
     row.names='name'
     )
   for (v in rownames(term.pat)) {
-    message('@@', term.pat[v, 'concept_path'])
     tumor.site <- with.var.pat(tumor.site, conn.site,
                                term.pat[v, 'concept_path'], v,
                                get.var=mk.agg.by.pat())
