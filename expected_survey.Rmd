@@ -1,0 +1,110 @@
+GPC Breast Cancer Site Sampling
+===============================
+
+Generated `r Sys.Date()`
+
+```{r libraries}
+library(RSQLite)
+```
+
+```{r previous results}
+load("bc_fetch_results.RData")
+load("bc_terms_results.RData")
+```
+
+```{r shared transformation routines}
+source('bc_qa_txform.R')
+```
+
+
+Data From All Sites
+===================
+
+```{r fetch, echo=FALSE, results='asis'}
+ht(fetch$dataset[, c('site', 'name', 'record_id', 'timestamp')])
+```
+
+
+```{r site.code, echo=FALSE}
+site.code <- factor(fetch$dataset$site)
+```
+
+```{r rbind.sites, echo=FALSE}
+
+rbind.sites <- function(df.site) {
+  df <- NULL
+  for (ix in 1:length(site.code)) {
+    site <- site.code[ix]
+
+    x <- df.site[[site]]
+
+    if (nrow(x) > 0) {
+      x$site <- site
+      names <- names(x)
+      if (is.null(df)) {
+        df <- x
+        } else {
+          df <- rbind(df, x)
+          }
+      }
+    }
+  df
+}
+```
+
+```{r tumor.all, echo=FALSE}
+site.tumor.data <- lapply(site.code, function(s) {
+  message('working on site: ', s)
+  bc.exclusions(fetch$site.data(s))
+  })
+names(site.tumor.data) <- levels(site.code)
+
+tumor.all <- rbind.sites(site.tumor.data)
+```
+
+Number in “Final” Survey-Eligible Cohort by Site
+================================================
+
+
+```{r echo=FALSE}
+site.survey.sample <- lapply(site.code, function(s) {
+  message('working on site: ', s)
+  check.cases(site.tumor.data[[s]])
+  })
+names(site.survey.sample) <- levels(site.code)
+site.survey.sample.size <- lapply(site.code, function(s) {
+  count.cases(site.survey.sample[[s]])
+  })
+names(site.survey.sample.size) <- levels(site.code)
+```
+
+
+
+Eligibility Criteria by Site: Cumulative
+========================================
+
+```{r echo=FALSE}
+x <- do.call(rbind.data.frame,
+              lapply(site.code, function(site) {
+                qty <- site.survey.sample.size[[site]][c('ind.pat', 'cum.pat'), ]
+                columns <- factor(row.names(qty),
+                                  levels=c('ind.pat', 'cum.pat'),
+                                  labels=c('ind.pat', 'cum.pat'),
+                                  ordered=TRUE)
+                qty <- cbind(columns, site, qty)
+                qty
+                }))
+x <- x[order(x$columns, x$site), ]
+row.names(x) <- 1:nrow(x)
+``` 
+
+```{r echo=FALSE, results='asis'}
+ht(x[x$columns == 'cum.pat', ])
+```
+
+Eligibility Criteria by Site: Summary
+=====================================
+
+```{r echo=FALSE, results='asis'}
+ht(x[x$columns == 'cum.pat', c('total', 'recent.dx', 'adult')])
+```
