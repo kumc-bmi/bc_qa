@@ -52,6 +52,8 @@ dataset <- input$about
 tumor.site <- bc.exclusions(conn.site)
 survey.sample <- check.cases(tumor.site)
 survey.sample.size <- count.cases(survey.sample)
+
+survey.sample$all.criteria <- reduce.logical(survey.sample)
 ```
 
 ### Load specified sampling rates for GPC sites 
@@ -70,16 +72,9 @@ ht(
 ```
 
 
+### Eligible patients identified after exclusions
+
 ```{r Identify eligible patients (pts not excluded),echo=TRUE}
-survey.sample$all.criteria <- reduce.logical(survey.sample)
-v.eligible.pt.cnt <- nrow(survey.sample[survey.sample$all.criteria,])
-```
-
-### Eligible patients identified after exclusions: `r v.eligible.pt.cnt`
-
-### Applying a sampling rate of `r paste0(v.site.rate*100,"%")` for `r dataset$site`
-
-``` {r}
 # Get add'l fields for 'not excluded' pts
 pat.not.excl <- 
   subset(unique(subset(tumor.site, 
@@ -88,6 +83,15 @@ pat.not.excl <-
 
 pat.not.excl$age <- round(age.in.years(pat.not.excl$date.birth))
 
+v.eligible.pt.cnt <- nrow(pat.not.excl)
+v.eligible.pt.cnt
+
+head(pat.not.excl)
+```
+
+### Applying a sampling rate of `r paste0(v.site.rate*100,"%")` for `r dataset$site`
+
+```{r}
 randomized.pts.selected <- subset(pat.not.excl, 
                                   patient_num %in% sample(pat.not.excl$patient_num,                             
                                                           size=v.eligible.pt.cnt*v.site.rate))
