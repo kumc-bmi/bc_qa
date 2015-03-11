@@ -109,5 +109,7 @@ fetch$site.data <- site.data
 Save our work for use in later articles:
 
 ```{r}
+write.csv(fetch$dataset[, c('record_id', 'timestamp', 'site', 'name', 'bc_db')],
+          file='dataset.csv')
 save(fetch, file="bc_fetch_results.RData")
 ```

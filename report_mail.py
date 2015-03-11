@@ -15,6 +15,7 @@ Options:
                      [default: bc_site_email.txt]
   --server=HOST      SMTP server [default: smtp.kumc.edu]
   --debug            debug logging
+  --dry-run -n       Just log; don't send any mail.
 '''
 
 from email.mime.multipart import MIMEMultipart
@@ -30,7 +31,8 @@ from docopt import docopt
 log = logging.getLogger(__name__)
 
 
-def main(cli):
+def main(access):
+    cli = access()
     body = cli['BODY']  # TODO: move to stdin
 
     attachments = [(cli[role], cli.openrd(role).read())
@@ -78,9 +80,8 @@ class CLI(object):
         self.site_mailer = partial(self.site_mailer_, SMTP, environ)
 
     @classmethod
-    def make(cls, argv, environ, openrd, SMTP):
-        arguments = docopt(__doc__, argv[1:])
-        return cls(environ, openrd, arguments, SMTP)
+    def parse(cls, argv):
+        return docopt(__doc__, argv[1:])
 
     def openrd_(self, openrd, arguments, which):
         return openrd(arguments[which])
@@ -136,22 +137,33 @@ class CLI(object):
         return self.lookup(n)
 
 
+class DrySMTP(object):
+    def __init__(self, server):
+        self.sent = []
+
+    def sendmail(self, sender, to, msg):
+        self.sent.append((sender, to, msg))
+
+    def close(self):
+        pass
+
+
 if __name__ == '__main__':
-    def _configure_logging():
-        from sys import argv
-
-        level = logging.DEBUG if '--debug' in argv else logging.INFO
-        logging.basicConfig(level=level)
-
     def _trusted_main():
         from __builtin__ import open as openf
         from sys import argv
         from os import environ
         import smtplib
 
-        main(CLI.make(argv, environ,
-                      openrd=lambda n: openf(n),
-                      SMTP=smtplib.SMTP))
+        def access():
+            opt = CLI.parse(argv)
+            level = logging.DEBUG if opt['--debug'] else logging.INFO
+            logging.basicConfig(level=level)
+            return CLI(environ,
+                       openrd=lambda n: openf(n),
+                       arguments=opt,
+                       SMTP=DrySMTP if opt['--dry-run'] else smtplib.SMTP)
 
-    _configure_logging()
+        main(access)
+
     _trusted_main()
