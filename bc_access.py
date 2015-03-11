@@ -22,6 +22,7 @@ Options
 '''
 
 from functools import partial
+from posixpath import splitext, join as path_join
 from sqlite3 import DatabaseError
 import csv
 import logging
@@ -34,7 +35,8 @@ from version import version
 log = logging.getLogger(__name__)
 
 
-def main(argv, stdin, stdout, mkTeam, projectAccess, checkDB, unzip):
+def main(argv, stdin, stdout, mkTeam, projectAccess,
+         checkDB, unzip, gunzip):
     usage = __doc__.split('\n..')[0]
     cli = docopt(usage, argv=argv[1:], version=version)
     log.debug('cli args: %s', cli)
@@ -50,7 +52,7 @@ def main(argv, stdin, stdout, mkTeam, projectAccess, checkDB, unzip):
         export_csv(details, stdout)
     elif cli['normalize']:
         details = list(csv.DictReader(stdin))
-        normalize(checkDB, unzip, details)
+        normalize(checkDB, unzip, gunzip, details)
         export_csv(details, stdout)
 
 
@@ -136,7 +138,7 @@ def mkProjectAccess(mkProject, env):
     return projectAccess
 
 
-def normalize(checkDB, unzip, details):
+def normalize(checkDB, unzip, gunzip, details):
     def dberr(f):
         try:
             qty = checkDB(f)
@@ -156,9 +158,12 @@ def normalize(checkDB, unzip, details):
             detail['patient_qty'] = qty
             continue
         try:
-            f = unzip(f)
-        except IOError as ex:
-            log.error('cannot unzip %s', f, exc_info=ex)
+            if f.endswith('.gz'):
+                f = gunzip(f)
+            else:
+                f = unzip(f)
+        except Exception as ex:
+            log.error('cannot uncompress %s', f, exc_info=ex)
         qty, ex = dberr(f)
         if ex is None:
             detail['bc_db'] = f
@@ -181,15 +186,15 @@ def mkCheckDB(exists, connect,
     return checkDB
 
 
-def mkUnzip(mkZipFileRd, splitext, path_join, rename, rmdir):
+def mkUnzip(mkZipFileRd, rename, rmdir):
 
     def unzip(f):
         z = mkZipFileRd(f)
         names = z.namelist()
         if len(names) != 1:
-            raise IOError('more than one item in zip file; which to use? %s' % names)
+            raise IOError('more than one item in zip file; which to use? %s' % names)  # noqa
         member = names[0]
-        log.info('extracting %s from %s', f, member)
+        log.info('extracting %s from %s', member, f)
         # x.zip    -> x    -> x
         # x.db.zip -> x.db -> x
         destdir = splitext(splitext(f)[0])[0]
@@ -202,6 +207,17 @@ def mkUnzip(mkZipFileRd, splitext, path_join, rename, rmdir):
     return unzip
 
 
+def mkGunzip(mkGzipFile, openwr):
+    def gunzip(f):
+        dest = splitext(f)[0]
+        log.info('extracting %s from %s', dest, f)
+        gz = mkGzipFile(f)
+        with openwr(dest) as out:
+            out.write(gz.read())
+        return dest
+    return gunzip
+
+
 if __name__ == '__main__':
     def _configure_logging():
         from sys import argv
@@ -211,23 +227,25 @@ if __name__ == '__main__':
         log.setLevel(level)
 
     def _privileged_main():
-        from __builtin__ import open
-        from sys import argv, stdin, stdout
+        from __builtin__ import open as openf
+        from gzip import GzipFile
         from os import environ, rename, rmdir
-        from os.path import exists, splitext, join
-        from zipfile import ZipFile
+        from os.path import exists
         from sqlite3 import connect
+        from sys import argv, stdin, stdout
+        from zipfile import ZipFile
         import warnings
 
         from redcap import Project
 
-        mkTeam = DevTeams.maker(lambda n: open(n, 'w'))
+        mkTeam = DevTeams.maker(lambda n: openf(n, 'w'))
         with warnings.catch_warnings():
             warnings.filterwarnings("once")
             main(argv, stdin, stdout,
                  checkDB=mkCheckDB(exists, connect),
                  unzip=mkUnzip(lambda f: ZipFile(f, 'r'),
-                               splitext, join, rename, rmdir),
+                               rename, rmdir),
+                 gunzip=mkGunzip(GzipFile, lambda n: openf(n, 'wb')),
                  mkTeam=mkTeam,
                  projectAccess=mkProjectAccess(Project, environ))
 
