@@ -58,27 +58,30 @@ survey.sample$all.criteria <- reduce.logical(survey.sample)
 
 ### Load specified sampling rates for GPC sites 
 
-```{r echo=TRUE}
+```{r}
 # Rates as of 4-Mar BC Conf Call
-site.sample.rates <-       data.frame(site="KUMC",    rate=0.4)
-site.sample.rates <- rbind(site.sample.rates, 
-                           data.frame(site="MCRF",    rate=0.75))
-site.sample.rates <- rbind(site.sample.rates, 
-                           data.frame(site="MCW",     rate=0.75))
-site.sample.rates <- rbind(site.sample.rates, 
-                           data.frame(site="UIOWA",   rate=100))
-site.sample.rates <- rbind(site.sample.rates, 
-                           data.frame(site="UMN",     rate=0.55))
-site.sample.rates <- rbind(site.sample.rates, 
-                           data.frame(site="UNMC",    rate=100))
-site.sample.rates <- rbind(site.sample.rates, 
-                           data.frame(site="UTHSCSA", rate=100))
-site.sample.rates <- rbind(site.sample.rates, 
-                           data.frame(site="UTSW",    rate=0.90))
-site.sample.rates <- rbind(site.sample.rates, 
-                           data.frame(site="WISC",    rate=0.8))
-v.site.rate <- site.sample.rates$rate[site.sample.rates$site==dataset$site]
-site.sample.rates
+# site.sample.rates <-       data.frame(site="KUMC",    rate=0.4)
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="MCRF",    rate=0.75))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="MCW",     rate=0.75))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="UIOWA",   rate=100))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="UMN",     rate=0.55))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="UNMC",    rate=100))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="UTHSCSA", rate=100))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="UTSW",    rate=0.90))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="WISC",    rate=0.8))
+# v.site.rate <- site.sample.rates$rate[site.sample.rates$site==dataset$site]
+# site.sample.rates
+
+# Set max sample size per 11-Mar BC conference call
+v.sample.max <- 234
 
 ```
 
@@ -106,12 +109,11 @@ v.eligible.pt.cnt
 head(pat.not.excl)
 ```
 
-### Applying a sampling rate of `r paste0(v.site.rate*100,"%")` for `r dataset$site`
-
 ```{r}
+v.sample.size <- min(v.eligible.pt.cnt,v.sample.max)
 randomized.pts.selected <- subset(pat.not.excl, 
                                   patient_num %in% sample(pat.not.excl$patient_num,                             
-                                                          size=v.eligible.pt.cnt*v.site.rate))
+                                                          size=v.sample.size))
 head(randomized.pts.selected)
 nrow(randomized.pts.selected)
 ```
