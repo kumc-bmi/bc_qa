@@ -146,7 +146,7 @@ style.dodge <- function(fig) {
     geom_text(data=fig$data, aes(label = result),
                   position = position_dodge(width=0.9), angle=45)
   }
-style.dodge(fig1) + labs(title="Data from all participating sites (Yay!)")
+style.dodge(fig1) + labs(title="Data from all 9 participating sites")
 ```
 
 Data From All Sites
