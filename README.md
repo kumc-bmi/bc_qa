@@ -1,6 +1,9 @@
 GPC Breast Cancer Data Quality Reporting
 ========================================
 
+based on earlier work by Jianghua He, with contributions from Bradley
+McDowell and Theresa Shireman, under the direction of Elizabeth Chrischilles
+
 by Dan Connolly, with Russ Waitman, Tamara McMahon, and Vince Leonardo  
 [Medical Informatics Division, Univeristy of Kansas Medical Center][MI]
 
