@@ -29,10 +29,41 @@ opts_chunk$set(echo=FALSE)
 source('bc_qa_txform.R')  
 ```
 
+### Load specified sampling rates for GPC sites 
+
+```{r}
+# Rates as of 4-Mar BC Conf Call
+# site.sample.rates <-       data.frame(site="KUMC",    rate=0.4)
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="MCRF",    rate=0.75))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="MCW",     rate=0.75))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="UIOWA",   rate=100))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="UMN",     rate=0.55))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="UNMC",    rate=100))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="UTHSCSA", rate=100))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="UTSW",    rate=0.90))
+# site.sample.rates <- rbind(site.sample.rates, 
+#                            data.frame(site="WISC",    rate=0.8))
+# v.site.rate <- site.sample.rates$rate[site.sample.rates$site==dataset$site]
+# site.sample.rates
+
+# Set max sample size per 11-Mar BC conference call
+#    - (target sample size - UTHSCSA ) / number of sites remaining
+v.sample.max <- round((2000 - 129) / 8) 
+message(paste0('Sample rate per site: ',v.sample.max))
+```
+
 ### Loading query terms
 
 ```{r}
 load("bc_terms_results.RData")
+message('Number of terms loaded: ',nrow(bcterm$term204))
 ```
 
 ### Loading 'dataset' object
@@ -44,6 +75,9 @@ conn.site <- input$conn
 
 # about has $record_id $site name, $bc_db filename, $content_length, submitter $name, $issues_other
 dataset <- input$about
+
+message('Dataset identified: ',dataset$site)
+
 ```
 
 ### Loading patient data for `r dataset$site`
@@ -56,23 +90,15 @@ survey.sample.size <- count.cases(survey.sample)
 survey.sample$all.criteria <- reduce.logical(survey.sample)
 ```
 
-### Load specified sampling rates for GPC sites 
 
-```{r echo=TRUE}
-site.sample.rates <- data.frame(site=c("KUMC","MCRF","MCW","UIOWA","UMN","UNMC","UTHSCSA","UTSW","WISC"),
-                                rate=c(.5,.9,.9,.7,.5,.9,.9,.9,.9))
-v.site.rate <- site.sample.rates$rate[site.sample.rates$site==dataset$site]
-site.sample.rates
-```
-
-```{r echo=TRUE,results='asis'}
+```{r results='asis'}
 ht(
   survey.sample.size[c('cum.pat'), ]
   )
 ```
 
 
-### Eligible patients identified after exclusions
+### Applying exclusion criteria
 
 ```{r Identify eligible patients (pts not excluded),echo=TRUE}
 # Get add'l fields for 'not excluded' pts
@@ -84,30 +110,27 @@ pat.not.excl <-
 pat.not.excl$age <- round(age.in.years(pat.not.excl$date.birth))
 
 v.eligible.pt.cnt <- nrow(pat.not.excl)
-v.eligible.pt.cnt
+message('Number of eligible patients: ',v.eligible.pt.cnt)
 
 head(pat.not.excl)
 ```
 
-### Applying a sampling rate of `r paste0(v.site.rate*100,"%")` for `r dataset$site`
-
-```{r}
+```{r echo=TRUE}
+v.sample.size <- min(v.eligible.pt.cnt,v.sample.max)
 randomized.pts.selected <- subset(pat.not.excl, 
                                   patient_num %in% sample(pat.not.excl$patient_num,                             
-                                                          size=v.eligible.pt.cnt*v.site.rate))
+                                                          size=v.sample.size))
+message('Number of pts randomly selected: ',nrow(randomized.pts.selected))
 head(randomized.pts.selected)
-nrow(randomized.pts.selected)
 ```
 
-### Number of eligible patients randomly selected: `r nrow(randomized.pts.selected)`
+### Number of eligible patients randomly selected: `r nrow(randomized.pts.selected)` out of `r v.eligible.pt.cnt`
 
 ```{r Send patient sampling to CSV file}
-v.sample.fullfilename <- file.path(fetch$dataDir,
-                                   paste0(dataset$site,"-",
-                                          dataset$record_id,"-BC-deid-pt-sample.csv"))
+message(paste('Output directory: ',fetch$dataDir))
+v.sample.filename <- paste0(dataset$site,"-",dataset$record_id,"-BC-deid-pt-sample.csv")
 write.csv(randomized.pts.selected, 
-          file = paste0(v.sample.fullfilename),
+          file = file.path(fetch$dataDir,'/',v.sample.filename),
           row.names=FALSE)
+message('Patient sample: ',v.sample.filename)
 ```
-
-### Patient sample: `r v.sample.fullfilename`
