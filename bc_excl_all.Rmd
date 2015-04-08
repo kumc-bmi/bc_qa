@@ -1,141 +1,91 @@
-Breast Cancer QA: Exclusion Criteria from All Sites
-===================================================
+Breast Cancer QA: Summary for All Sites
+=======================================
 
-*Transformation and access utilities:*
+Generated `r Sys.Date()`
 
-```{r}
+```{r libraries}
+library(RSQLite)
+```
+
+```{r previous results}
+load("bc_fetch_results.RData")
+load("bc_terms_results.RData")
+```
+
+```{r shared transformation routines}
 source('bc_qa_txform.R')
 ```
 
 
-```{r echo=FALSE}
-# Don't wrap so much
-options(width=300) 
+Summary of Submissions
+======================
+
+```{r fetch, echo=FALSE, results='asis'}
+ht(fetch$dataset[, c('site', 'name', 'record_id', 'timestamp')])
 ```
 
 
-Let's summarize exclusion criteria for the current data sets:
+Collect Exclusion Criteria Data Elements from Each Site
+=======================================================
 
-*Restore work saved from earlier sections.*
-
-```{r}
-load("bc_data_excl.RData")
+```{r site.code}
+site.code <- factor(fetch$dataset$site)
 ```
 
-```{r}
-current[c('record_id', 'site', 'name', 'filename')]
-```
+```{r rbind.sites}
+# move to bc_qa_txform.R?
 
+rbind.sites <- function(df.site) {
+  df <- NULL
+  for (ix in 1:length(site.code)) {
+    site <- site.code[ix]
 
-The framework looks like this:
+    x <- df.site[[site]]
 
-```{r}
-stats.empty <- function() {
-  empty <- rep(0, nrow(var.excl) + 1)
-  df <- data.frame(lapply(current$site, function(x) empty))
-  names(df) <- current$site
-  row.names(df) <- c('BC DX', row.names(var.excl))
+    if (nrow(x) > 0) {
+      x$site <- site
+      names <- names(x)
+      if (is.null(df)) {
+        df <- x
+        } else {
+          df <- rbind(df, x)
+          }
+      }
+    }
   df
 }
-
-stats.empty()
 ```
 
-Our data set has one row per case (tumor) and columns for encounter number, patient number, and our exclusion criteria. We're counting the number of distinct patient numbers where the some value of the exclusion criterion is provided in the data set.
-
-
-```{r}
-pat.with <- function(df, col) {
-  ok.cases <- !is.na(df[[col]])
-  length(unique(df$patient_num[ok.cases]))
-}
-```
-
-Now let's crunch the data:
-
-```{r}
-excl.sites <- function(df) {
-  for (ix in 1:nrow(current)) {
-    site <- current$site[ix]
-    message('working on site: ', ix, ' ', site)
-    tumor.site <- bc.exclusions(site.data(site, dataDir, current))
-    stats <- lapply(row.names(var.excl), function(n) pat.with(tumor.site, n))
-    stats <- c(length(unique(tumor.site$patient_num)), stats)
-    x <- unlist(stats)
-    df[, site] <- x
-  }
-  df
-}
-
-stats <- excl.sites(stats.empty())
-stats
-```
-
-For comparison with Vince's work, we can look at it the other way:
-
-```{r}
-stats.by.site <- t(stats)
-stats.by.site <- stats.by.site[order(row.names(stats.by.site)), ]
-stats.by.site
-```
-
-
-## Appendix: Query Terms
-
-
-The query was sent to GPC sites 12/23/2014:
-
-  - [GPC Honest Brokers: Time to run the breast cancer survey query][23dec]
-    - Tamara McMahon Tue Dec 23 16:17:23 CST 2014 
-
-[23dec]: http://listserv.kumc.edu/pipermail/gpc-honest-brokers/2014-December/000002.html
-
-cf. [ticket:204][204]
-
-[204]: https://informatics.gpcnetwork.org/trac/Project/ticket/204
-
-From a KUMC data file, we extracted the variable table in [bc-variable.csv][222b] on Feb 9 using:
-
-    sqlite3 -header -csv kumcBC.db 'select * from variable' >bc-variable.csv 
-
-[222b]:  https://informatics.gpcnetwork.org/trac/Project/attachment/ticket/222/bc-variable.csv
-
-*Note: R doubles backslashes when it displays strings.*
-
-```{r}
-var204 <- read.csv('bc-variable.csv',
-                   stringsAsFactors=FALSE)
-
-var204$name <- strip.counts(var204$name_char)
-var204 <- var204[, c('id', 'concept_path', 'name')]
-var204[, c('concept_path', 'name')]
+```{r tumor.all}
+site.tumor.data <- lapply(site.code, function(s) {
+  message('working on site: ', s)
+  bc.exclusions(fetch$site.data(s))
+  })
+names(site.tumor.data) <- levels(site.code)
 
 ```
 
-We seem to have some duplicates:
+Apply Exclusion Criteria
+========================
+
+
 ```{r}
-var204[duplicated(var204$concept_path), ]
-data.frame(
-  term.qty=nrow(var204),
-  term.uniq.qty=length(unique(var204$concept_path))
-  )
+site.survey.sample <- lapply(site.code, function(s) {
+  message('working on site: ', s)
+  check.cases(site.tumor.data[[s]])
+  })
+names(site.survey.sample) <- levels(site.code)
+site.survey.sample.size <- lapply(site.code, function(s) {
+  count.cases(site.survey.sample[[s]])
+  })
+
+names(site.survey.sample.size) <- levels(site.code)
+site.survey.sample.size
 ```
 
-The first 4 exclusion criteria are taken directly from those terms:
+Save for Later Sections
+=======================
 
 ```{r}
-var.excl[, c('name', 'concept_path')]
-```
-
-The other two are a combination of 2 staging terms and 3 vital status terms:
-```{r}
-terms.aux <- data.frame(
-  concept_path=c(
-    '\\i2b2\\naaccr\\S:11 Stage/Prognostic Factors\\3020 Derived SS2000\\',
-    '\\i2b2\\naaccr\\S:11 Stage/Prognostic Factors\\3430 Derived AJCC-7 Stage Grp\\',
-    '\\i2b2\\naaccr\\S:4 Follow-up/Recurrence/Death\\1760 Vital Status\\',
-    '\\i2b2\\Demographics\\Vital Status\\Deceased\\',
-    '\\i2b2\\Demographics\\Vital Status\\Deceased per SSA\\'),
-  name=c('stage.ss', 'stage.ajcc', 'vital.tr', 'deceased.ehr', 'deceased.ssa'))
-terms.aux
+save(site.survey.sample.size, file="bc_excl_all_results.RData")
 ```

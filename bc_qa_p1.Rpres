@@ -29,6 +29,8 @@ library(RSQLite)
 ```{r load_prev, echo=FALSE}
 load("bc_fetch_results.RData")
 load("bc_terms_results.RData")
+# site.survey.sample.size
+load("bc_excl_all_results.RData")
 ```
 
 Patients
@@ -40,39 +42,6 @@ site.code <- factor(fetch$dataset$site)
 current <- fetch$dataset  # anachronism
 ```
 
-
-```{r rbind.sites, echo=FALSE}
-
-rbind.sites <- function(df.site) {
-  df <- NULL
-  for (ix in 1:length(site.code)) {
-    site <- site.code[ix]
-
-    x <- df.site[[site]]
-
-    if (nrow(x) > 0) {
-      x$site <- site
-      names <- names(x)
-      if (is.null(df)) {
-        df <- x
-        } else {
-          df <- rbind(df, x)
-          }
-      }
-    }
-  df
-}
-```
-
-```{r tumor.all, echo=FALSE}
-site.tumor.data <- lapply(site.code, function(s) {
-  message('working on site: ', s)
-  bc.exclusions(fetch$site.data(s))
-  })
-names(site.tumor.data) <- levels(site.code)
-
-tumor.all <- rbind.sites(site.tumor.data)
-```
 
 ```{r patients.queries, echo=FALSE}
 query.site <- function(q, site) {
