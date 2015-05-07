@@ -8,10 +8,11 @@
 #   survey.sample - complex frame created by bc_excl
 
 # Considerations (Potential Enhancements)
-#    - Writes file to current working directly
+#    - Writes file to fetch$dataDir (~/GPC-Development/bc-data-files)
 #    - Rates are embedded and could be loaded from an external file
 # 
 # Note - script was modeled after 'multitumor.rmd'
+#
 # ============================================================================
 ```
 
@@ -116,12 +117,24 @@ head(pat.not.excl)
 ```
 
 ```{r echo=TRUE}
-v.sample.size <- min(v.eligible.pt.cnt,v.sample.max)
-randomized.pts.selected <- subset(pat.not.excl, 
-                                  patient_num %in% sample(pat.not.excl$patient_num,                             
-                                                          size=v.sample.size))
-message('Number of pts randomly selected: ',nrow(randomized.pts.selected))
-head(randomized.pts.selected)
+# v.sample.size <- min(v.eligible.pt.cnt,v.sample.max)
+#randomized.pts.selected <- subset(pat.not.excl, 
+#                                  patient_num %in% sample(pat.not.excl$patient_num,                             
+#                                                          size=v.sample.size))
+randomized.pts.selected <- pat.not.excl[sample(nrow(pat.not.excl)),]
+message('Number of pts randomly sampled: ',nrow(randomized.pts.selected))
+
+# Add row number
+randomized.pts.selected$row_number <- 1:dim(randomized.pts.selected)[1]
+randomized.pts.selected$redcap_record_id <- dataset$record_id
+randomized.pts.selected$redcap_timestamp <- dataset$timestamp
+randomized.pts.selected$randomized_timestamp <- Sys.time()
+final.site.survey.set <- randomized.pts.selected[,c("row_number",
+                                                    "patient_num",
+                                                    "redcap_record_id",
+                                                    "redcap_timestamp",
+                                                    "randomized_timestamp")]
+head(final.site.survey.set)
 ```
 
 ### Number of eligible patients randomly selected: `r nrow(randomized.pts.selected)` out of `r v.eligible.pt.cnt`
@@ -129,7 +142,7 @@ head(randomized.pts.selected)
 ```{r Send patient sampling to CSV file}
 message(paste('Output directory: ',fetch$dataDir))
 v.sample.filename <- paste0(dataset$site,"-",dataset$record_id,"-BC-deid-pt-sample.csv")
-write.csv(randomized.pts.selected, 
+write.csv(final.site.survey.set, 
           file = file.path(fetch$dataDir,'/',v.sample.filename),
           row.names=FALSE)
 message('Patient sample: ',v.sample.filename)
