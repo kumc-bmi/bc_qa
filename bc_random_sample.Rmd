@@ -110,6 +110,11 @@ pat.not.excl <-
 
 pat.not.excl$age <- round(age.in.years(pat.not.excl$date.birth))
 
+
+# Handles sites that return multiple rows
+# - MCRF and UIOWA can generate multiple rows
+pat.not.excl$temp_placeholder <- c("<>")  # Work-around unique naming
+pat.not.excl <- unique(pat.not.excl[,c("patient_num","temp_placeholder")])
 v.eligible.pt.cnt <- nrow(pat.not.excl)
 message('Number of eligible patients: ',v.eligible.pt.cnt)
 
@@ -137,7 +142,7 @@ final.site.survey.set <- randomized.pts.selected[,c("row_number",
 head(final.site.survey.set)
 ```
 
-### Number of eligible patients randomly selected: `r nrow(randomized.pts.selected)` out of `r v.eligible.pt.cnt`
+### Number of eligible patients randomly selected: `r nrow(final.site.survey.set)` out of `r v.eligible.pt.cnt`
 
 ```{r Send patient sampling to CSV file}
 message(paste('Output directory: ',fetch$dataDir))
