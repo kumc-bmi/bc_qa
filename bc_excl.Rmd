@@ -64,6 +64,7 @@ cat(dataset$issues_other)
 ```
 
 ```{r echo=FALSE, results='asis'}
+# Note - When running interactively, assign ht<- print
 ht(
   caption="Patients, Encounters, and Observations per Variable",
   builder.summary(conn.site)[, c('variable', 'pat_qty', 'enc_qty', 'fact_qty')]
@@ -307,6 +308,8 @@ if (any(!is.na(tumor.site$date.birth))) {
 }
 
 ```
+
+
 
 ### Vital Status
 
@@ -600,6 +603,88 @@ ht(
 ### Issues for `r SITE`
 
 Mis-aligned query terms: `r nrow(v.bad)`.
+
+
+## Analytic Dataset: Tumors, Descriptive Variables
+   - Collected variables that are not part of eligibility criteria
+
+### Receptor Status - ER 1 (CS SSF 1)
+
+```{r}
+#  tumor.site - transposed data frame (variables are spread laterally as columns)
+v.receptor.path <- grep('2880 CS Site-Specific Factor 1',bcterm$term204$concept_path,value=TRUE)
+tumor.site <- with.var(tumor.site, conn.site,
+                       v.receptor.path, 'er.csf.1')  # Adds new var to tumor.site
+head(tumor.site[, c("patient_num","encounter_num","er.csf.1")])  # Negative subscripts omit those elements
+                
+prop <- enum.sum(tumor.site, 'er.csf.1')  # Frequency of values
+pie(prop)
+as.data.frame(addmargins(prop))  # Displays values behind table                
+
+```
+
+### Receptor Status - PR 2 (CS SSF 2)
+
+```{r}
+v.receptor.path <- grep('2890 CS Site-Specific Factor 2',bcterm$term204$concept_path,value=TRUE)
+v.receptor.path
+tumor.site <- with.var(tumor.site, conn.site,
+                       v.receptor.path, 'pr.csf.2')
+head(tumor.site[, c("patient_num","encounter_num","pr.csf.2")])  # Negative subscripts omit those elements
+                
+prop <- enum.sum(tumor.site, 'pr.csf.2')  # Frequency of values
+pie(prop)
+as.data.frame(addmargins(prop))  # Displays values behind table          
+
+```
+
+### Receptor Status - HER2 (CS SSF 15)
+
+```{r}                       
+                       
+
+v.receptor.path <- grep('2869 CS Site-Specific Factor15',bcterm$term204$concept_path,value=TRUE)
+tumor.site <- with.var(tumor.site, conn.site,
+                       v.receptor.path, 'her2.csf.15')
+head(tumor.site[, c("patient_num","encounter_num","her2.csf.15")])  # Negative subscripts omit those elements
+                
+prop <- enum.sum(tumor.site, 'her2.csf.15')  # Frequency of values
+pie(prop)
+as.data.frame(addmargins(prop))  # Displays values behind table  
+
+```
+
+### Receptor Status - Multigene Signature Method (CS SSF 22)
+
+```{r}
+
+v.receptor.path <- grep('2876 CS Site-Specific Factor22',bcterm$term204$concept_path,value=TRUE)
+tumor.site <- with.var(tumor.site, conn.site,
+                       v.receptor.path, 'mgs.method.csf.22')  # multi-gene signature method
+head(tumor.site[, c("patient_num","encounter_num","mgs.method.csf.22")])  # Negative subscripts omit those elements
+                
+prop <- enum.sum(tumor.site, 'mgs.method.csf.22')  # Frequency of values
+pie(prop)
+as.data.frame(addmargins(prop))  # Displays values behind table     
+
+```
+
+### Receptor Status - Multigene Signature Score (CS SSF 23)
+
+```{r}
+
+v.receptor.path <- grep('2877 CS Site-Specific Factor23',bcterm$term204$concept_path,value=TRUE)
+tumor.site <- with.var(tumor.site, conn.site,
+                       v.receptor.path, 'mgs.score.csf.23')  # multi-gene signature method
+head(tumor.site[, c("patient_num","encounter_num","mgs.score.csf.23") ]) # Negative subscripts omit those elements
+                
+prop <- enum.sum(tumor.site, 'mgs.score.csf.23')  # Frequency of values
+pie(prop)
+as.data.frame(addmargins(prop))  # Displays values behind table 
+
+```
+
+
 
 Mis-aligned facts: `r if(nrow(bad.concept.path) > 0) { sum(bad.concept.path$qty_fact) } else { 0 }`.
 

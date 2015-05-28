@@ -8,12 +8,12 @@ library(RSQLite)
 ```
 
 ```{r previous results}
-load("bc_fetch_results.RData")
-load("bc_terms_results.RData")
+load("bc_fetch_results.RData")  # REDCap table listing of dataset file stats
+load("bc_terms_results.RData")  # i2b2 BCcohort query terms
 ```
 
 ```{r shared transformation routines}
-source('bc_qa_txform.R')
+source('bc_qa_txform.R')  # Library of stuff
 ```
 
 
@@ -29,11 +29,12 @@ Collect Exclusion Criteria Data Elements from Each Site
 =======================================================
 
 ```{r site.code}
-site.code <- factor(fetch$dataset$site)
+site.code <- factor(fetch$dataset$site)  # Provides factor of site code identifiers
 ```
 
 ```{r rbind.sites}
 # move to bc_qa_txform.R?
+# Produces dataframe which is 'union' of all site-specific datasets
 
 rbind.sites <- function(df.site) {
   df <- NULL
@@ -57,9 +58,10 @@ rbind.sites <- function(df.site) {
 ```
 
 ```{r tumor.all}
+# Produces a list of site-specific dataframes
 site.tumor.data <- lapply(site.code, function(s) {
   message('working on site: ', s)
-  bc.exclusions(fetch$site.data(s))
+  bc.exclusions(fetch$site.data(s))  # Produces site-specific results file
   })
 names(site.tumor.data) <- levels(site.code)
 
