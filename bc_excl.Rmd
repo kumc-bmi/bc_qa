@@ -604,6 +604,11 @@ ht(
 
 Mis-aligned query terms: `r nrow(v.bad)`.
 
+Mis-aligned facts: `r if(nrow(bad.concept.path) > 0) { sum(bad.concept.path$qty_fact) } else { 0 }`.
+
+```{r echo=FALSE}
+show.issues(tumor.site, bcterm$excl)
+```
 
 ## Analytic Dataset: Tumors, Descriptive Variables
    - Collected variables that are not part of eligibility criteria
@@ -640,8 +645,7 @@ as.data.frame(addmargins(prop))  # Displays values behind table
 
 ### Receptor Status - HER2 (CS SSF 15)
 
-```{r}                       
-                       
+```{r}                                            
 
 v.receptor.path <- grep('2869 CS Site-Specific Factor15',bcterm$term204$concept_path,value=TRUE)
 tumor.site <- with.var(tumor.site, conn.site,
@@ -684,10 +688,3 @@ as.data.frame(addmargins(prop))  # Displays values behind table
 
 ```
 
-
-
-Mis-aligned facts: `r if(nrow(bad.concept.path) > 0) { sum(bad.concept.path$qty_fact) } else { 0 }`.
-
-```{r echo=FALSE}
-show.issues(tumor.site, bcterm$excl)
-```

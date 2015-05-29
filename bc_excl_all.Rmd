@@ -35,6 +35,7 @@ site.code <- factor(fetch$dataset$site)  # Provides factor of site code identifi
 ```{r rbind.sites}
 # move to bc_qa_txform.R?
 # Produces dataframe which is 'union' of all site-specific datasets
+#  - Input: site.tumor.data (list of site-specific dataframes)
 
 rbind.sites <- function(df.site) {
   df <- NULL
@@ -58,9 +59,9 @@ rbind.sites <- function(df.site) {
 ```
 
 ```{r tumor.all}
-# Produces a list of site-specific dataframes
+# Produces a list of site-specific dataframes less exclusions
 site.tumor.data <- lapply(site.code, function(s) {
-  message('working on site: ', s)
+  message('Working on site: ', s)
   bc.exclusions(fetch$site.data(s))  # Produces site-specific results file
   })
 names(site.tumor.data) <- levels(site.code)
@@ -82,12 +83,112 @@ site.survey.sample.size <- lapply(site.code, function(s) {
   })
 
 names(site.survey.sample.size) <- levels(site.code)
-site.survey.sample.size
+site.survey.sample.size  # Summary stats of exclusion criteria
 ```
 
 Save for Later Sections
 =======================
 
 ```{r}
+# Summary stats for exclusion criteria
 save(site.survey.sample.size, file="bc_excl_all_results.RData")
+# Encounter-level TRUE/FALSE for exclusion criteria
+save(site.survey.sample, file="tmp_sitesurveysample.RData")
+# Source data
+save(site.tumor.data, file="tmp_sitetumordata.RData")
+```
+
+Data Review for Descriptive Variables
+=======================
+- All patient data submitted is reviewed 
+-- including patients excluded from the survey sample
+-- this is consistent w/ method used to review eligibility variables
+
+### Number of encounter rows by site
+
+```{r}
+bc.allsites.datamart <- rbind.sites(site.tumor.data)
+table(bc.allsites.datamart$site)
+```
+
+### Patient & Encounter Counts
+```{r}
+bad <- list("")
+bad$ttls <- setNames(aggregate(bc.allsites.datamart$patient_num,
+                               by=list(bc.allsites.datamart$site),
+                               function(x) length(unique(x))),
+                               c("Site","Pts"))
+tmp.ttls  <- setNames(aggregate(bc.allsites.datamart$encounter_num,
+                               by=list(bc.allsites.datamart$site),
+                               function(x) length(unique(x))),
+                               c("Site","Enctrs"))
+bad$ttls <- merge(bad$ttls,tmp.ttls)
+bad$ttls
+```
+
+### Number of unique patients w/in each variable
+```{r}
+bad$ptcnts <- setNames(aggregate(bc.allsites.datamart$patient_num,
+                                 by=list(bc.allsites.datamart$site),
+                                 function(x) length(unique(x))),
+                                 c("Site","Pts"))
+tmp.stats <- setNames(aggregate(subset(bc.allsites.datamart,!is.na(er.csf.1))$patient_num,
+                                 by=list(subset(bc.allsites.datamart,!is.na(er.csf.1))$site),
+                                 function(x) length(unique(x))),
+                                 c("Site","ER1"))
+bad$ptcnts <- merge(bad$ptcnts,tmp.stats)
+tmp.stats <- setNames(aggregate(subset(bc.allsites.datamart,!is.na(pr.csf.2))$patient_num,
+                                 by=list(subset(bc.allsites.datamart,!is.na(er.csf.1))$site),
+                                 function(x) length(unique(x))),
+                                 c("Site","PR1"))
+bad$ptcnts <- merge(bad$ptcnts,tmp.stats)
+tmp.stats <- setNames(aggregate(subset(bc.allsites.datamart,!is.na(her2.csf.15))$patient_num,
+                                 by=list(subset(bc.allsites.datamart,!is.na(her2.csf.15))$site),
+                                 function(x) length(unique(x))),
+                                 c("Site","HER2"))
+bad$ptcnts <- merge(bad$ptcnts,tmp.stats)
+tmp.stats <- setNames(aggregate(subset(bc.allsites.datamart,!is.na(mgs.method.csf.22))$patient_num,
+                                 by=list(subset(bc.allsites.datamart,!is.na(mgs.method.csf.22))$site),
+                                 function(x) length(unique(x))),
+                                 c("Site","MGS-Method"))
+bad$ptcnts <- merge(bad$ptcnts,tmp.stats)
+tmp.stats <- setNames(aggregate(subset(bc.allsites.datamart,!is.na(mgs.score.csf.23))$patient_num,
+                                 by=list(subset(bc.allsites.datamart,!is.na(mgs.score.csf.23))$site),
+                                 function(x) length(unique(x))),
+                                 c("Site","MGS Score"))
+bad$ptcnts <- merge(bad$ptcnts,tmp.stats)
+
+bad$ptcnts
+```
+
+### Distinct values
+
+```{r}
+tmp.stats  <- setNames(aggregate(bc.allsites.datamart$er.csf.1,
+                               by=list(bc.allsites.datamart$site),
+                               function(x) length(unique(x))),
+                               c("Site","ER1"))
+bad$unique <- tmp.stats
+tmp.stats  <- setNames(aggregate(bc.allsites.datamart$pr.csf.2,
+                               by=list(bc.allsites.datamart$site),
+                               function(x) length(unique(x))),
+                               c("Site","PR1"))
+bad$unique <- merge(bad$unique,tmp.stats)
+tmp.stats  <- setNames(aggregate(bc.allsites.datamart$her2.csf.15,
+                               by=list(bc.allsites.datamart$site),
+                               function(x) length(unique(x))),
+                               c("Site","HER2"))
+bad$unique <- merge(bad$unique,tmp.stats)
+tmp.stats  <- setNames(aggregate(bc.allsites.datamart$mgs.method.csf.22,
+                               by=list(bc.allsites.datamart$site),
+                               function(x) length(unique(x))),
+                               c("Site","MGS-Method"))
+bad$unique <- merge(bad$unique,tmp.stats)
+tmp.stats  <- setNames(aggregate(bc.allsites.datamart$mgs.score.csf.23,
+                               by=list(bc.allsites.datamart$site),
+                               function(x) length(unique(x))),
+                               c("Site","MGS-Score"))
+bad$unique <- merge(bad$unique,tmp.stats)
+
+bad$unique
 ```

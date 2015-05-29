@@ -263,7 +263,23 @@ bc.exclusions <- function(conn.site,
   tumor.site$stage <- stage.combine(tumor.site)
 
   # message('TODO: check bc.exclusions(conn.site) against tumor.site')
-  
+
+  # Receptor Status - descriptive variables
+  v.receptor.path <- grep('2880 CS Site-Specific Factor 1',bcterm$term204$concept_path,value=TRUE)
+  tumor.site <- with.var(tumor.site, conn.site,
+                         v.receptor.path, 'er.csf.1')  # Adds new var to tumor.site
+  v.receptor.path <- grep('2890 CS Site-Specific Factor 2',bcterm$term204$concept_path,value=TRUE)
+  tumor.site <- with.var(tumor.site, conn.site,
+                         v.receptor.path, 'pr.csf.2')
+  v.receptor.path <- grep('2869 CS Site-Specific Factor15',bcterm$term204$concept_path,value=TRUE)
+  tumor.site <- with.var(tumor.site, conn.site,
+                         v.receptor.path, 'her2.csf.15')
+  v.receptor.path <- grep('2876 CS Site-Specific Factor22',bcterm$term204$concept_path,value=TRUE)
+  tumor.site <- with.var(tumor.site, conn.site,
+                         v.receptor.path, 'mgs.method.csf.22')  # multi-gene signature method
+  v.receptor.path <- grep('2877 CS Site-Specific Factor23',bcterm$term204$concept_path,value=TRUE)
+  tumor.site <- with.var(tumor.site, conn.site,
+                         v.receptor.path, 'mgs.score.csf.23')  # multi-gene signature method  
   tumor.site
 }
 
