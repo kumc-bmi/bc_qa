@@ -1,7 +1,7 @@
 GPC Breast Cancer Data by Site
 ==============================
-author: Dan Connolly
-date: Feb 2015
+author: Dan Connolly, Vince Leonardo
+date: May 2015
 width: 1536
 height: 864
 transition: fade
@@ -29,8 +29,14 @@ library(RSQLite)
 ```{r load_prev, echo=FALSE}
 load("bc_fetch_results.RData")
 load("bc_terms_results.RData")
-# site.survey.sample.size
+# bc.allsites.datamart
+# Encounter-level TRUE/FALSE for exclusion criteria
+load("tmp_sitesurveysample.RData")
+# Source data
+load("tmp_sitetumordata.RData")
 load("bc_excl_all_results.RData")
+load("bc_allsites_datamart.RData")
+tumor.all <- bc.allsites.datamart
 ```
 
 Patients
@@ -39,9 +45,8 @@ Patients
 ```{r site.code, echo=FALSE}
 site.code <- factor(fetch$dataset$site)
 
-current <- fetch$dataset  # anachronism
+current <- fetch$dataset  # anachronism, RedCap dataset stats
 ```
-
 
 ```{r patients.queries, echo=FALSE}
 query.site <- function(q, site) {
@@ -83,12 +88,12 @@ patients.vital <- rbind(
   data.frame(
     site=site.code,
     key='w/Vital from SEER/EHR',
-    result=pat.per.site(tumor.all[!is.na(tumor.all$vital), ])),
+    result=pat.per.site(bc.allsites.datamart[!is.na(bc.allsites.datamart$vital), ])),
 
   data.frame(
     site=site.code,
     key='w/Vital from EHR (data)',
-    result=pat.per.site(tumor.all[!is.na(tumor.all$vital.ehr), ])),
+    result=pat.per.site(bc.allsites.datamart[!is.na(bc.allsites.datamart$vital.ehr), ])),
 
   query.each.site(
     'vital: patient_dimension',
@@ -97,6 +102,7 @@ patients.vital <- rbind(
 )
 
 ```
+
 
 
 Number of Breast Cancer Patients and Tumors by Site
@@ -366,6 +372,98 @@ Exclusion criteria and missing information
    - known to be female
    - not known to be not female
    
+Tumors w/ ER1, by Site
+===========================================================
+
+```{r echo=FALSE}
+tumor.by.er1 <- rbind.data.frame(
+  subset(patients, key == 'tumor'),
+  
+  data.frame(
+    site=site.code,
+    key='w/ER1',
+    result=unlist(lapply(site.code, site.tumor.var('2880 CS Site'))))
+  )
+```
+
+```{r echo=FALSE}
+fig5 <- ggplot(tumor.by.er1, aes(x=site, y=result, fill=key))
+style.dodge(fig5)
+```
+
+Tumors w/ PR2, by Site
+===========================================================
+
+```{r echo=FALSE}
+tumor.by.pr2 <- rbind.data.frame(
+  subset(patients, key == 'tumor'),
+  
+  data.frame(
+    site=site.code,
+    key='w/PR2',
+    result=unlist(lapply(site.code, site.tumor.var('2890 CS Site'))))
+  )
+```
+
+```{r echo=FALSE}
+fig5 <- ggplot(tumor.by.pr2, aes(x=site, y=result, fill=key))
+style.dodge(fig5)
+```
+
+Tumors w/ HER2, by Site
+===========================================================
+```{r echo=FALSE}
+tumor.by.her2 <- rbind.data.frame(
+  subset(patients, key == 'tumor'),
+  
+  data.frame(
+    site=site.code,
+    key='w/HER2',
+    result=unlist(lapply(site.code, site.tumor.var('2869 CS Site'))))
+  )
+```
+
+```{r echo=FALSE}
+fig5 <- ggplot(tumor.by.her2, aes(x=site, y=result, fill=key))
+style.dodge(fig5)
+```
+
+Tumors w/ Multigene Signature Method, by Site
+===========================================================
+```{r echo=FALSE}
+tumor.by.mgs.method <- rbind.data.frame(
+  subset(patients, key == 'tumor'),
+  
+  data.frame(
+    site=site.code,
+    key='w/MGS Method',
+    result=unlist(lapply(site.code, site.tumor.var('2876 CS Site'))))
+  )
+```
+```{r echo=FALSE}
+fig5 <- ggplot(tumor.by.mgs.method, aes(x=site, y=result, fill=key))
+style.dodge(fig5)
+```
+
+Tumors w/ Multigene Signature Score, by Site
+===========================================================
+
+```{r echo=FALSE}
+tumor.by.mgs.score <- rbind.data.frame(
+  subset(patients, key == 'tumor'),
+  
+  data.frame(
+    site=site.code,
+    key='w/MGS Score',
+    result=unlist(lapply(site.code, site.tumor.var('2877 CS Site'))))
+  )
+```
+
+```{r echo=FALSE}
+fig5 <- ggplot(tumor.by.mgs.score, aes(x=site, y=result, fill=key))
+style.dodge(fig5)
+```
+
 Changes Since Feb 24
 ====================
 
