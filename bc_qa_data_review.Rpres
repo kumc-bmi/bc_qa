@@ -1,0 +1,402 @@
+GPC Breast Cancer Data by Site
+==============================
+author: Dan Connolly
+date: Feb 2015
+width: 1536
+height: 864
+transition: fade
+
+Graphs by Site
+========================================================
+
+Generated `r Sys.Date()`
+
+Modelled after Graphs by Elizabeth A. Chrischilles, PhD 18 Feb 2015
+
+```{r fig_size, echo=FALSE}
+library(knitr)
+opts_chunk$set(fig.width=8,fig.height=4.5,dpi=300,out.width="1920px",height="1080px")
+```
+
+```{r libraries, echo=FALSE}
+source('bc_qa_txform.R')
+
+library(ggplot2)
+library(grid)
+library(RSQLite)
+```
+
+```{r load_prev, echo=FALSE}
+load("bc_fetch_results.RData")
+load("bc_terms_results.RData")
+# site.survey.sample.size
+load("bc_excl_all_results.RData")
+```
+
+Patients
+========
+
+```{r site.code, echo=FALSE}
+site.code <- factor(fetch$dataset$site)
+
+current <- fetch$dataset  # anachronism
+```
+
+
+```{r patients.queries, echo=FALSE}
+query.site <- function(q, site) {
+  conn <- fetch$site.data(site)
+  dbGetQuery(conn, q)
+}
+
+query.each.site <- function(key, q,
+                            current=fetch$dataset) {
+  data.frame(
+    site=site.code,
+    key=key,
+    result=unlist(lapply(current$site, function(s) query.site(q, s)))
+    )
+}
+
+patients <- rbind(
+  query.each.site(
+    'data',
+    'select count(distinct patient_num) from observation_fact'),
+  query.each.site(
+    'patient_dimension',
+    'select count(*) from patient_dimension'),
+  data.frame(
+    site=site.code,
+    key='tumor',
+    result=unlist(lapply(site.code, function(s) length(unique(tumor.all$encounter_num[tumor.all$site == s]))))
+    ))
+
+```
+
+```{r vital, echo=FALSE}
+pat.per.site <- function(df) {
+  as.vector(table(unique(df[, c('site', 'patient_num')])$site))
+  }
+
+patients.vital <- rbind(
+  patients,
+  data.frame(
+    site=site.code,
+    key='w/Vital from SEER/EHR',
+    result=pat.per.site(tumor.all[!is.na(tumor.all$vital), ])),
+
+  data.frame(
+    site=site.code,
+    key='w/Vital from EHR (data)',
+    result=pat.per.site(tumor.all[!is.na(tumor.all$vital.ehr), ])),
+
+  query.each.site(
+    'vital: patient_dimension',
+    'select count(*) from patient_dimension
+     where vital_status_cd is not null')
+)
+
+```
+
+
+Number of Breast Cancer Patients and Tumors by Site
+===================================================
+
+
+```{r echo=FALSE}
+
+fig1 <- ggplot(data=patients, mapping=aes(x=site, y=result, fill=key), fill=key)
+
+# text dodge clue: http://stackoverflow.com/a/6017961
+style.dodge <- function(fig) {
+  fig + geom_bar(stat = "identity", position="dodge") +
+    labs(x="", y="") +
+    theme(legend.position=c(0.9, 0.8)) +
+    geom_text(data=fig$data, aes(label = result),
+                  position = position_dodge(width=0.9), angle=45)
+  }
+style.dodge(fig1) + labs(title="Data from all 9 participating sites")
+```
+
+Data From All Sites
+===================
+
+```{r fetch, echo=FALSE, results='asis'}
+ht(fetch$dataset[, c('site', 'name', 'record_id', 'timestamp')])
+```
+
+
+Exclusion Criteria
+=====================
+
+In [Share Thoughts on Breast Cancer Study][18Dec] GPC Global Webinar, December 18, 2014, on Slide 8 *Selection Criteria*:
+
+[18Dec]: http://listserv.kumc.edu/pipermail/gpc-all/attachments/20141215/f655d41b/attachment-0001.pptx
+
+> Exclude from the SURVEY sample if:
+>  - Sex not equal to female
+>  - Less than 18 years of age
+>  - Prior cancer diagnosis
+>  - Breast cancer was not microscopically confirmed
+>  - Only tumor morphology was lobular carcinoma in situ
+>  - Stage IV breast cancer
+>  - Known to be deceased
+>  - Non-English speaking (for now)
+
+Needed for Exclusions
+=====================
+
+ - Primary site
+ - Sex
+ - Sequence Number
+ - Diagnostic Confirmation
+ - Morphology Code
+ - Derived AJCC-7 Grp and/or SS2000
+ - Vital Status
+
+Query Term Details
+==================
+
+```{r echo=FALSE, results='asis'}
+ht(caption="Exclusion Criteria Terms (Primary)",
+   bcterm$excl)
+```
+
+Query Term Details
+==================
+
+```{r echo=FALSE, results='asis'}
+ht(caption="Exclusion Criteria Terms (All)",
+   bcterm$excl.all)
+```
+
+
+Number in “Final” Survey-Eligible Cohort by Site
+================================================
+
+
+```{r echo=FALSE}
+site.survey.sample <- lapply(site.code, function(s) {
+  message('working on site: ', s)
+  check.cases(site.tumor.data[[s]])
+  })
+names(site.survey.sample) <- levels(site.code)
+site.survey.sample.size <- lapply(site.code, function(s) {
+  count.cases(site.survey.sample[[s]])
+  })
+names(site.survey.sample.size) <- levels(site.code)
+```
+
+```{r echo=FALSE}
+patients.eligible <- rbind(
+  query.each.site(
+    'Number of patients (data dim.)',
+    'select count(distinct patient_num) from observation_fact'),
+  data.frame(
+    site=site.code,
+    key='Number after exclusions',
+    result=unlist(lapply(site.code, function(s) {
+      qty <- site.survey.sample.size[[s]]
+      qty['cum.pat', length(qty)]
+      }))))
+# TODO: Percent eligible for survey
+```
+
+```{r echo=FALSE}
+
+fig2 <- ggplot(subset(patients.eligible,
+                      key %in% c('Number of patients (data dim.)', 'Number after exclusions')),
+               aes(x=site, y=result, fill=key))
+style.dodge(fig2)
+```
+
+
+Eligibility Criteria by Site: Cumulative
+=========================================
+
+```{r echo=FALSE}
+x <- do.call(rbind.data.frame,
+              lapply(site.code, function(site) {
+                qty <- site.survey.sample.size[[site]][c('ind.pat', 'cum.pat'), ]
+                columns <- factor(row.names(qty),
+                                  levels=c('ind.pat', 'cum.pat'),
+                                  labels=c('ind.pat', 'cum.pat'),
+                                  ordered=TRUE)
+                qty <- cbind(columns, site, qty)
+                qty
+                }))
+x <- x[order(x$columns, x$site), ]
+row.names(x) <- 1:nrow(x)
+``` 
+
+```{r echo=FALSE, results='asis'}
+ht(x[x$columns == 'cum.pat', ])
+```
+
+
+Eligibility Criteria by Site: Independent
+=========================================
+
+```{r echo=FALSE, results='asis'}
+ht(x[x$columns == 'ind.pat', ])
+```
+
+
+Number of Breast Cancer Patients with EMR Vital Status by Site
+==============================================================
+
+```{r echo=FALSE}
+fig2 <- ggplot(subset(patients.vital, key %in% c('w/Vital from EHR (data)', 'vital: patient_dimension')),
+               aes(x=site, y=result, fill=key))
+style.dodge(fig2)
+```
+
+
+*based on revised query: any vital status, not just deceased*
+
+
+Number with Vital Status, by Site
+=================================
+
+```{r echo=FALSE}
+
+fig2 <- ggplot(subset(patients.vital, key %in% c('patient_dimension', 'w/Vital from SEER/EHR')),
+               aes(x=site, y=result, fill=key))
+style.dodge(fig2)
+```
+
+
+Tumors
+======
+
+```{r echo=FALSE}
+var204 <- bcterm$term204  # anachonism
+
+site.tumor.var <- function(naaccr.name) {
+  function(s) {
+    df <- v.enc.nominal(fetch$site.data(s),
+                        unique(var204$concept_path[grep(naaccr.name, var204$name)]),
+                        'x')
+    length(unique(df$encounter_num))
+    }
+  }
+
+
+tumor.by.site <- rbind.data.frame(
+  subset(patients, key == 'tumor'),
+  
+  data.frame(
+    site=site.code,
+    key='w/Primary Site',
+    result=unlist(lapply(site.code, site.tumor.var('0400 Primary'))))
+  )
+
+```
+
+Number of Tumors Overall and With Primary Site, by Site
+=======================================================
+
+```{r echo=FALSE}
+fig5 <- ggplot(tumor.by.site, aes(x=site, y=result, fill=key))
+style.dodge(fig5)
+```
+```{r echo=FALSE}
+bcterm$t.incl[2, ]$concept_path
+```
+
+
+Number of Tumors Overall and With SEER Site Breast, by Site
+===========================================================
+
+```{r echo=FALSE}
+tumor.by.site <- rbind.data.frame(
+  subset(patients, key == 'tumor'),
+  
+  data.frame(
+    site=site.code,
+    key='w/SEER Site',
+    result=unlist(lapply(site.code, site.tumor.var('Breast'))))
+  )
+```
+
+```{r echo=FALSE}
+fig5 <- ggplot(tumor.by.site, aes(x=site, y=result, fill=key))
+style.dodge(fig5)
+```
+
+```{r echo=FALSE}
+bcterm$t.incl[1, ]$concept_path
+```
+
+
+BC Tumors in Date Range
+=======================
+
+```{r echo=FALSE}
+tumor.by.site <- rbind.data.frame(
+  subset(patients, key == 'tumor'),
+  
+  data.frame(
+    site=site.code,
+    key='BC',
+    result=unlist(lapply(site.code,
+                         function(s) site.survey.sample.size[[s]]['ind.tumor', 'bc.dx']))
+    ),
+  data.frame(
+    site=site.code,
+    key='In Range',
+    result=unlist(lapply(site.code,
+                         function(s) site.survey.sample.size[[s]]['ind.tumor', 'recent.dx']))
+    )
+  )
+```
+
+```{r echo=FALSE}
+fig6 <- ggplot(tumor.by.site, aes(x=site, y=result, fill=key))
+style.dodge(fig6)
+```
+
+Exclusion criteria and missing information
+==========================================
+
+ - for age
+   - age known to be >= 18
+   - age not known to be < 18
+ - is this sex criterion
+   - known to be female
+   - not known to be not female
+   
+Changes Since Feb 24
+====================
+
+  73. refine path patching and incorporate updated BC query  [ef4729d3ff90/bc_qa]
+  77. a few more patches for MCW  [5d851387cd05/bc_qa]
+  83. SHARED: Breast Cancer Survey: Breast Cancer EMR Vital status [2-24-2015] by TM  [c1db46135346/bc_qa]
+  88. - Fall back to primary site; don't rely entirely on SEER Site = Breast  [38a0eff0cab3/bc_qa]
+  90. sequence number detail plot; cohort summary rownames  [94247428f737/bc_qa]
+  91. more cohort plots; do not exclude based on NA  [5f67474aaa62/bc_qa]
+  96. re-work path tail extraction; fixes cardinality of vital status, morphology  [c5d13a563b31/bc_qa]
+  97. normalize case when excluding non-english  [26326aa1c3ad/bc_qa]
+  
+Changes (cont)
+==============
+
+  101. - use "Breast Cancer Cohort Characterization — Survey Sample" order  [9e5dafdcb380/bc_qa]
+  103. reproduced cohort size after exclusions after flipping stage NA logic  [cbed62357e15/bc_qa]
+  104. fetch submission timestamps  [ce072d6441f3/bc_qa]
+  105. separate overly-precise query terms from mis-aligned query terms  [8e757183b2df/bc_qa]
+  106. undo hack to use Primary Site to look for date of diagnosis  [1cf120567e2e/bc_qa]
+  107. - handle multiple language values per patient  [7889d1373e52/bc_qa]
+  111. if all tumors are within 4 months of each other, no.prior = TRUE  [e59f9f7aeb97/bc_qa]
+
+Changes (cont)
+==============
+
+  112. - solid tumor histologies only  [f618c0d35c34/bc_qa]
+  116. - for date of diagnosis, fall back to date of primary site, seer  [2354d903692e/bc_qa]
+  117. - handle milliseconds-since-the-epoch dates  [ae55d71d8c4e/bc_qa]
+  118. show patched path for mis-aligned facts  [a3bf195be989/bc_qa]
+  122. default sex criterion to NA; do not require reduce.local() caller to filter non-logicals  [4006abae27f0/bc_qa]
+  124. - pick random sample per site  [0628f16207e4/bc_qa]
+  128. the 4 month option for no.prior was based on a misunderstanding  [49f3994857e0/bc_qa]
+  130. - drop.dup.enc deals with >1 value per tumor where 1 is expected  [9c01e4b505db/bc_qa]
