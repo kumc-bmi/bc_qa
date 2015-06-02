@@ -464,11 +464,6 @@ fig5 <- ggplot(tumor.by.mgs.score, aes(x=site, y=result, fill=key))
 style.dodge(fig5)
 ```
 
-Breast Cancer - QA Completeness (Frequency Distribution)
-===========================================================
-bc.freq <- ggplot(bc.allsites.datamart, aes(x=site, y=))
-style.dodge(fig5)
-
 Changes Since Feb 24
 ====================
 
