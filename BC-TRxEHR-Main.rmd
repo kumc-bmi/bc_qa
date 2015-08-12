@@ -1,0 +1,523 @@
+############################################################################
+# BC-TRxEHR-Main - BC Tumor Registry to EHR Correlation Analysis for BC
+#
+# 05-Aug Genesis (Cloned from PHM1-COPD)
+# 05-Aug Load data frames
+# 06-Aug Stratify dx'es 
+# 07-Aug Filter for active diagnosis (observed or problem list)
+# 
+############################################################################
+
+#############################################################################
+```{r Package Set-Up, include=FALSE}
+#############################################################################
+
+setwd("~/GPC-Development/bc-trxehr")
+
+# Include PHM function libraries
+source('/d1/home/vleonardo/PHM-Development/PHM-LIBRARY.rmd')  # Loads PHM functions
+
+PHM.PackageSetup()
+```
+
+#############################################################################
+``` {r  Set input/run-time parameters}
+#############################################################################
+v1 <- list("")
+
+# Establish date frame for measure
+# -- IDX can have records which are post-dated into the future, so this boundary must be set.
+v1$dmr.begvisitdate <- as.POSIXct("2012-01-01") 
+v1$dmr.endvisitdate <- as.POSIXct("2015-01-01") 
+
+v1$ptdata.fileprefix <- "bc-trxehr-proto-demogs-mrn"
+v.username <- "vleonardo"
+v.password <- "SET VALUE"
+v.SID <- "nheronA1"
+```
+
+#############################################################################
+``` {r  Set measure parameters}
+#############################################################################
+
+v1$prefix <- "BC-TRxEHR"
+v1$title <- "BC-TRxEHR - BC Tumor Registry to EHR Correlation Analysis"
+# Note - Commas cannot be embedded within phrases, as they create a delimited field which disrupts the Excel Summary sheet (causing the phrase to be parsed into multiple columns).
+v1$spec <- paste("Pts w/ a breast cancer diagnosis recorded",
+                 "in SEERS Tumor Registry or EHR,",
+                 "ages 18 or older.",
+                 paste0("Date Range: ",v1$dmr.begvisitdate," to ", v1$dmr.endvisitdate),
+                 sep="\n")
+v1$title
+cat(v1$spec)
+v1$dmr.begvisitdate
+v1$dmr.endvisitdate
+```
+
+#############################################################################
+```{r Connect to NightHERON Oracle Database, include=FALSE}
+#############################################################################
+# Step 1) The values for these arguments need to be set independently of this script.
+# Step 2) Open halibut tunnel that then connects to whaleshark tunnel
+#         ssh -q -L 1522:localhost:1521 whaleshark
+# Step 3) Run this chunk
+v1$conn.heron <- PHM.HeronConnect(v.username, v.password,
+                            paste0("//localhost:1522/",v.SID) )
+v1$conn.heron
+```
+
+#############################################################################
+```{r Connect to SQLite file (as a database), include=FALSE}
+#############################################################################
+setwd("~/GPC-Development/bc-trxehr")
+v1$conn.sqldb <- dbConnect(SQLite(),paste0(v1$ptdata.fileprefix,".db"))
+dbListTables(v1$conn.sqldb)
+dbListFields(v1$conn.sqldb,"observation_fact")
+dbGetQuery(v1$conn.sqldb,"select count(patient_num) from patient_dimension")
+dbGetQuery(v1$conn.sqldb,"select count(patient_num) from observation_fact")
+# test.frame <- dbReadTable(v2$conn.sqldb,"observation_fact")
+# length(unique(test.frame$patient_num))
+```
+
+#############################################################################
+``` {r Load patient frame (contains both numerator and denominator)}
+#############################################################################
+# Expected Run-time: 1 min 
+bc1 <- PHM.LoadPatientFrame(v1$conn.sqldb,v1$conn.heron,"MRN Included")
+print(head(bc1$patient))
+nrow(bc1$patient)
+x.patient <- bc1$patient
+```
+
+#############################################################################
+``` {r Load variables & concepts}
+#############################################################################
+bc1$variable <- translateBuilderVariables(v1$conn.sqldb)
+bc1$code     <- translateBuilderCodes(v1$conn.sqldb)
+```
+
+############################################################################
+``` {r Load and Merge Observations With Concept Descriptors (concept names/query terms w/ patient data records)}
+############################################################################
+# Expected Run-time: 6.5 mins
+bc1$ptobs <- PHM.LoadObservationsWithConceptDescriptors(v1$conn.sqldb)
+print(t(head(bc1$ptobs)))
+nrow(bc1$ptobs)
+
+# Archive origial data, before filtering
+x.ptobs <-bc1$ptobs  
+x.patient <-bc1$patient
+```
+
+############################################################################
+```{r Stratify concepts into analysis dimensions}
+# Analysis Dimensions: DX, CPT, FS, PFT, DIVISION, AREA
+############################################################################
+bc1$ptobs$concept.class      <- "N/A"
+bc1$ptobs$analysis.dimension <- "N/A"
+bc1$ptobs$analysis.group     <- "N/A"
+bc1$ptobs$cohort.group       <- "N/A"
+
+bc1$ptobs$concept.class <- "EHR"  # Default to EHR
+bc1$ptobs$concept.class[grepl("naaccr", bc1$ptobs$code.path)] <- "NAACCR"
+
+tmp.dx.list <- list("Breast","breast",
+                 "Malignant neoplasm",
+                 "mammoplasty")
+bc1$ptobs$analysis.dimension[grepl(paste(tmp.dx.list,collapse="|"),
+                            bc1$ptobs$variable.name)] <- "BC DX"
+
+
+bc1$ptobs$analysis.dimension.descriptor[bc1$ptobs$analysis.dimension=="BC DX"] <- "Breast Cancer Diagnosis"
+### DENOMINATOR CONCEPTS
+# Placeholder for use of cohort.group (instituted by Osteo datamart and used in Pt Observation Listing)
+bc1$ptobs$analysis.group <- "N/A"
+bc1$ptobs$cohort.group <- "N/A"
+
+# List all analysis dimensions created
+table(bc1$ptobs$concept.class)
+table(bc1$ptobs$analysis.dimension)
+```
+
+############################################################################
+```{r Apply fix for NAACCR codes and sub.encounter}
+############################################################################
+bc1$cohort.fact <- bc1$ptobs
+bc1$cohort.fact$sub.encounter[bc1$cohort.fact$concept.class=="NAACCR"] <- bc1$cohort.fact$encounter.num[bc1$cohort.fact$concept.class=="NAACCR"]
+```
+
+############################################################################
+```{r Filter cohort}
+############################################################################
+nrow(bc1$patient)
+bc1$cohort.fact <- subset(bc1$cohort.fact,(modifier %in% c(
+                                                   "DiagObs:UHC_DIAGNOSIS",
+                                                   "DiagObs:Primary",
+                                                   "DiagObs:Clinic",
+                                                   "DiagObs:PAT_ENC_DX",
+                                                   "DiagObs:PROBLEM_LIST",
+                                                   "DiagObs:UHC_PROCEDURE",
+                                                   "@")) &
+                            (analysis.dimension=="BC DX") |
+                            (analysis.dimension != "BC DX")
+                     )
+length(unique(bc1$cohort.fact$patient.num))
+
+tmp.cohort <- subset(bc1$cohort.fact,analysis.dimension=="BC DX") 
+tmp.cohort <- subset(tmp.cohort, 
+                    as.Date(start.date) >= as.Date(v1$dmr.begvisitdate) & 
+                      as.Date(start.date) < as.Date(v1$dmr.endvisitdate))
+                     
+bc1$cohort.fact <- subset(bc1$cohort.fact,
+                  (patient.num %in% tmp.cohort$patient.num) |
+                  (analysis.dimension != "BC DX") ) 
+bc1$patient <- subset(bc1$patient,patient.num %in% tmp.cohort$patient.num)
+length(unique(bc1$cohort.fact$patient.num))
+
+# Include pts 18 yo or older
+tmp.cohort <- subset(bc1$patient, age > 17)
+bc1$patient <- subset(bc1$patient,patient.num %in% tmp.cohort$patient.num)
+bc1$cohort.fact <- subset(bc1$cohort.fact,patient.num %in% tmp.cohort$patient.num)
+
+nrow(bc1$patient)
+length(unique(bc1$cohort.fact$patient.num))
+```
+
+#===========================================================================
+```{r Roll-up First Diagnosis}
+#===========================================================================
+tmp.dmr.enctrs <- subset(bc1$cohort.fact,analysis.dimension=="BC DX")
+tmp.first.dx <- setNames(aggregate(tmp.dmr.enctrs$start.date, 
+                                     by=list(tmp.dmr.enctrs$patient.num,
+                                             tmp.dmr.enctrs$concept.class), 
+                                     min),                              
+                               c("patient.num","concept.class","start.date"))
+
+bc1$patient <- merge(tmp.first.dx[tmp.first.dx$concept.class=="NAACCR",
+                                              c("patient.num","start.date")],
+                                 bc1$patient, 
+                     all.y=TRUE)
+colnames(bc1$patient)[colnames(bc1$patient)=="start.date"] <- "NAACCR.start.date"
+
+bc1$patient <- merge(tmp.first.dx[(tmp.first.dx$concept.class=="EHR"), 
+                                  c("patient.num","start.date")],
+                                 bc1$patient,
+                     all.y=TRUE)
+colnames(bc1$patient)[colnames(bc1$patient)=="start.date"] <- "EHR.start.date"
+```
+
+#===========================================================================
+```{r Histogram for 'days difference'}
+#===========================================================================
+bc1$patient$dx.date.diff <- as.numeric(bc1$patient$EHR.start.date - bc1$patient$NAACCR.start.date)
+
+op <- par(mar=c(4,5,4,2),bg="white",oma=c(2,0,1,0)) # Bottom, left, top, right
+h <- hist(bc1$patient$dx.date.diff, 
+                xlab="Variance (Days: EHR minus NAACCR 1st Dx Date)",
+                ylab="Pt Cnts",
+                col=c("mediumpurple"),
+                main=" ",
+                breaks=100)
+mtext(side=3, line=3, "KUMC NAACCR vs EHR", font=2)
+mtext(side=3, line=2, paste("All BC Diagnoses: ", v1$dmr.begvisitdate," thru ", 
+                            as.Date(v1$dmr.endvisitdate)-1))
+mtext(side=3, line=1, "Pts in both NAACCR & EHR")
+mtext(side=1, line=4, "20 day increments", cex=0.85)
+par(op)  # reset
+
+# W/in 30 days
+op <- par(mar=c(4,5,4,2),bg="white",oma=c(2,0,1,0)) # Bottom, left, top, right
+h <- hist(bc1$patient$dx.date.diff[(bc1$patient$dx.date.diff > -31) &
+                                   (bc1$patient$dx.date.diff < 31)], 
+                xlab="Variance (Days: EHR minus NAACCR 1st Dx Date)",
+                ylab="Pt Cnts",
+                col=c("mediumpurple"),
+                main="",
+                xlim=c(-35,35),
+                breaks=100,
+)
+mtext(side=3, line=3, "KUMC NAACCR vs EHR", font=2)
+mtext(side=3, line=2, paste("All BC Diagnoses: ", v1$dmr.begvisitdate," thru ", 
+                            as.Date(v1$dmr.endvisitdate)-1))
+mtext(side=3, line=1, "Pts in both NAACCR & EHR")
+mtext(side=1, line=4, "1 day increments w/in 30 days", cex=0.85)
+par(op)  # reset
+```
+
+#===========================================================================
+```{r Macro Analysis - Patient.num correlation}
+#===========================================================================
+tmp.dmr.enctrs <- subset(bc1$cohort.fact,analysis.dimension=="BC DX")
+bc1$patient$NAACCR <- ""
+bc1$patient$NAACCR[bc1$patient$patient.num %in% 
+                     tmp.dmr.enctrs$patient.num[tmp.dmr.enctrs$concept.class=="NAACCR"]] <- "NAACCR"
+bc1$patient$EHR <- ""
+bc1$patient$EHR[bc1$patient$patient.num %in% tmp.dmr.enctrs$patient.num[tmp.dmr.enctrs$concept.class=="EHR"]] <- "EHR"
+nrow(subset(bc1$patient,NAACCR=="NAACCR") )
+nrow(subset(bc1$patient,EHR=="EHR") )
+# NAACCR in EHR
+tmp.NAACCRandEHR.cnt <- nrow(subset(bc1$patient,NAACCR=="NAACCR" & patient.num %in% subset(bc1$patient,EHR=="EHR")$patient.num ) )
+
+# NAACCR not in EHR
+tmp.NAACCRonly.cnt <- nrow(subset(bc1$patient,NAACCR=="NAACCR" & !(patient.num %in% subset(bc1$patient,EHR=="EHR")$patient.num )) )
+
+# EHR not in NAACCR
+tmp.EHRonly.cnt <- nrow(subset(bc1$patient,EHR=="EHR" & !(patient.num %in% subset(bc1$patient,NAACCR=="NAACCR")$patient.num )) )
+
+# Chart results
+tmp.total.cnt <- nrow(bc1$patient)
+bp.stack <- cbind(c(tmp.NAACCRonly.cnt,tmp.NAACCRandEHR.cnt,tmp.EHRonly.cnt))
+bp.stack
+op <- par(mar=c(4,3,4,2),bg="white",oma=c(2,0,1,0)) # Bottom, left, top, right
+bp <- barplot(bp.stack,
+              horiz=TRUE,
+              col=c("darkred","mediumpurple","blue"),
+              xlim=c(0,tmp.total.cnt+500),
+              xlab="Num of pts")
+mtext(side=3, line=3, "KUMC NAACCR vs EHR", font=2)
+mtext(side=3, line=2, paste("All BC Diagnoses: ", v1$dmr.begvisitdate," thru ", as.Date(v1$dmr.endvisitdate)-1),cex=1)
+legend("topright", inset =.03, cex=.75,
+       legend=c("NAACCR Only","Both", "EHR Only"),
+       fill=c("darkred","mediumpurple","blue"))
+
+# Billed diagnoses only, eliminates "PROBLEM LIST"
+tmp.billed.patient <- subset(bc1$patient, patient.num %in% (
+         subset(bc1$cohort.fact,((analysis.dimension=="BC DX") &
+                                 (concept.class=="EHR") &
+                                 (modifier %in% c("DiagObs:Clinic","DiagObs:Primary"))) |
+                                 (concept.class=="NAACCR"))$patient.num
+  ))
+nrow(subset(tmp.billed.patient,NAACCR=="NAACCR") )
+nrow(subset(tmp.billed.patient,EHR=="EHR") )
+# NAACCR in EHR
+tmp.NAACCRandEHR.cnt <- nrow(subset(tmp.billed.patient,NAACCR=="NAACCR" & patient.num %in% subset(tmp.billed.patient,EHR=="EHR")$patient.num ) )
+
+# NAACCR not in EHR
+tmp.NAACCRonly.cnt <- nrow(subset(tmp.billed.patient,NAACCR=="NAACCR" & !(patient.num %in% subset(tmp.billed.patient,EHR=="EHR")$patient.num )) )
+
+# EHR not in NAACCR
+tmp.EHRonly.cnt <- nrow(subset(tmp.billed.patient,EHR=="EHR" & !(patient.num %in% subset(tmp.billed.patient,NAACCR=="NAACCR")$patient.num )) )
+
+# Chart results
+tmp.total.cnt <- nrow(tmp.billed.patient)
+bp.stack <- cbind(c(tmp.NAACCRonly.cnt,tmp.NAACCRandEHR.cnt,tmp.EHRonly.cnt))
+bp.stack
+op <- par(mar=c(4,3,4,2),bg="white",oma=c(2,0,1,0)) # Bottom, left, top, right
+bp <- barplot(bp.stack,
+              horiz=TRUE,
+              col=c("darkred","mediumpurple","blue"),
+              xlim=c(0,tmp.total.cnt+500),
+              xlab="Num of pts")
+mtext(side=3, line=3, "KUMC NAACCR vs EHR", font=2)
+mtext(side=3, line=2, paste("Billed BC Diagnoses: ", v1$dmr.begvisitdate," thru ", as.Date(v1$dmr.endvisitdate)-1),cex=1)
+legend("topright", inset =.03, cex=.75,
+       legend=c("NAACCR Only","Both", "EHR Only"),
+       fill=c("darkred","mediumpurple","blue"))
+
+```
+
+#===========================================================================
+```{r Patient Listing}
+setwd("~/GPC-Development/bc-trxehr")
+rpt.pt.list <- bc1$patient
+rpt.naaccr.pt.list <- subset(bc1$patient,NAACCR=="NAACCR")
+rpt.ehr.pt.list <- subset(bc1$patient,EHR=="EHR")
+
+WriteXLS(c("rpt.pt.list","rpt.naaccr.pt.list","rpt.ehr.pt.list"),
+         ExcelFileName=paste0(v1$ptdata.fileprefix,"-PtListing-",Sys.Date(),".xls"),
+         SheetNames=c("ALL Pts","NAACCR","EHR"),
+         row.names=FALSE,AdjWidth=TRUE,AutoFilter=TRUE,BoldHeaderRow=TRUE,FreezeRow=1)
+#==========================================================================
+```
+#===========================================================================
+```{r Macro Analysis - Patient Identification based on DOB & Sex}
+#===========================================================================
+length(unique(paste0(bc1$patient$NAACCR,"<>",
+                     bc1$patient$EHR,"<>",
+                     #bc1$patient$patient.num, "<>",  
+                     bc1$patient$birth.date,"<>",
+                     bc1$patient$sex,"<>",
+                     bc1$patient$race,"<>",
+                     bc1$patient$language,"<>",
+                     bc1$patient$religion, "<>",
+                     bc1$vital.status, "<>",
+                     bc1$death.date)))
+```
+
+
+#===========================================================================
+```{r Stratify dimensions/concepts}
+#===========================================================================
+setwd("~/GPC-Development/bc-trxehr")
+bc1$summary <- PHM.StratifyConcepts(v1$prefix,bc1$cohort.fact)
+#View(bc1$all.concepts$variable.summary)
+#View(bc1$all.concepts$concept.summary)
+#View(bc1$all.concepts$class.summary)
+#View(bc1$all.concepts$dim.summary)
+```
+
+#===========================================================================
+```{r Year/Month Stratification -- ALL Encounters}
+#===========================================================================
+# Aggregate patient counts by year - NAACCR
+bc.dx <- subset(bc1$cohort.fact,(analysis.dimension=="BC DX") &
+                                (concept.class=="NAACCR"))
+bc.dx.summary <- setNames(aggregate(bc.dx$patient.num, 
+                                  by=list(format(bc.dx$start.date,"%Y-%m")),
+                                  function(x) length(unique(x) ) ),
+                        c("datedim", "ptcnt"))
+
+op <- par(mar=c(2,4,4,2),bg="white")  # c(bottom, left, top, right)
+op <- par(oma=c(2,1,1,0),bg="white")  # c(bottom, left, top, right)
+bp <- barplot(bc.dx.summary$ptcnt, 
+                     #ylim=c(0,50+max(p2$bp.year.month$dmrcnt)),
+                        col=rgb((100:25)/100,0,0),
+                     ylab="Num of Pts")                                                                                       
+# Label x-axis at 45 degree angle
+text(bp, par("usr")[3]-0.25, adj=c(1.1,1.1),
+     labels=bc.dx.summary$datedim, srt=45, xpd=TRUE, cex=.65)
+# Show Rates above bars
+mtext(side=3, line=2, "Tumor Registry", font=2)
+mtext(side=3, line=1, paste("BC Diagnoses: ", v1$dmr.begvisitdate," thru ", as.Date(v1$dmr.endvisitdate)-1),cex=1)
+
+# Aggregate patient counts by year - EHR All
+bc.dx <- subset(bc1$cohort.fact,(analysis.dimension=="BC DX") &
+                                (concept.class=="EHR"))
+bc.dx.summary <- setNames(aggregate(bc.dx$patient.num, 
+                                  by=list(format(bc.dx$start.date,"%Y-%m")),
+                                  function(x) length(unique(x) ) ),
+                        c("datedim", "ptcnt"))
+
+op <- par(mar=c(2,4,4,2),bg="white")  # c(bottom, left, top, right)
+op <- par(oma=c(2,1,1,0),bg="white")  # c(bottom, left, top, right)
+bp <- barplot(bc.dx.summary$ptcnt, 
+                     #ylim=c(0,50+max(p2$bp.year.month$dmrcnt)),
+                        col=rgb(0,0,(100:25)/100),
+                     ylab="Num of Pts")                                                                                       
+# Label x-axis at 45 degree angle
+text(bp, par("usr")[3]-0.25, adj=c(1.1,1.1),
+     labels=bc.dx.summary$datedim, srt=45, xpd=TRUE, cex=.65)
+# Show Rates above bars
+mtext(side=3, line=2, "KUMC EHR", font=2)
+mtext(side=3, line=1, paste("All BC Diagnoses: ", v1$dmr.begvisitdate," thru ", as.Date(v1$dmr.endvisitdate)-1),cex=1)
+
+# Aggregate patient counts by year - EHR - Billed
+bc.dx <- subset(bc1$cohort.fact,(analysis.dimension=="BC DX") &
+                                (concept.class=="EHR") &
+                                (modifier %in% c("DiagObs:Clinic","DiagObs:Primary")))
+bc.dx.summary <- setNames(aggregate(bc.dx$patient.num, 
+                                  by=list(format(bc.dx$start.date,"%Y-%m")),
+                                  function(x) length(unique(x) ) ),
+                        c("datedim", "ptcnt"))
+
+op <- par(mar=c(2,4,4,2),bg="white")  # c(bottom, left, top, right)
+op <- par(oma=c(2,1,1,0),bg="white")  # c(bottom, left, top, right)
+bp <- barplot(bc.dx.summary$ptcnt, 
+                     #ylim=c(0,50+max(p2$bp.year.month$dmrcnt)),
+                        col=rgb(0,0,(100:25)/100),
+                     ylab="Num of Pts")                                                                                       
+# Label x-axis at 45 degree angle
+text(bp, par("usr")[3]-0.25, adj=c(1.1,1.1),
+     labels=bc.dx.summary$datedim, srt=45, xpd=TRUE, cex=.65)
+# Show Rates above bars
+mtext(side=3, line=2, "KUMC EHR", font=2)
+mtext(side=3, line=1, paste("Billed BC Diagnosis: ", v1$dmr.begvisitdate," thru ", as.Date(v1$dmr.endvisitdate)-1),cex=1)
+
+```
+
+#===========================================================================
+```{r Year/Month Stratification - FIRST Diagnosis}
+#===========================================================================
+# Aggregate patient counts by year - NAACCR
+bc.dx <- subset(bc1$patient, NAACCR=="NAACCR")
+bc.dx.summary <- setNames(aggregate(bc.dx$patient.num, 
+                                  by=list(format(bc.dx$NAACCR.start.date,"%Y-%m")),
+                                  function(x) length(unique(x) ) ),
+                        c("datedim", "ptcnt"))
+
+op <- par(mar=c(2,4,4,2),bg="white")  # c(bottom, left, top, right)
+op <- par(oma=c(2,1,1,0),bg="white")  # c(bottom, left, top, right)
+bp <- barplot(bc.dx.summary$ptcnt, 
+                     #ylim=c(0,50+max(p2$bp.year.month$dmrcnt)),
+                        col=rgb((100:25)/100,0,0),
+                     ylab="Num of Pts")                                                                                       
+# Label x-axis at 45 degree angle
+text(bp, par("usr")[3]-0.25, adj=c(1.1,1.1),
+     labels=bc.dx.summary$datedim, srt=45, xpd=TRUE, cex=.65)
+# Show Rates above bars
+mtext(side=3, line=2, "Tumor Registry", font=2)
+mtext(side=3, line=1, paste("BC 1st Diagnosis: ", v1$dmr.begvisitdate," thru ", as.Date(v1$dmr.endvisitdate)-1),cex=1)
+
+# Aggregate patient counts by year - EHR All
+bc.dx <- subset(bc1$patient, EHR=="EHR")
+bc.dx.summary <- setNames(aggregate(bc.dx$patient.num, 
+                                  by=list(format(bc.dx$EHR.start.date,"%Y-%m")),
+                                  function(x) length(unique(x) ) ),
+                        c("datedim", "ptcnt"))
+
+op <- par(mar=c(2,4,4,2),bg="white")  # c(bottom, left, top, right)
+op <- par(oma=c(2,1,1,0),bg="white")  # c(bottom, left, top, right)
+bp <- barplot(bc.dx.summary$ptcnt, 
+                     #ylim=c(0,50+max(p2$bp.year.month$dmrcnt)),
+                        col=rgb(0,0,(100:25)/100),
+                     ylab="Num of Pts")                                                                                       
+# Label x-axis at 45 degree angle
+text(bp, par("usr")[3]-0.25, adj=c(1.1,1.1),
+     labels=bc.dx.summary$datedim, srt=45, xpd=TRUE, cex=.65)
+# Show Rates above bars
+mtext(side=3, line=2, "KUMC EHR", font=2)
+mtext(side=3, line=1, paste("All BC 1st Diagnosis: ", v1$dmr.begvisitdate," thru ", as.Date(v1$dmr.endvisitdate)-1),cex=1)
+
+# Aggregate patient counts by year - EHR - Billed
+bc.dx <- subset(bc1$cohort.fact,(analysis.dimension=="BC DX") &
+                                (concept.class=="EHR") &
+                                (modifier %in% c("DiagObs:Clinic","DiagObs:Primary")))
+bc.dx.summary <- setNames(aggregate(bc.dx$patient.num, 
+                                  by=list(format(bc.dx$start.date,"%Y-%m")),
+                                  function(x) length(unique(x) ) ),
+                        c("datedim", "ptcnt"))
+
+op <- par(mar=c(2,4,4,2),bg="white")  # c(bottom, left, top, right)
+op <- par(oma=c(2,1,1,0),bg="white")  # c(bottom, left, top, right)
+bp <- barplot(bc.dx.summary$ptcnt, 
+                     #ylim=c(0,50+max(p2$bp.year.month$dmrcnt)),
+                        col=rgb(0,0,(100:25)/100),
+                     ylab="Num of Pts")                                                                                       
+# Label x-axis at 45 degree angle
+text(bp, par("usr")[3]-0.25, adj=c(1.1,1.1),
+     labels=bc.dx.summary$datedim, srt=45, xpd=TRUE, cex=.65)
+# Show Rates above bars
+mtext(side=3, line=2, "KUMC EHR", font=2)
+mtext(side=3, line=1, paste("Billed BC Diagnosis: ", v1$dmr.begvisitdate," thru ", as.Date(v1$dmr.endvisitdate)-1),cex=1)
+
+```
+
+############################################################################
+```{r Export shared dataframes & variables}
+############################################################################
+setwd("~/GPC-Development/bc-trxehr")
+saveRDS(v1,  paste0(v1$ptdata.fileprefix,"-v1.rds"))
+saveRDS(bc1,  paste0(v1$ptdata.fileprefix,"-bc1.rds"))
+```
+
+
+############################################################################
+```{r Observation Fact Listing}
+############################################################################
+setwd("~/GPC-Development/bc-trxehr")
+rpt.naaccr.list <- subset(bc1$ptobs,concept.class=="NAACCR")
+rpt.ehr.list <- subset(bc1$ptobs,concept.class=="EHR")
+# Note EHR can't be exported due to 75,000 row limitation
+WriteXLS(c(rpt.naaccr.list),
+         ExcelFileName=paste0(v1$ptdata.fileprefix,"-ObsFacts-",Sys.Date(),".xls"),
+         SheetNames=c("NAACCR"),
+         row.names=FALSE,AdjWidth=TRUE,AutoFilter=TRUE,BoldHeaderRow=TRUE,FreezeRow=1)
+print(Sys.time())
+```
+
+#############################################################################
+```{r Timestamp end of run}
+#############################################################################
+
+Sys.time()  # Display current time}
+```

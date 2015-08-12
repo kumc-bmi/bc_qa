@@ -464,6 +464,166 @@ fig5 <- ggplot(tumor.by.mgs.score, aes(x=site, y=result, fill=key))
 style.dodge(fig5)
 ```
 
+```{r Patient-Level Statistics, echo=FALSE}
+
+site.ptlevel.freq <-                          data.frame(site="KUMC", var="Pts-SEER-Vital-Status", rate=881/881)
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="MCRF", var="Pts-SEER-Vital-Status", rate=93/489))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="MCW", var="Pts-SEER-Vital-Status", rate=498/498))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UIOWA", var="Pts-SEER-Vital-Status", rate=341/341))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UMN", var="Pts-SEER-Vital-Status", rate=800/800))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UNMC", var="Pts-SEER-Vital-Status", rate=473/467))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UTHSCSA", var="Pts-SEER-Vital-Status", rate=163/163))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UTSW", var="Pts-SEER-Vital-Status", rate=509/509))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="WISC", var="Pts-SEER-Vital-Status", rate=390/390))
+
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="KUMC", var="Pts-EMR-Vital-Status", rate=8/881))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="MCRF", var="Pts-EMR-Vital-Status", rate=489/489))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="MCW", var="Pts-EMR-Vital-Status", rate=0/498))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UIOWA", var="Pts-EMR-Vital-Status", rate=341/341))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UMN", var="Pts-EMR-Vital-Status", rate=800/800))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UNMC", var="Pts-EMR-Vital-Status", rate=0/467))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UTHSCSA", var="Pts-EMR-Vital-Status", rate=163/163))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UTSW", var="Pts-EMR-Vital-Status", rate=509/509))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="WISC", var="Pts-EMR-Vital-Status", rate=0/390))
+
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="KUMC", var="Pts-Eligible",  rate=707/881))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="MCRF", var="Pts-Eligible",  rate=382/489))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="MCW", var="Pts-Eligible", rate=397/498))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UIOWA", var="Pts-Eligible", rate=249/341))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UMN", var="Pts-Eligible", rate=640/800))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UNMC", var="Pts-Eligible", rate=354/473))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UTHSCSA", var="Pts-Eligible", rate=129/163))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="UTSW", var="Pts-Eligible", rate=436/509))
+site.ptlevel.freq <- rbind(site.ptlevel.freq, data.frame(site="WISC", var="Pts-Eligible", rate=302/390))
+
+site.ptlevel.freq$rate <- site.ptlevel.freq$rate*100
+```
+
+```{r Survey Variables, echo=FALSE}
+
+site.survey.freq <- data.frame(site="KUMC", var="BC-Within-Range", rate=933/936)
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="MCRF", var="BC-Within-Range", rate=660/666))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="MCW", var="BC-Within-Range", rate=583/598))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UIOWA", var="BC-Within-Range", rate=352/352))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UMN", var="BC-Within-Range", rate=947/962))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UNMC", var="BC-Within-Range", rate=534/539))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UTHSCSA", var="BC-Within-Range", rate=173/175))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UTSW", var="BC-Within-Range", rate=550/564))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="WISC", var="BC-Within-Range", rate=410/423))
+
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="KUMC", var="Tumors-BC", rate=936/962))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="MCRF", var="Tumors-BC", rate=666/722))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="MCW", var="Tumors-BC", rate=583/598))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UIOWA", var="Tumors-BC", rate=352/352))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UMN", var="Tumors-BC", rate=962/1007))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UNMC", var="Tumors-BC", rate=539/564))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UTHSCSA", var="Tumors-BC", rate=175/181))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UTSW", var="Tumors-BC", rate=564/566))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="WISC", var="Tumors-BC", rate=423/446))
+
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="KUMC", var="SEER-Site", rate=936/962))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="MCRF", var="SEER-Site", rate=666/722))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="MCW", var="SEER-Site", rate=583/598))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UIOWA", var="SEER-Site", rate=352/352))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UMN", var="SEER-Site", rate=962/1007))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UNMC", var="SEER-Site", rate=539/564))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UTHSCSA", var="SEER-Site", rate=175/181))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UTSW", var="SEER-Site", rate=564/566))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="WISC", var="SEER-Site", rate=402/446))
+
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="KUMC", var="Primary-Site", rate=962/962))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="MCRF", var="Primary-Site", rate=722/722))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="MCW", var="Primary-Site", rate=598/598))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UIOWA", var="Primary-Site", rate=352/352))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UMN", var="Primary-Site", rate=1007/1007))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UNMC", var="Primary-Site", rate=564/564))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UTHSCSA", var="Primary-Site", rate=181/181))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="UTSW", var="Primary-Site", rate=566/566))
+site.survey.freq <- rbind(site.survey.freq, data.frame(site="WISC", var="Primary-Site", rate=446/446))
+
+site.survey.freq$rate <- site.survey.freq$rate*100
+
+```
+
+```{r Receptor Status, echo=FALSE} 
+
+site.receptor.freq <-                           data.frame(site="KUMC", var="MGS-Score", rate=951/962)
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="MCRF", var="MGS-Score", rate=586/722))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="MCW", var="MGS-Score", rate=570/598))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UIOWA", var="MGS-Score", rate=352/352))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UMN", var="MGS-Score", rate=976/1007))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UNMC", var="MGS-Score", rate=560/564))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UTHSCSA", var="MGS-Score", rate=181/181))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UTSW", var="MGS-Score", rate=553/566))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="WISC", var="MGS-Score", rate=438/446))
+
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="KUMC", var="MGS-Method", rate=951/962))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="MCRF", var="MGS-Method", rate=575/722))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="MCW", var="MGS-Method", rate=585/598))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UIOWA", var="MGS-Method", rate=352/352))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UMN", var="MGS-Method", rate=976/1007))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UNMC", var="MGS-Method", rate=560/564))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UTHSCSA", var="MGS-Method", rate=181/181))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UTSW", var="MGS-Method", rate=553/566))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="WISC", var="MGS-Method", rate=438/446))
+
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="KUMC", var="HER2", rate=951/962))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="MCRF", var="HER2", rate=197/722))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="MCW", var="HER2", rate=585/598))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UIOWA", var="HER2", rate=0/352))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UMN", var="HER2", rate=976/1007))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UNMC", var="HER2", rate=560/564))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UTHSCSA", var="HER2", rate=181/181))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UTSW", var="HER2", rate=553/566))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="WISC", var="HER2", rate=438/446))
+
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="KUMC", var="PR2",  rate=951/962))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="MCRF", var="PR2",  rate=65/722))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="MCW", var="PR2",  rate=585/598))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UIOWA", var="PR2", rate=352/352))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UMN", var="PR2", rate=976/1007))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UNMC", var="PR2", rate=560/564))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UTHSCSA", var="PR2", rate=181/181))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UTSW", var="PR2", rate=553/566))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="WISC", var="PR2", rate=438/446))
+
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="KUMC",var="ER1",  rate=951/962))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="MCRF", var="ER1",  rate=54/722))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="MCW", var="ER1",  rate=585/598))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UIOWA", var="ER1", rate=352/352))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UMN", var="ER1", rate=976/1007))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UNMC", var="ER1", rate=560/564))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UTHSCSA", var="ER1", rate=181/181))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="UTSW", var="ER1", rate=553/566))
+site.receptor.freq <- rbind(site.receptor.freq, data.frame(site="WISC", var="ER1", rate=438/446))
+
+site.receptor.freq$rate <- site.receptor.freq$rate*100
+
+```
+
+Breast Cancer Variable Frequencies - Prototype Heatmap
+===========================================================
+```{r echo=FALSE}
+site.allvar.freq <- rbind(site.receptor.freq,
+                          site.survey.freq,
+                          site.ptlevel.freq)
+fig7 <- ggplot(site.allvar.freq, 
+               aes(x=site,y=var,fill=rate)) + 
+               geom_tile(aes(fill=rate),colour="white") + xlab("") + ylab("") + 
+               scale_fill_gradient2(low="white", high="slategray",name="Freq %") +
+               theme(axis.text.x = element_text(colour = "slategray"),
+                     axis.text.y = element_text(colour = "slategray"))
+fig7
+```
+
+Breast Cancer Variable Frequencies - Data Table
+===========================================================
+```{r echo=FALSE}
+fig8 <- fig7 +geom_text(aes(fill=rate), colour="darkslategray",
+                         label=format(round(site.allvar.freq$rate,1),nsmall=1) ) 
+fig8
+```
+
 Changes Since Feb 24
 ====================
 
