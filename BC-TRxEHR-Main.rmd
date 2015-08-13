@@ -5,6 +5,7 @@
 # 05-Aug Load data frames
 # 06-Aug Stratify dx'es 
 # 07-Aug Filter for active diagnosis (observed or problem list)
+# 13-Aug Reinstated all modifiers
 # 
 ############################################################################
 
@@ -150,17 +151,17 @@ bc1$cohort.fact$sub.encounter[bc1$cohort.fact$concept.class=="NAACCR"] <- bc1$co
 ```{r Filter cohort}
 ############################################################################
 nrow(bc1$patient)
-bc1$cohort.fact <- subset(bc1$cohort.fact,(modifier %in% c(
-                                                   "DiagObs:UHC_DIAGNOSIS",
-                                                   "DiagObs:Primary",
-                                                   "DiagObs:Clinic",
-                                                   "DiagObs:PAT_ENC_DX",
-                                                   "DiagObs:PROBLEM_LIST",
-                                                   "DiagObs:UHC_PROCEDURE",
-                                                   "@")) &
-                            (analysis.dimension=="BC DX") |
-                            (analysis.dimension != "BC DX")
-                     )
+# bc1$cohort.fact <- subset(bc1$cohort.fact,(modifier %in% c(
+#                                                    "DiagObs:UHC_DIAGNOSIS",
+#                                                    "DiagObs:Primary",
+#                                                    "DiagObs:Clinic",
+#                                                    "DiagObs:PAT_ENC_DX",
+#                                                    "DiagObs:PROBLEM_LIST",
+#                                                    "DiagObs:UHC_PROCEDURE",
+#                                                    "@")) &
+#                             (analysis.dimension=="BC DX") |
+#                             (analysis.dimension != "BC DX")
+#                      )
 length(unique(bc1$cohort.fact$patient.num))
 
 tmp.cohort <- subset(bc1$cohort.fact,analysis.dimension=="BC DX") 
