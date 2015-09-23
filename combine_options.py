@@ -32,13 +32,26 @@ class Codebook(object):
 
     @classmethod
     def as_field(cls, v_id, records):
-        record = records.next()
+        records = list(records)
+        record = records[0]
+
+        ty, choices = (
+            ('dropdown', FieldDef.encode_choices(pairs=[
+                (r['Code values'], r['Label']) for r in records]))
+            if len(records) > 1 and records[0]['Code values']
+            else
+            ('dropdown', FieldDef.encode_choices(labels=[
+                r['Label'] for r in records]))
+            if len(records) > 1
+            else ('text', None))
+
         f = FieldDef._default()._replace(
             field_name='v%02d_%s' % (
                 v_id,
-                record['Variable Name'].replace(' ', '_')),
+                record['Variable Name'].replace(' ', '_').replace('/', 'X')),
             form_name=record['var_type'],
-            field_type='text',  # @@dropdown
+            field_type=ty,
+            select_choices_or_calculations=choices
             )
         return f
 
