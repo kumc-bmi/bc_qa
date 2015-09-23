@@ -33,8 +33,6 @@ class Codebook(object):
     @classmethod
     def as_field(cls, v_id, records):
         records = list(records)
-        record = records[0]
-
         ty, choices = (
             ('dropdown', FieldDef.encode_choices(pairs=[
                 (r['Code values'], r['Label']) for r in records]))
@@ -45,11 +43,18 @@ class Codebook(object):
             if len(records) > 1
             else ('text', None))
 
+        item = records[0]
+
+        name = 'v%02d_%s' % (
+            v_id,
+            item['Variable Name'].replace(' ', '_').replace('/', 'X'))
+
         f = FieldDef._default()._replace(
-            field_name='v%02d_%s' % (
-                v_id,
-                record['Variable Name'].replace(' ', '_').replace('/', 'X')),
-            form_name=record['var_type'],
+            field_name=name,
+            field_label=item['Concept'],
+            field_note=('source: %s %s' % (
+                item['source'], item['Notes'])).strip(),
+            form_name=item['var_type'],
             field_type=ty,
             select_choices_or_calculations=choices
             )
