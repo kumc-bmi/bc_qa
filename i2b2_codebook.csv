@@ -1,4 +1,4 @@
-source,var_type,option_num,variable_num,,Variable Name,Concept,"Code, width, format ",Code values,Label,Notes,
+source,var_type,option_num,variable_num,NOTE,Variable Name,Concept,"Code, width, format ",Code values,Label,Notes,
 study,admin,1,1,1,StudyID,Study ID,,,,,
 study,admin,1,2,1,breastsurvey,Breast Cancer Survey Participant,,,Yes,,
 ,,2,2, ,,,,,No,,
