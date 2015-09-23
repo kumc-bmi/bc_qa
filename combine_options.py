@@ -4,6 +4,7 @@
 import csv
 import logging
 from itertools import groupby
+import re
 
 from redcap_upload import FieldDef
 
@@ -27,34 +28,59 @@ class Codebook(object):
     def convert(cls, records):
         variables = groupby(records,
                             lambda r: r['variable_num'])
-        return (cls.as_field(int(v_id), records)
-                for (v_id, records) in variables)
+        fields = (cls.as_field(int(v_id), records)
+                  for (v_id, records) in variables)
+        return sorted(fields,
+                      key=lambda f: f.form_name)
 
     @classmethod
     def as_field(cls, v_id, records):
         records = list(records)
+
+        # Use x__ in attempt to be sure we don't put
+        # such fields before the study ID.
+        form_required = lambda hint: hint or 'x__missing'
+
+        # Variables/field names must consist of ONLY
+        # lower-case letters, numbers, and underscores.
+        mk_name = lambda id, hint: 'v%02d_%s' % (
+            v_id,
+            re.sub(r'[^a-z0-9_]', '', hint.replace(' ', '_').lower()))
+
+        note_source = lambda source, note: (
+            'source: %s %s' % (
+                source, note)).strip()
+
+        # Multiple choice fields can only have coded values
+        # (in the choices in column F) that are numeric or
+        # alpha-numeric (lower case or upper case, with or
+        # without underscores), thus they cannot have codings
+        # that contain spaces or other characters. Please make
+        # the following corrections:
+        # "00*" (F51) - Suggestion: replace with "00"
+        fix_code = lambda c: c.replace('*', '_')
+
+        item = records[0]
+
         ty, choices = (
             ('dropdown', FieldDef.encode_choices(pairs=[
-                (r['Code values'], r['Label']) for r in records]))
-            if len(records) > 1 and records[0]['Code values']
+
+                (fix_code(r['Code values']),
+                 r['Label']) for r in records
+                if r['Label']  # skip "headings"
+            ]))
+            if len(records) > 1 and item['Code values']
             else
             ('dropdown', FieldDef.encode_choices(labels=[
                 r['Label'] for r in records]))
             if len(records) > 1
             else ('text', None))
 
-        item = records[0]
-
-        name = 'v%02d_%s' % (
-            v_id,
-            item['Variable Name'].replace(' ', '_').replace('/', 'X'))
-
         f = FieldDef._default()._replace(
-            field_name=name,
-            field_label=item['Concept'],
-            field_note=('source: %s %s' % (
-                item['source'], item['Notes'])).strip(),
-            form_name=item['var_type'],
+            form_name=form_required(item['var_type']),
+            field_name=mk_name(v_id, item['Variable Name']),
+            field_label=item['Concept'] or item['Variable Name'],
+            field_note=note_source(item['source'], item['Notes']),
             field_type=ty,
             select_choices_or_calculations=choices
             )
