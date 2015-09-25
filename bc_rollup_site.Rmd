@@ -16,6 +16,9 @@
 # 22-Sep Handles different data types for code values (CHAR, DATE & NUM)
 # 23-Sep Uses '||' as delimiter between code and code.name (for character data types)
 # 24-Sep SAVEPOINT (RMD file committed to TortoiseHg)
+# 24-Sep Moved datamart working directory to 'bc-datamart'
+# 25-Sep Restructured error handling
+# 25-Sep SAVEPOINT (RMD file committed to TortoiseHg) 
 # ============================================================================
 ```
 
@@ -24,7 +27,6 @@
 ```{r Package Set-Up, include=FALSE}
 
 # Include PHM function libraries
-setwd('/d1/home/vleonardo/GPC-Development/bc_qa')  
 source('/d1/home/vleonardo/PHM-Development/PHM-LIBRARY.rmd')  # Loads PHM functions
 # library(ggplot2)
 library(reshape)
@@ -35,117 +37,142 @@ options(width=300)
 opts_chunk$set(echo=FALSE)
 
 # BC Function library
-source('bc_qa_txform.R')  
+source('/d1/home/vleonardo/GPC-Development/bc_qa/bc_qa_txform.R')  
 ```
 
 ```{r AddVariable - Add new column to aggregated datamart, based on search strings}
-
-# Note - ignores case and punctuation n the concept path
 BCRup.AddVariableToDatamart <- function(p.datamart, p.site.ptobs, 
                                         p.code.string.1, p.code.string.2, 
-                                        p.new.col.name, p.code.type) {
-  
-  # Sets up return of entire dataset, if this variable raises any exceptions
+                                        p.new.col.name, p.code.data.type) {
 
-  tmp.datamart <- p.datamart  
-  tmp.exception <- list("")
-  tmp.found.and.added.flag <- FALSE
+  # NOTE: Search terms must be found in both 'variable name' and 'concept path'
+  # NOTE: Ignores case and punctuation in the concept path  
   
+  tmp.log.record <- list("")
+  tmp.valid.terms.flag <- TRUE
+  tmp.new.col.descriptor.name <- paste0(p.new.col.name,".Descriptor")  # Used for CHAR data types
+  tmp.datamart <- p.datamart
+  
+  # Check for matching variable -----------------------------------------------------
   message("Checking variable to be added: ",p.new.col.name) 
   # Ensure only 1 variable matches search terms
   message("... searching variable names containing: '",
           p.code.string.1,"' & '",p.code.string.2,"'")
   tmp.var.found.cnt <- nrow(subset(bs, 
                           grepl(p.code.string.1,variable,ignore.case=TRUE) &
-                          grepl(p.code.string.2,variable,ignore.case=TRUE) ))                           
+                          grepl(p.code.string.2,variable,ignore.case=TRUE) ))  
+  message("Number of variables found matching search terms: ",tmp.var.found.cnt)
                           
-  if (tmp.var.found.cnt > 1) {
-    tmp.msg <- "Collision where multiple variables found matching search strings."
-    tmp.action.taken <- "WARNING: Variable values not populated."
-    tmp.exception <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
-                           tmp.msg,tmp.action.taken)
-    v.exceptions <<- rbind(,v.exceptions, 
-                          tmp.exception) } 
-  else {
-    message("... searching facts for concept paths containing: '",
-            p.code.string.1,"' & '",p.code.string.2,"'") 
-    tmp.new.col.facts <- subset(p.site.ptobs, 
-                            grepl(p.code.string.1,code.path,ignore.case=TRUE) &
-                            grepl(p.code.string.2,code.path,ignore.case=TRUE) )  
-    if (p.code.type == "CHAR") {
-      # Default and applies to CHAR datatypes
-      print(names(tmp.new.col.facts))
-      tmp.new.col.facts <- unique(tmp.new.col.facts[,c("patient.num","encounter.num",
-                                                       "code","code.name")])
-      tmp.new.col.facts$code <- paste0(tmp.new.col.facts$code,"||",tmp.new.col.facts$code.name)
-      tmp.new.col.facts <- tmp.new.col.facts[,c("patient.num","encounter.num","code")]
-      } 
-    else {
-      if (p.code.type == "NUM") {
-        tmp.new.col.facts <- unique(tmp.new.col.facts[,c("patient.num","encounter.num","nval")])
-        } 
-      else {
-          if (p.code.type == "DATE") {
-                  tmp.new.col.facts <- unique(tmp.new.col.facts[,c("patient.num","encounter.num","start.date.char")])
-            } 
-          else {
-                  tmp.msg <- "Datatype specified is not supported."
-                  tmp.action.taken <- "WARNING: Using simple code values for column."
-                  tmp.exception <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
-                                              tmp.msg,tmp.action.taken)
-                  v.exceptions <<- rbind(,v.exceptions,tmp.exception)
-          }
-      }
-            
-    }
-    tmp.new.col.facts <- setNames(tmp.new.col.facts,c("patient.num","encounter.num",p.new.col.name))
-
-  }
-    # Ensure observation facts exist for search terms
-    tmp.ncf.cnt <- nrow(tmp.new.col.facts)  # Necessary for knitr markdown 
-    message("... number of unique records found: ",tmp.ncf.cnt)
-    message("... number of unique values founds: ",length(unique(tmp.new.col.facts[,p.new.col.name])))
-    if (tmp.ncf.cnt == 0) {
-      tmp.msg <- "Unable to locate any facts for search strings in concept paths."
-      tmp.action.taken <- "WARNING: Variable values not populated."
-      tmp.exception <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
-                             tmp.msg,tmp.action.taken)
-      v.exceptions <<- rbind(v.exceptions, 
-                            tmp.exception) }
-    else { 
-      if (tmp.ncf.cnt > nrow(p.datamart)) {
-        message("... verifying cardinality of result set for variable requested.")
-        tmp.msg <- "Cardinality of variable does not correspond with desired result set."
-        tmp.action.taken <- "WARNING: Variable values not populated."
-        tmp.exception <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
-                               tmp.msg,tmp.action.taken)
-        v.exceptions <<- rbind(v.exceptions, 
-                              tmp.exception) }
-      else {
-        # All clear, proceed w/ adding variable values to datamart
-        tmp.datamart <- merge(tmp.datamart, tmp.new.col.facts,
-                              all.x=TRUE)  # don't prune on join mis-matches         
-        tmp.found.and.added.flag <- TRUE
-        tmp.msg <- "Search terms found."
-        message("... number of unique values: ", length(unique(tmp.new.col.facts[,ncol(tmp.new.col.facts)])))
-        tmp.action.taken <- "Successfuly added new column!"
-        tmp.exception <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
-                               tmp.msg,tmp.action.taken)
-        message(tmp.action.taken)
-        v.exceptions <<- rbind(v.exceptions, 
-                              tmp.exception)  # Assign value to global variable
-        }      
+  # Variable not found!
+  if (tmp.var.found.cnt == 0) {
+    tmp.msg <- "Unable to find a variable matching search terms."
+    tmp.action.taken <- "WARNING: Variable values will be set to NA."
+    tmp.log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
+                                tmp.msg,tmp.action.taken)
+    v.script.log <<- rbind(v.script.log, 
+                          tmp.log.record) 
+    tmp.valid.terms.flag <- FALSE
     } 
   
-  # If values were not populated, due to wonkiness in search terms, then add NAs instead
-  if (! (tmp.found.and.added.flag))  {
-     # Go ahead and add placeholder for variable
-     #    -- Wonky variables will then just not be populated and instead will be set to NA
-     message("Search terms not found....  Column created w/ NA values, instead.")
-     tmp.datamart[,c("p.new.col.name")] <- NA
-     colnames(tmp.datamart)[colnames(tmp.datamart)=="p.new.col.name"] <- p.new.col.name
-     message(tmp.action.taken)
-     }    
+  # More than ONE variable found!
+  if (tmp.var.found.cnt > 1) {
+    tmp.msg <- "Collision where multiple variables found matching search strings."
+    tmp.action.taken <- "WARNING: Values from multiple variables merged into one column."
+    tmp.log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
+                           tmp.msg,tmp.action.taken)
+    v.script.log <<- rbind(v.script.log, 
+                          tmp.log.record) 
+    }
+  
+  # Search and load any matching observation facts -----------------------------------------------------  
+  message("Checking patient data (observation facts) for populated concept codes: ",p.new.col.name) 
+  message("... searching facts for concept paths containing: '",
+          p.code.string.1,"' & '",p.code.string.2,"'") 
+  tmp.new.col.facts <- subset(p.site.ptobs, 
+                              grepl(p.code.string.1,code.path,ignore.case=TRUE) &
+                              grepl(p.code.string.2,code.path,ignore.case=TRUE) )   
+  tmp.new.col.facts <- unique(tmp.new.col.facts[,c("patient.num","encounter.num",
+                                                   "code","code.name","nval","start.date.char")]) 
+  tmp.ncf.cnt <- nrow(tmp.new.col.facts)  # Necessary for knitr markdown 
+  message("... number of unique records found: ",tmp.ncf.cnt)
+  message("... number of unique values founds: ",length(unique(tmp.new.col.facts$code)))
+  
+    
+  # Check for matching observation facts -----------------------------------------------------  
+  if (tmp.valid.terms.flag) {
+    if (! (p.code.data.type %in% c("CHAR","NUM","DATE"))) {
+      tmp.msg <- "Datatype specified is not supported."
+      tmp.action.taken <- "WARNING: Using simple code values for column."
+      tmp.log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
+                                  tmp.msg,tmp.action.taken)
+      v.script.log <<- rbind(,v.script.log,tmp.log.record)
+      }
+    
+    if (tmp.ncf.cnt > nrow(p.datamart)) {
+        message("... verifying cardinality of result set for variable requested.")
+        tmp.msg <- "Cardinality of variable does not correspond with desired result set."
+        tmp.action.taken <- "WARNING: Variable values will be set to NA."
+        tmp.log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
+                                     tmp.msg,tmp.action.taken)
+        v.script.log <<- rbind(v.script.log, 
+                               tmp.log.record) 
+        tmp.valid.terms.flag <- FALSE
+    } else {
+      # Ensure observation facts exist for search terms
+      message("ncf: ",tmp.ncf.cnt)
+      if (tmp.ncf.cnt == 0) {
+        tmp.msg <- "Unable to locate any facts for search strings in concept paths."
+        tmp.action.taken <- "WARNING: Variable values will be set to NA."
+        tmp.log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
+                                     tmp.msg,tmp.action.taken)
+        v.script.log <<- rbind(v.script.log, 
+                               tmp.log.record) 
+        tmp.valid.terms.flag <- FALSE
+      }
+    }
+  }
+
+  #------------------------------------------------------------------------------------
+  # All conditions handled, proceed w/ adding variable values to datamart 
+  # -- Invalid terms will have NAs loaded
+  #-----------------------------------------------------------------------------------
+  if (tmp.valid.terms.flag) {
+    # Handle based on data type
+    if (p.code.data.type == "NUM") {
+      tmp.new.col.facts <- tmp.new.col.facts[,c("patient.num","encounter.num","nval")]
+      tmp.new.col.facts <- setNames(tmp.new.col.facts,c("patient.num","encounter.num",
+                                                      p.new.col.name))
+    } else {
+      if (p.code.data.type == "DATE") {
+        # Use start.date.char to get hh:mm:ss
+        tmp.new.col.facts <- tmp.new.col.facts[,c("patient.num","encounter.num","start.date.char")]
+        tmp.new.col.facts <- setNames(tmp.new.col.facts,c("patient.num","encounter.num",
+                                                      p.new.col.name))
+      } else {
+        if (!(p.code.data.type %in% c("NUM","DATE"))) {  # Handle as CHAR, includes unsupported data types
+          tmp.new.col.facts <- tmp.new.col.facts[,c("patient.num","encounter.num","code","code.name")]
+          tmp.new.col.facts <- setNames(tmp.new.col.facts,c("patient.num","encounter.num",
+                                                      p.new.col.name,tmp.new.col.descriptor.name))
+        } 
+      }    
+    }
+    tmp.new.col.facts <- unique(tmp.new.col.facts)
+    tmp.datamart <- merge(tmp.datamart, tmp.new.col.facts,
+                          all.x=TRUE)  # don't prune on join mis-matches         
+    tmp.msg <- "Search terms found."
+    tmp.action.taken <- "Successfully added new column!"
+    tmp.log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
+                                 tmp.msg,tmp.action.taken)
+    message(tmp.action.taken)
+    v.script.log <<- rbind(v.script.log, 
+                           tmp.log.record)  # Assign value to global variable
+  } else { # Terms are not valid, so simply return nulls instead
+    message("... assigning NAs to invalid term.")
+    tmp.datamart[,p.new.col.name] <- NA
+          if (!(p.code.data.type %in% c("NUM","DATE"))) {  # Handle as CHAR, includes unsupported data types
+            tmp.datamart[,tmp.new.col.descriptor.name] <- NA
+          }
+  }
   return(tmp.datamart)
 }
 ```
@@ -235,23 +262,26 @@ dataset$site <- "KUMC"
 dataset$bc_db <- "KUMC-16-kumcBC"
 
 message('Dataset identified: ',dataset$site)
-conn.site <- dbConnect(SQLite(),paste0(dataset$bc_db,".db") )
+conn.site <- dbConnect(SQLite(),paste0('/d1/home/vleonardo/GPC-Development/bc-data-files/',dataset$bc_db,".db") )
 print(dbListTables(conn.site))
 
 # builder.summary reads raw db
 bs <- (builder.summary(conn.site)[, c('variable', 'pat_qty', 'enc_qty', 'fact_qty')])
 print(bs)
 
+# Load site's variable and concept codes directly from db file
 site <- list("")
+site$variables <- dbGetQuery(conn.site,"select * from variable")
+print(site$variables[,c("concept_path","name_char")])
+site$concept.codes <- dbGetQuery(conn.site,"select * from concept_dimension")
+
+# Diagnostics for site's data
 message('SQLITE db file) patient_dimension: ',
         dbGetQuery(conn.site,"select count(*) from patient_dimension"))
 message('SQLITE db file) variable: ',
         dbGetQuery(conn.site,"select count(*) from variable"))
-site$variables <- dbGetQuery(conn.site,"select * from variable")
-print(site$variables[,c("concept_path","name_char")])
 message('SQLITE db file) concept_dimension: ',
         dbGetQuery(conn.site,"select count(*) from concept_dimension"))
-site$concept.codes <- dbGetQuery(conn.site,"select * from concept_dimension")
 message('SQLITE db file) observation_fact: ',
         dbGetQuery(conn.site,"select count(*) from observation_fact"))
 
@@ -274,8 +304,7 @@ site$ptobs.code.paths <- unique(site$ptobs$code.path)
  -- variables used in QA process (exclusion criteria and receptor status)
 
 ```{r}
-setwd('/d1/home/vleonardo/GPC-Development/bc_qa')  
-load("bc_terms_results.RData")
+load("/d1/home/vleonardo/GPC-Development/bc_qa/bc_terms_results.RData")
 message('Number of terms loaded: ',nrow(bcterm$term204))
 
 message(Sys.time())
@@ -341,10 +370,14 @@ print(nrow(site$ptobs))
 
 ```{r}
 # Variable Initialization
-v.exceptions <- data.frame(p.new.col.name="",p.code.string.1="",p.code.string.2="",tmp.msg="",tmp.action.taken="")
+v.script.log <- data.frame(p.new.col.name="",p.code.string.1="",p.code.string.2="",tmp.msg="",tmp.action.taken="")
 message("Rows in tumor.site: ", nrow(tumor.site))
 tmp.tumor.site <- tumor.site
+
+# Add GPC Site Identifier
 tmp.tumor.site <- cbind(gpc.site=dataset$site,tmp.tumor.site)
+
+# Add each variable
 tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'Breast','Breast', 'Seer.Site.Breast','CHAR')
 tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0160','race 1', 'NAACCR.0160.Race.1','CHAR')
 tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0161','race 2', 'NAACCR.0161.Race.2','CHAR')
@@ -382,9 +415,12 @@ tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'3020',
 tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'3400','AJCC-7', 'NAACCR.3400.AJCC-7.T','CHAR')
 tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'3430','AJCC-7', 'NAACCR.3430.AJCC-7.Stage','CHAR')
 
+# Summary of actions taken
 names(tmp.tumor.site)
 message("Rows in tumor.site: ", nrow(tumor.site))
-print(v.exceptions)
+print(v.script.log)
+message("Flagged Issues w/ Variables")
+print(v.script.log[!grepl("Success",v.script.log$tmp.action.taken),])
 ```
 
 ### Descriptive Analysis for Each Datamart Variable
