@@ -19,6 +19,8 @@
 # 24-Sep Moved datamart working directory to 'bc-datamart'
 # 25-Sep Restructured error handling
 # 25-Sep SAVEPOINT (RMD file committed to TortoiseHg) 
+# 25-Sep Provide all encounters, eligible and ineligible for the study
+# 25-Sep SAVEPOINT (RMD file committed to TortoiseHg)
 # ============================================================================
 ```
 
@@ -307,11 +309,9 @@ site$ptobs.code.paths <- unique(site$ptobs$code.path)
 load("/d1/home/vleonardo/GPC-Development/bc_qa/bc_terms_results.RData")
 message('Number of terms loaded: ',nrow(bcterm$term204))
 
-message(Sys.time())
-tumor.site <- bc.exclusions(conn.site)   # Expected run-time: 10 mins for 14k pts
-message(Sys.time())
+tumor.site <- bc.exclusions(conn.site)   
 
-print(matrix(names(tumor.site)))
+print(names(tumor.site))
 saveRDS(tumor.site,  paste0(dataset$bc_db,"-",Sys.Date(),"-tumor-site.rds"))
 x.tumor.site <- tumor.site  # Holding area for restoration/debugging purposes
 #tumor.site <- readRDS(paste0(dataset$bc_db,"-",Sys.Date(),"-tumor-site.rds"))
@@ -324,41 +324,33 @@ survey.sample$all.criteria <- reduce.logical(survey.sample)
 message('Number of pts meeting inclusion criteria: ', 
         nrow(survey.sample[survey.sample$all.criteria,]))
 
-survey.sample.size <- count.cases(survey.sample)  # Produce table of criteria counts
-print(survey.sample.size)
+survey.sample.summary <- count.cases(survey.sample)  # Produce table of criteria counts
+print(survey.sample.summary)
 ```
 
 ### Filter for only eligible encounters(tumors)
 ```{r}
-message("Total number of patients submitted: ", length(unique(tumor.site$patient_num)))
-message("Total number of encounters submitted: ", length(unique(tumor.site$patient_num)))
-tumor.site <- subset(tumor.site,encounter_num %in% survey.sample$encounter_num[survey.sample$all.criteria])
-message("Number of eligible patients: ", length(unique(tumor.site$patient_num)))
-message("Number of eligible encounters(tumors): ", nrow(tumor.site))
+# Remove original receptor status variables f/ inclusion set, as they are replicated in NAACCR vars
+tumor.site <- subset(tumor.site,select=-c(er.csf.1,pr.csf.2,her2.csf.15,mgs.method.csf.22,mgs.score.csf.23))
 
-```
-
-### Rename for R syntax
-
-```{r}
+tumor.site <- merge(tumor.site,survey.sample[,c("patient_num","encounter_num","all.criteria")])
 colnames(tumor.site)[colnames(tumor.site)=="patient_num"] <- "patient.num"
 colnames(tumor.site)[colnames(tumor.site)=="encounter_num"] <- "encounter.num"
+colnames(tumor.site)[colnames(tumor.site)=="all.criteria"] <- "enctr.eligible"
+
+# Add prefix to survey variables to distinguish them from TR & EHR direct-sourced items
+for (i in 3:ncol(tumor.site)) {
+  tmp.col.name <- names(tumor.site[i])
+  colnames(tumor.site)[colnames(tumor.site)==tmp.col.name] <- paste0("gpc.",tmp.col.name)
+}
+
+message("Total number of patients submitted: ", length(unique(tumor.site$patient.num)))
+message("Total number of encounters submitted: ", length(unique(tumor.site$encounter.num)))
+message("Number of eligible patients: ", length(unique(tumor.site$patient.num[tumor.site$gpc.enctr.eligible])))
+message("Number of eligible encounters(tumors): ", nrow(tumor.site[tumor.site$gpc.enctr.eligible,]))
 ```
 
-### Report only the first eligible encounter for each patient
-
-```{r}
-#message('Number of pts w/ multiple eligible encounters: ',
-        #length(tumor.site[duplicated(tumor.site$patient.num),]$patient.num) )
-#tmp.first.enctrs <- setNames(
-#                       aggregate(tumor.site$encounter.num, by=list(tumor.site$patient.num),min),
-#                       c("patient.num","encounter.num") )
-#tumor.site <- merge(tumor.site,tmp.first.enctrs,by=c("patient.num","encounter.num"))
-#message('Number of pts w/ multiple eligible encounters: ',
-#        length(tumor.site[duplicated(tumor.site$patient.num),]$patient.num) )
-```
-
-### Trim dataset for only eligible encounters
+### Trim master patient observations for only eligible encounters, solely for performance reasons
 
 ```{r}
 site$ptobs <- subset(site$ptobs, encounter.num %in% tumor.site$encounter.num)
@@ -415,8 +407,10 @@ tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'3020',
 tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'3400','AJCC-7', 'NAACCR.3400.AJCC-7.T','CHAR')
 tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'3430','AJCC-7', 'NAACCR.3430.AJCC-7.Stage','CHAR')
 
+tumor.site <- tmp.tumor.site
+
 # Summary of actions taken
-names(tmp.tumor.site)
+names(tumor.site)
 message("Rows in tumor.site: ", nrow(tumor.site))
 print(v.script.log)
 message("Flagged Issues w/ Variables")
@@ -427,9 +421,9 @@ print(v.script.log[!grepl("Success",v.script.log$tmp.action.taken),])
 
 ```{r Descriptive Analysis}
 #for (tmp.col.index in 24:27) # Skip P#, E# and Site columns
-for (tmp.col.index in 4:(ncol(tmp.tumor.site))) # Skip P#, E# and Site columns
+for (tmp.col.index in 4:(ncol(tumor.site))) # Skip P#, E# and Site columns
   {  
-  BCRup.DescribeDatamartColumn(tmp.tumor.site,tmp.col.index) 
+  BCRup.DescribeDatamartColumn(tumor.site,tmp.col.index) 
   #BCRup.DescribeDatamartColumn(tmp.tumor.site,39) 
   }
 ```
@@ -437,12 +431,9 @@ for (tmp.col.index in 4:(ncol(tmp.tumor.site))) # Skip P#, E# and Site columns
 ```{r Send patient sampling to CSV file}
 setwd('/d1/home/vleonardo/GPC-Development/bc-datamart')  
 
-# Remove original recept status variables f/ inclusion set, as they are replicated in NAACCR vars
-csv.tumor.site <- subset(tmp.tumor.site,select=-c(er.csf.1,pr.csf.2,her2.csf.15,mgs.method.csf.22,mgs.score.csf.23))
-
 message(paste('Output directory: ',getwd()) )
 v.filename <- paste0(dataset$site,"-",dataset$record_id,"-BCDatamart.csv")
-write.csv(csv.tumor.site, file = v.filename, row.names=FALSE)
+write.csv(tumor.site, file = v.filename, row.names=FALSE)
 message('Tumor-level datamart: ',v.filename)
-message('... ',nrow(csv.tumor.site),' rows written.')
+message('... ',nrow(tumor.site),' rows written.')
 ```
