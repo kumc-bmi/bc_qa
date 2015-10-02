@@ -21,6 +21,9 @@
 # 25-Sep SAVEPOINT (RMD file committed to TortoiseHg) 
 # 25-Sep Provide all encounters, eligible and ineligible for the study
 # 25-Sep SAVEPOINT (RMD file committed to TortoiseHg)
+# 25-Sep Calculate age at dx and provide as a gpc variable
+# 02-Oct Uses 'v.col.terms' dataframe for search term values
+# 02-Oct SAVEPOINT (RMD file committed to TortoiseHg)
 # ============================================================================
 ```
 
@@ -42,6 +45,48 @@ opts_chunk$set(echo=FALSE)
 source('/d1/home/vleonardo/GPC-Development/bc_qa/bc_qa_txform.R')  
 ```
 
+### Load Data Dictionary For Column Naming And Search Terms 
+
+```{r Load Search Term Dictionary, include=FALSE}
+v.col.terms  <- data.frame(term.1='Breast', term.2='Breast', col.name='Seer.Site.Breast', col.data.type='CHAR')
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0160', term.2='race 1', col.name='NAACCR.0160.Race.1', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0161', term.2='race 2', col.name='NAACCR.0161.Race.2', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0162', term.2='race 3', col.name='NAACCR.0162.Race.3', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0163', term.2='race 4', col.name='NAACCR.0163.Race.4', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0164', term.2='race 5', col.name='NAACCR.0164.Race.5', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0190', term.2='spanish', col.name='NAACCR.0190.Spanish', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0220', term.2='sex', col.name='NAACCR.0220.Sex', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0240', term.2='birth', col.name='NAACCR.0240.Birth.Date', col.data.type='DATE'))  # Date of birth
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0380', term.2='central', col.name='NAACCR.0380.Seqno.Central', col.data.type='CHAR'))  # Seqno Central
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0390', term.2='diagnosis', col.name='NAACCR.0390.Dx.Date', col.data.type='DATE'))  # Date of diagnosis
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0400', term.2='primary', col.name='NAACCR.0400.Primary.Site', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0410', term.2='laterality', col.name='NAACCR.0410.Laterality', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0440', term.2='grade', col.name='NAACCR.0440.Grade', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0490', term.2='confirmation', col.name='NAACCR.0490.Confirmation', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0560', term.2='hospital', col.name='NAACCR.0560.Seqno.Hosp', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0610', term.2='class', col.name='NAACCR.0610.Class.Case', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0670', term.2='surg', col.name='NAACCR.0670.Surg.Prim.Site', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0820', term.2='positive', col.name='NAACCR.0820.Reg.Nodes.Pos', col.data.type='CHAR'))  # Regional Nodes Positive
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0830', term.2='examine', col.name='NAACCR.0830.Reg.Nodes.Examined', col.data.type='CHAR'))  # Regional Nodes Examined
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='1750', term.2='contact', col.name='NAACCR.1750.Last.Contact.Date', col.data.type='DATE'))  
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='1760', term.2='vital', col.name='NAACCR.1760.Vital.Status', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='1860', term.2='recurrence', col.name='NAACCR.1860.Recurrence.Date', col.data.type='DATE'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='1861', term.2='flag', col.name='NAACCR.1861.Recurrence.Date.1st.Flag', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2850', term.2='dx', col.name='NAACCR.2850.CSMets.Dx', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2860', term.2='eval', col.name='NAACCR.2860.CSMets.Eval', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2869', term.2='factor', col.name='NAACCR.2869.CSSF.15', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2876', term.2='factor', col.name='NAACCR.2876.CSSF.22', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2877', term.2='factor', col.name='NAACCR.2877.CSSF.23', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2880', term.2='factor', col.name='NAACCR.2880.CSSF.01', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2890', term.2='factor', col.name='NAACCR.2890.CSSF.02', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2940', term.2='AJCC-6', col.name='NAACCR.2940.AJCC-6.T', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='3000', term.2='AJCC-6', col.name='NAACCR.3000.AJCC-6.Stage', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='3020', term.2='SS2000', col.name='NAACCR.3020.SS2000', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='3400', term.2='AJCC-7', col.name='NAACCR.3400.AJCC-7.T', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='3430', term.2='AJCC-7', col.name='NAACCR.3430.AJCC-7.Stage', col.data.type='CHAR'))
+message("Number of search terms identified: ",nrow(v.col.terms))
+```
+
 ```{r AddVariable - Add new column to aggregated datamart, based on search strings}
 BCRup.AddVariableToDatamart <- function(p.datamart, p.site.ptobs, 
                                         p.code.string.1, p.code.string.2, 
@@ -50,7 +95,7 @@ BCRup.AddVariableToDatamart <- function(p.datamart, p.site.ptobs,
   # NOTE: Search terms must be found in both 'variable name' and 'concept path'
   # NOTE: Ignores case and punctuation in the concept path  
   
-  tmp.log.record <- list("")
+  log.record <- list("")
   tmp.valid.terms.flag <- TRUE
   tmp.new.col.descriptor.name <- paste0(p.new.col.name,".Descriptor")  # Used for CHAR data types
   tmp.datamart <- p.datamart
@@ -67,23 +112,23 @@ BCRup.AddVariableToDatamart <- function(p.datamart, p.site.ptobs,
                           
   # Variable not found!
   if (tmp.var.found.cnt == 0) {
-    tmp.msg <- "Unable to find a variable matching search terms."
-    tmp.action.taken <- "WARNING: Variable values will be set to NA."
-    tmp.log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
-                                tmp.msg,tmp.action.taken)
+    log.msg <- "Unable to find a variable matching search terms."
+    log.action.taken <- "WARNING: Variable values will be set to NA."
+    log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
+                                log.msg,log.action.taken)
     v.script.log <<- rbind(v.script.log, 
-                          tmp.log.record) 
+                          log.record) 
     tmp.valid.terms.flag <- FALSE
     } 
   
   # More than ONE variable found!
   if (tmp.var.found.cnt > 1) {
-    tmp.msg <- "Collision where multiple variables found matching search strings."
-    tmp.action.taken <- "WARNING: Values from multiple variables merged into one column."
-    tmp.log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
-                           tmp.msg,tmp.action.taken)
+    log.msg <- "Collision where multiple variables found matching search strings."
+    log.action.taken <- "WARNING: Values from multiple variables merged into one column."
+    log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
+                           log.msg,log.action.taken)
     v.script.log <<- rbind(v.script.log, 
-                          tmp.log.record) 
+                          log.record) 
     }
   
   # Search and load any matching observation facts -----------------------------------------------------  
@@ -103,32 +148,32 @@ BCRup.AddVariableToDatamart <- function(p.datamart, p.site.ptobs,
   # Check for matching observation facts -----------------------------------------------------  
   if (tmp.valid.terms.flag) {
     if (! (p.code.data.type %in% c("CHAR","NUM","DATE"))) {
-      tmp.msg <- "Datatype specified is not supported."
-      tmp.action.taken <- "WARNING: Using simple code values for column."
-      tmp.log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
-                                  tmp.msg,tmp.action.taken)
-      v.script.log <<- rbind(,v.script.log,tmp.log.record)
+      log.msg <- "Datatype specified is not supported."
+      log.action.taken <- "WARNING: Using simple code values for column."
+      log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
+                                  log.msg,log.action.taken)
+      v.script.log <<- rbind(,v.script.log,log.record)
       }
     
     if (tmp.ncf.cnt > nrow(p.datamart)) {
         message("... verifying cardinality of result set for variable requested.")
-        tmp.msg <- "Cardinality of variable does not correspond with desired result set."
-        tmp.action.taken <- "WARNING: Variable values will be set to NA."
-        tmp.log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
-                                     tmp.msg,tmp.action.taken)
+        log.msg <- "Cardinality of variable does not correspond with desired result set."
+        log.action.taken <- "WARNING: Variable values will be set to NA."
+        log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
+                                     log.msg,log.action.taken)
         v.script.log <<- rbind(v.script.log, 
-                               tmp.log.record) 
+                               log.record) 
         tmp.valid.terms.flag <- FALSE
     } else {
       # Ensure observation facts exist for search terms
       message("ncf: ",tmp.ncf.cnt)
       if (tmp.ncf.cnt == 0) {
-        tmp.msg <- "Unable to locate any facts for search strings in concept paths."
-        tmp.action.taken <- "WARNING: Variable values will be set to NA."
-        tmp.log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
-                                     tmp.msg,tmp.action.taken)
+        log.msg <- "Unable to locate any facts for search strings in concept paths."
+        log.action.taken <- "WARNING: Variable values will be set to NA."
+        log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
+                                     log.msg,log.action.taken)
         v.script.log <<- rbind(v.script.log, 
-                               tmp.log.record) 
+                               log.record) 
         tmp.valid.terms.flag <- FALSE
       }
     }
@@ -152,6 +197,7 @@ BCRup.AddVariableToDatamart <- function(p.datamart, p.site.ptobs,
                                                       p.new.col.name))
       } else {
         if (!(p.code.data.type %in% c("NUM","DATE"))) {  # Handle as CHAR, includes unsupported data types
+          message("... handling as type CHAR")
           tmp.new.col.facts <- tmp.new.col.facts[,c("patient.num","encounter.num","code","code.name")]
           tmp.new.col.facts <- setNames(tmp.new.col.facts,c("patient.num","encounter.num",
                                                       p.new.col.name,tmp.new.col.descriptor.name))
@@ -161,19 +207,19 @@ BCRup.AddVariableToDatamart <- function(p.datamart, p.site.ptobs,
     tmp.new.col.facts <- unique(tmp.new.col.facts)
     tmp.datamart <- merge(tmp.datamart, tmp.new.col.facts,
                           all.x=TRUE)  # don't prune on join mis-matches         
-    tmp.msg <- "Search terms found."
-    tmp.action.taken <- "Successfully added new column!"
-    tmp.log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
-                                 tmp.msg,tmp.action.taken)
-    message(tmp.action.taken)
+    log.msg <- "Search terms found."
+    log.action.taken <- "Successfully added new column!"
+    log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
+                                 log.msg,log.action.taken)
+    message(log.action.taken)
     v.script.log <<- rbind(v.script.log, 
-                           tmp.log.record)  # Assign value to global variable
-  } else { # Terms are not valid, so simply return nulls instead
-    message("... assigning NAs to invalid term.")
-    tmp.datamart[,p.new.col.name] <- NA
-          if (!(p.code.data.type %in% c("NUM","DATE"))) {  # Handle as CHAR, includes unsupported data types
-            tmp.datamart[,tmp.new.col.descriptor.name] <- NA
-          }
+                           log.record)  # Assign value to global variable
+  } else { # Terms are not valid, so simply return NAs instead
+    message("... assigning NAs to invalid term for variable: ",p.new.col.name)
+    tmp.datamart[,c(p.new.col.name)] <- NA
+    if (!(p.code.data.type %in% c("NUM","DATE"))) {  # Handle as CHAR, includes unsupported data types
+      tmp.datamart[,c(tmp.new.col.descriptor.name)] <- NA
+      }
   }
   return(tmp.datamart)
 }
@@ -195,17 +241,9 @@ BCRup.DescribeDatamartColumn <- function(p.datamart,p.col.idx) {
        p.datamart[,tmp.col.name] <- as.POSIXct(p.datamart[,tmp.col.name],"%y-%m-%d %T")
        } 
     
-    if (grepl(".date$|.num$",tmp.col.name,ignore.case=TRUE)) {
+    if (grepl("date|.num$",tmp.col.name,ignore.case=TRUE)) {
        print(summary(p.datamart[,tmp.col.name]))
-       hist(p.datamart[,tmp.col.name],
-            breaks="days", format="%b %y",
-            main=tmp.col.name,
-            col=c("lightsteelblue"),
-            xlab="")
-    } else {if (grepl("date.",tmp.col.name,ignore.case=TRUE)) {
-              message("Prior date variable not yet supported")
-              }
-            else {# Handle as character
+    } else {# Handle as character
        # Descriptive analysis for variable added
        tmp.frequency.table <- as.data.frame(addmargins(table(p.datamart[,p.col.idx])))
        tmp.frequency.table <- tmp.frequency.table[,c("Freq","Var1")]
@@ -214,6 +252,39 @@ BCRup.DescribeDatamartColumn <- function(p.datamart,p.col.idx) {
   
        print(tmp.frequency.table, right=FALSE)  
        # print(summary(tmp.frequency.table[,tmp.col.name]))  # Only applies to numeric or date columns
+       }
+   
+}
+```
+
+```{r VisualizeDatamartColumn - Generate frequency and distribution charts}
+# Note - ignores case and punctuation n the concept path
+BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.idx) {
+ 
+     tmp.col.name <- names(p.datamart[p.col.idx])
+     tmp.col.found.flag <- (nrow(p.datamart[! (is.na(p.datamart[,tmp.col.name])),]) > 0)
+     if  (! tmp.col.found.flag) {
+       message("No 'Descriptive Analysis', as only NAs are present for column: ",tmp.col.name) 
+       return("No 'Descriptive Analysis' performed")
+       }
+
+    # Convert dates from character to date format
+    if (grepl(".date$",tmp.col.name,ignore.case=TRUE) ) { # Handle as date, '$' checks for end of string
+       p.datamart[,tmp.col.name] <- as.POSIXct(p.datamart[,tmp.col.name],"%y-%m-%d %T")
+       } 
+    
+    if (grepl("date|.num$",tmp.col.name,ignore.case=TRUE)) {
+       hist(p.datamart[,tmp.col.name],
+            breaks="days", format="%b %y",
+            main=tmp.col.name,
+            col=c("lightsteelblue"),
+            xlab="")
+    } else {# Handle as character
+       # Descriptive analysis for variable added
+       tmp.frequency.table <- as.data.frame(addmargins(table(p.datamart[,p.col.idx])))
+       tmp.frequency.table <- tmp.frequency.table[,c("Freq","Var1")]
+       colnames(tmp.frequency.table)[colnames(tmp.frequency.table)=="Var1"] <- tmp.col.name
+       colnames(tmp.frequency.table)[colnames(tmp.frequency.table)=="Freq"] <- "Enctrs"
            
        # Charts
        pie(table(p.datamart[,tmp.col.name]),
@@ -242,7 +313,7 @@ BCRup.DescribeDatamartColumn <- function(p.datamart,p.col.idx) {
        mtext(side=3, line=0, tmp.chart.subtitle) 
        par(op)  # reset
        }
-   }
+   
 }
 ```
 
@@ -331,29 +402,51 @@ print(survey.sample.summary)
 ### Filter for only eligible encounters(tumors)
 ```{r}
 # Remove original receptor status variables f/ inclusion set, as they are replicated in NAACCR vars
-tumor.site <- subset(tumor.site,select=-c(er.csf.1,pr.csf.2,her2.csf.15,mgs.method.csf.22,mgs.score.csf.23))
-
-tumor.site <- merge(tumor.site,survey.sample[,c("patient_num","encounter_num","all.criteria")])
-colnames(tumor.site)[colnames(tumor.site)=="patient_num"] <- "patient.num"
-colnames(tumor.site)[colnames(tumor.site)=="encounter_num"] <- "encounter.num"
-colnames(tumor.site)[colnames(tumor.site)=="all.criteria"] <- "enctr.eligible"
+q.site.datamart <- subset(tumor.site,select=-c(er.csf.1,pr.csf.2,her2.csf.15,mgs.method.csf.22,mgs.score.csf.23))
+colnames(q.site.datamart)[colnames(q.site.datamart)=="patient_num"] <- "patient.num"
+colnames(q.site.datamart)[colnames(q.site.datamart)=="encounter_num"] <- "encounter.num"
 
 # Add prefix to survey variables to distinguish them from TR & EHR direct-sourced items
-for (i in 3:ncol(tumor.site)) {
-  tmp.col.name <- names(tumor.site[i])
-  colnames(tumor.site)[colnames(tumor.site)==tmp.col.name] <- paste0("gpc.",tmp.col.name)
+for (i in 3:ncol(q.site.datamart)) {
+  tmp.col.name <- names(q.site.datamart[i])
+  colnames(q.site.datamart)[colnames(q.site.datamart)==tmp.col.name] <- paste0("gpc.",tmp.col.name)
 }
 
-message("Total number of patients submitted: ", length(unique(tumor.site$patient.num)))
-message("Total number of encounters submitted: ", length(unique(tumor.site$encounter.num)))
-message("Number of eligible patients: ", length(unique(tumor.site$patient.num[tumor.site$gpc.enctr.eligible])))
-message("Number of eligible encounters(tumors): ", nrow(tumor.site[tumor.site$gpc.enctr.eligible,]))
+# Add GPC Site Identifier
+q.site.datamart <- cbind(gpc.site=dataset$site,q.site.datamart)
+
+# Calculate age at diagnosis
+tmp.dx <- list("")
+tmp.dx <- q.site.datamart[,c("encounter.num","gpc.date.dx","gpc.date.birth")]
+tmp.dx$age <-   
+  as.POSIXlt(tmp.dx$gpc.date.dx)$year - 
+  as.POSIXlt(tmp.dx$gpc.date.birth)$year
+tmp.dx$dx.mmdd <- (as.POSIXlt(tmp.dx$gpc.date.dx)$mon*100) +
+                             as.POSIXlt(tmp.dx$gpc.date.dx)$mday 
+tmp.dx$birth.mmdd <- (as.POSIXlt(tmp.dx$gpc.date.birth)$mon*100) +
+                             as.POSIXlt(tmp.dx$gpc.date.birth)$mday 
+tmp.dx$age[tmp.dx$dx.mmdd < tmp.dx$birth.mmdd] <- 
+  tmp.dx$age[tmp.dx$dx.mmdd < tmp.dx$birth.mmdd] - 1
+q.site.datamart$gpc.dx.age <- tmp.dx$age[tmp.dx$encounter.num==q.site.datamart$encounter.num]
+# Move column towards beginning of list
+q.site.datamart <- q.site.datamart[,c(1,2,3,ncol(q.site.datamart),5:ncol(q.site.datamart)-1)]
+
+# Add eligiblity flag
+q.site.datamart <- merge(q.site.datamart,survey.sample[,c("patient_num","encounter_num","all.criteria")],
+                         by.x=c("patient.num","encounter.num"),
+                         by.y=c("patient_num","encounter_num"))
+colnames(q.site.datamart)[colnames(q.site.datamart)=="all.criteria"] <- "gpc.enctr.eligible"
+
+message("Total number of patients submitted: ", length(unique(q.site.datamart$patient.num)))
+message("Total number of encounters submitted: ", length(unique(q.site.datamart$encounter.num)))
+message("Number of eligible patients: ", length(unique(q.site.datamart$patient.num[q.site.datamart$gpc.enctr.eligible])))
+message("Number of eligible encounters(tumors): ", nrow(q.site.datamart[q.site.datamart$gpc.enctr.eligible,]))
 ```
 
 ### Trim master patient observations for only eligible encounters, solely for performance reasons
 
 ```{r}
-site$ptobs <- subset(site$ptobs, encounter.num %in% tumor.site$encounter.num)
+site$ptobs <- subset(site$ptobs, encounter.num %in% q.site.datamart$encounter.num)
 print(nrow(site$ptobs))
 ```
 
@@ -362,78 +455,84 @@ print(nrow(site$ptobs))
 
 ```{r}
 # Variable Initialization
-v.script.log <- data.frame(p.new.col.name="",p.code.string.1="",p.code.string.2="",tmp.msg="",tmp.action.taken="")
+v.script.log <- data.frame(p.new.col.name="",p.code.string.1="",p.code.string.2="",log.msg="",log.action.taken="")
 message("Rows in tumor.site: ", nrow(tumor.site))
-tmp.tumor.site <- tumor.site
-
-# Add GPC Site Identifier
-tmp.tumor.site <- cbind(gpc.site=dataset$site,tmp.tumor.site)
+tmp.tumor.site <- q.site.datamart
 
 # Add each variable
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'Breast','Breast', 'Seer.Site.Breast','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0160','race 1', 'NAACCR.0160.Race.1','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0161','race 2', 'NAACCR.0161.Race.2','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0162','race 3', 'NAACCR.0162.Race.3','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0163','race 4', 'NAACCR.0163.Race.4','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0164','race 5', 'NAACCR.0164.Race.5','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0190','spanish', 'NAACCR.0190.Spanish','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0220','sex', 'NAACCR.0220.Sex','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0240','birth', 'NAACCR.0240.Birth.Date','DATE')  # Date of birth
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0380','central', 'NAACCR.0380.Seqno.Central','CHAR')  # Seqno Central
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0390','diagnosis', 'NAACCR.0390.Dx.Date','DATE')  # Date of diagnosis
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0400','primary', 'NAACCR.0400.Primary.Site','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0410','laterality', 'NAACCR.0410.Laterality','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0440','grade', 'NAACCR.0440.Grade','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0490','confirmation', 'NAACCR.0490.Confirmation','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0560','hospital', 'NAACCR.0560.Seqno.Hosp','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0610','class', 'NAACCR.0610.Class.Case','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0670','surg', 'NAACCR.0670.Surg.Prim.Site','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0820','positive', 'NAACCR.0820.Reg.Nodes.Pos','CHAR')  # Regional Nodes Positive
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'0830','examine', 'NAACCR.0830.Reg.Nodes.Examined','CHAR')  # Regional Nodes Examined
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'1750','contact', 'NAACCR.1750.Last.Contact.Date','DATE')  
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'1760','vital', 'NAACCR.1760.Vital.Status','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'1860','recurrence', 'NAACCR.1860.Recurrence.Date','DATE')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'1861','flag', 'NAACCR.1861.Recurrence.Date.1st.Flag','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'2850','dx', 'NAACCR.2850.CSMets.Dx','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'2860','eval', 'NAACCR.2860.CSMets.Eval','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'2869','factor', 'NAACCR.2869.CSSF.15','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'2876','factor', 'NAACCR.2876.CSSF.22','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'2877','factor', 'NAACCR.2877.CSSF.23','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'2880','factor', 'NAACCR.2880.CSSF.01','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'2890','factor', 'NAACCR.2890.CSSF.02','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'2940','AJCC-6', 'NAACCR.2940.AJCC-6.T','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'3000','AJCC-6', 'NAACCR.3000.AJCC-6.Stage','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'3020','SS2000', 'NAACCR.3020.SS2000','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'3400','AJCC-7', 'NAACCR.3400.AJCC-7.T','CHAR')
-tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs,'3430','AJCC-7', 'NAACCR.3430.AJCC-7.Stage','CHAR')
-
-tumor.site <- tmp.tumor.site
+for (r in 1:nrow(v.col.terms)) {
+  tmp.col.name <- as.character(v.col.terms$col.name[r])
+  tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs, 
+                                                v.col.terms$term.1[r],
+                                                v.col.terms$term.2[r],
+                                                tmp.col.name, 
+                                                v.col.terms$col.data.type[r]) 
+}
+q.site.datamart <- tmp.tumor.site
 
 # Summary of actions taken
-names(tumor.site)
-message("Rows in tumor.site: ", nrow(tumor.site))
+names(q.site.datamart)
+message("Rows in tumor.site: ", nrow(q.site.datamart))
 print(v.script.log)
 message("Flagged Issues w/ Variables")
-print(v.script.log[!grepl("Success",v.script.log$tmp.action.taken),])
+print(v.script.log[!grepl("Success",v.script.log$log.action.taken),])
 ```
 
-### Descriptive Analysis for Each Datamart Variable
+### Descriptive Analysis
 
 ```{r Descriptive Analysis}
-#for (tmp.col.index in 24:27) # Skip P#, E# and Site columns
-for (tmp.col.index in 4:(ncol(tumor.site))) # Skip P#, E# and Site columns
+#for (tmp.col.index in 4:7) # Skip P#, E# and Site columns
+for (tmp.col.index in 4:(ncol(q.site.datamart))) # Skip P#, E# and Site columns
   {  
-  BCRup.DescribeDatamartColumn(tumor.site,tmp.col.index) 
-  #BCRup.DescribeDatamartColumn(tmp.tumor.site,39) 
+  BCRup.DescribeDatamartColumn(q.site.datamart,tmp.col.index) 
+  BCRup.VisualizeDatamartColumn(q.site.datamart,tmp.col.index) 
+  }
+
+# Provides a presentation similar to a standard 'Table One' 
+for (tmp.col.index in 4:(ncol(q.site.datamart))) # Skip P#, E# and Site columns
+  {  
+  BCRup.DescribeDatamartColumn(q.site.datamart,tmp.col.index) 
   }
 ```
+
+### Merge for Consented Study Ids Only
+
+```{r Filter for Consented Study IDs}
+# Iowa: 100101 - 100360
+# KUMC: 150101 - 150360
+# UWISC: 200101 - 200360
+# UTSW: 250101 - 250360
+# MCW: 300101 - 300360
+# UNMC: 350101 - 350360
+# UMN: 400101 - 400360
+# MCRF: 450101 - 450360
+
+v.site.study.prefix.id <- "15"
+message(getwd())
+v.site.study.ids <- read.csv(paste0("~/GPC-Development/bc-datamart/KUMC-StudyIds-2015-09-22.csv"))
+v.site.survey.set <- read.csv(paste0("~/GPC-Development/bc-data-files/",dataset$site,"-16-BC-deid-pt-sample.csv"))
+v.site.survey.set$gpc.study.id <- paste0(v.site.study.prefix.id,sprintf("%04d",v.final.site.survey.set$row_number+100))  # Study ids start at 101
+v.site.pts.consented <- merge(v.site.survey.set,
+                              v.site.study.ids,
+                              by.x="gpc.study.id",
+                              by.y="record_id")
+v.site.pts.consented <- v.site.pts.consented[,c("patient_num","gpc.study.id")]
+tmp.sdpc <- merge(q.site.datamart,v.site.pts.consented,
+                                  by.x="patient.num",
+                                  by.y="patient_num")
+# Move Study id to front of the pack
+tmp.sdpc <- tmp.sdpc[,c(3,1,2,ncol(q.site.datamart),5:ncol(tmp.sdpc)-1 )]
+z.site.datamart.pts.consented <- tmp.sdpc
+```
+
+
 
 ```{r Send patient sampling to CSV file}
 setwd('/d1/home/vleonardo/GPC-Development/bc-datamart')  
 
 message(paste('Output directory: ',getwd()) )
-v.filename <- paste0(dataset$site,"-",dataset$record_id,"-BCDatamart.csv")
-write.csv(tumor.site, file = v.filename, row.names=FALSE)
+v.filename <- paste0(dataset$site,"-",dataset$record_id,"-BCDatamart-Consented.csv")
+write.csv(z.site.datamart.pts.consented, file = v.filename, row.names=FALSE)
 message('Tumor-level datamart: ',v.filename)
-message('... ',nrow(tumor.site),' rows written.')
+message('... ',nrow(z.site.datamart.pts.consented),' rows written.')
 ```
