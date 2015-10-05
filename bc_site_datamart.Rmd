@@ -1,4 +1,4 @@
-# Breast Cancer - Roll-up Site Data
+# Breast Cancer - Site Datamart
 ```{r echo=FALSE}
 # ============================================================================
 ###  Creates site-specific tumor-level datamart
@@ -24,6 +24,8 @@
 # 25-Sep Calculate age at dx and provide as a gpc variable
 # 02-Oct Uses 'v.col.terms' dataframe for search term values
 # 02-Oct SAVEPOINT (RMD file committed to TortoiseHg)
+# 05-Oct Uses 'v.col.terms' data typing to drive 'visualizations'
+# 05-Oct SAVEPOINT (RMD file committed to TortoiseHg)
 # ============================================================================
 ```
 
@@ -227,93 +229,152 @@ BCRup.AddVariableToDatamart <- function(p.datamart, p.site.ptobs,
 
 ```{r DescribeDatamartColumn - Generate frequency and distribution charts}
 # Note - ignores case and punctuation n the concept path
-BCRup.DescribeDatamartColumn <- function(p.datamart,p.col.idx) {
+BCRup.DescribeDatamartColumn <- function(p.datamart,p.col.name) {
  
-     tmp.col.name <- names(p.datamart[p.col.idx])
-     tmp.col.found.flag <- (nrow(p.datamart[! (is.na(p.datamart[,tmp.col.name])),]) > 0)
+     # By-pass descriptor columns, as they are merged w/ their root values
+     if (grepl(".Descriptor$",p.col.name)) {
+       return("Skipping over 'descriptor' column")
+     }
+     
+     # Default data type
+     p.col.datatype <- "CHAR"
+               
+     # Check for NAs
+     tmp.col.found.flag <- (nrow(p.datamart[! is.na(p.datamart[,p.col.name] ), ]) > 0)
      if  (! tmp.col.found.flag) {
        message("No 'Descriptive Analysis', as only NAs are present for column: ",tmp.col.name) 
        return("No 'Descriptive Analysis' performed")
        }
-
+     
+     # Handle GPC eligibility variables by determining data type
+     if (grepl("^gpc.",p.col.name)) {
+       if (grepl(".date.",p.col.name)) {
+          p.col.datatype <- "DATE"
+          } else {
+            if (grepl(".dx.age$",p.col.name)) {
+              p.col.datatype <- "NUM"
+            }
+          }
+     } else { # Handle as NAACCR variable
+       p.col.datatype <- v.col.terms$col.data.type[v.col.terms$col.name==p.col.name]
+     }
+  
     # Convert dates from character to date format
-    if (grepl(".date$",tmp.col.name,ignore.case=TRUE) ) { # Handle as date, '$' checks for end of string
-       p.datamart[,tmp.col.name] <- as.POSIXct(p.datamart[,tmp.col.name],"%y-%m-%d %T")
+    if (p.col.datatype == "DATE") { 
+       p.datamart[,p.col.name] <- as.POSIXct(p.datamart[,p.col.name],"%y-%m-%d %T")
        } 
     
-    if (grepl("date|.num$",tmp.col.name,ignore.case=TRUE)) {
-       print(summary(p.datamart[,tmp.col.name]))
+    if ((p.col.datatype == "DATE") | (p.col.datatype == "NUM")) {
+       print(summary(p.datamart[,p.col.name]))
     } else {# Handle as character
        # Descriptive analysis for variable added
-       tmp.frequency.table <- as.data.frame(addmargins(table(p.datamart[,p.col.idx])))
-       tmp.frequency.table <- tmp.frequency.table[,c("Freq","Var1")]
+       tmp.next.col <- which(colnames(p.datamart)==p.col.name) + 1
+       p.datamart$col.expanded <- p.datamart[,p.col.name]
+       # Add descriptor, if not a GPC Eligibility variable
+       if (! grepl("^gpc.",p.col.name)) {
+         p.datamart$col.expanded <- paste0(p.datamart[,p.col.name]," :: ",p.datamart[,tmp.next.col])
+         }
+       tmp.frequency.table <- as.data.frame(addmargins(table(p.datamart$col.expanded)))
+       tmp.frequency.table <- tmp.frequency.table[,c("Freq","Var1")]  # Switch column order
        colnames(tmp.frequency.table)[colnames(tmp.frequency.table)=="Var1"] <- tmp.col.name
        colnames(tmp.frequency.table)[colnames(tmp.frequency.table)=="Freq"] <- "Enctrs"
   
        print(tmp.frequency.table, right=FALSE)  
-       # print(summary(tmp.frequency.table[,tmp.col.name]))  # Only applies to numeric or date columns
        }
    
 }
 ```
 
 ```{r VisualizeDatamartColumn - Generate frequency and distribution charts}
-# Note - ignores case and punctuation n the concept path
-BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.idx) {
+# Note - ignores case and punctuation n the concept path /
+BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.name) {
  
-     tmp.col.name <- names(p.datamart[p.col.idx])
+ 
+     # By-pass descriptor columns, as they are merged w/ their root values
+     if (grepl(".Descriptor$",p.col.name)) {
+       return("Skipping over 'descriptor' column")
+     }
+  
      tmp.col.found.flag <- (nrow(p.datamart[! (is.na(p.datamart[,tmp.col.name])),]) > 0)
      if  (! tmp.col.found.flag) {
-       message("No 'Descriptive Analysis', as only NAs are present for column: ",tmp.col.name) 
-       return("No 'Descriptive Analysis' performed")
+       message("No 'Visual Analysis', as only NAs are present for column: ",tmp.col.name) 
+       return("No 'Visual Analysis' performed")
        }
 
+     p.col.datatype <- "CHAR"  # Default
+     # Handle GPC eligibility variables by determining data type
+     if (grepl("^gpc.",p.col.name)) {
+       if (grepl(".date.",p.col.name)) {
+          p.col.datatype <- "DATE"
+          } else {
+            if (grepl(".dx.age$",p.col.name)) {
+              p.col.datatype <- "NUM"
+            }
+          }
+     } else { # Handle as NAACCR variable
+       p.col.datatype <- v.col.terms$col.data.type[v.col.terms$col.name==p.col.name]
+     }          
+     
     # Convert dates from character to date format
-    if (grepl(".date$",tmp.col.name,ignore.case=TRUE) ) { # Handle as date, '$' checks for end of string
-       p.datamart[,tmp.col.name] <- as.POSIXct(p.datamart[,tmp.col.name],"%y-%m-%d %T")
+    if (p.col.datatype == "DATE") { 
+       p.datamart[,p.col.name] <- as.POSIXct(p.datamart[,p.col.name],"%y-%m-%d %T")
        } 
     
-    if (grepl("date|.num$",tmp.col.name,ignore.case=TRUE)) {
-       hist(p.datamart[,tmp.col.name],
+    if (p.col.datatype == "DATE") {
+       hist(p.datamart[,p.col.name],
             breaks="days", format="%b %y",
-            main=tmp.col.name,
+            main=p.col.name,
             col=c("lightsteelblue"),
             xlab="")
-    } else {# Handle as character
-       # Descriptive analysis for variable added
-       tmp.frequency.table <- as.data.frame(addmargins(table(p.datamart[,p.col.idx])))
-       tmp.frequency.table <- tmp.frequency.table[,c("Freq","Var1")]
-       colnames(tmp.frequency.table)[colnames(tmp.frequency.table)=="Var1"] <- tmp.col.name
-       colnames(tmp.frequency.table)[colnames(tmp.frequency.table)=="Freq"] <- "Enctrs"
+    } else {
+      if (p.col.datatype == "NUM") {
+         hist(p.datamart[,p.col.name],
+              breaks=max(p.datamart[,p.col.name]),
+              main=p.col.name,
+              col=c("lightsteelblue"),
+              xlab="")
+      } else {# Handle as character
+        tmp.frequency.table <- as.data.frame(addmargins(table(p.datamart[,p.col.name])))
+        tmp.frequency.table <- tmp.frequency.table[,c("Freq","Var1")]
+        colnames(tmp.frequency.table)[colnames(tmp.frequency.table)=="Var1"] <- p.col.name
+        colnames(tmp.frequency.table)[colnames(tmp.frequency.table)=="Freq"] <- "Enctrs"
            
-       # Charts
-       pie(table(p.datamart[,tmp.col.name]),
-           main=tmp.col.name)  # 3 is code
-    
-       tmp.frequency.table2 <- aggregate(p.datamart$encounter.num, 
-                              by=list(p.datamart[,tmp.col.name]), 
-                              function(x) length(unique(x)))
-       tmp.frequency.table2 <- tmp.frequency.table2[order(tmp.frequency.table2$x,decreasing=TRUE),]
-       tmp.row.cnt <- nrow(tmp.frequency.table2)
-       tmp.max.analysis.cnt <- min(7,tmp.row.cnt)
-       tmp.chart.subtitle <- "All Occurrences"
-       if (tmp.row.cnt > tmp.max.analysis.cnt) {
-           tmp.chart.subtitle <- paste0("Most Frequence Occurrences (Top ",tmp.max.analysis.cnt," of ",tmp.row.cnt,")")
-       }
-       tmp.frequency.table2 <- tmp.frequency.table2[1:tmp.max.analysis.cnt,]  
-       op <- par(mar=c(5,4,3,2),bg="white")   # Bottom, left, top, right
-       bp <- barplot(tmp.frequency.table2$x,
+        # Charts
+        pie(table(p.datamart[,p.col.name]),
+            main=p.col.name)  
+       
+        p.datamart$col.expanded <- p.datamart[,p.col.name]
+        # Add descriptor, if not a GPC Eligibility variable
+        if (! grepl("^gpc.",p.col.name)) {
+          tmp.next.col <- which(colnames(p.datamart)==p.col.name) + 1
+          p.datamart$col.expanded <- paste0(p.datamart[,p.col.name]," :: ",p.datamart[,tmp.next.col])
+          }
+       
+        tmp.frequency.table2 <- aggregate(p.datamart$encounter.num, 
+                                          by=list(p.datamart$col.expanded), 
+                                         function(x) length(unique(x)))
+       
+        tmp.frequency.table2 <- tmp.frequency.table2[order(tmp.frequency.table2$x,decreasing=TRUE),]
+        tmp.row.cnt <- nrow(tmp.frequency.table2)
+        tmp.max.analysis.cnt <- min(7,tmp.row.cnt)
+        tmp.chart.subtitle <- "All Occurrences"
+        if (tmp.row.cnt > tmp.max.analysis.cnt) {
+            tmp.chart.subtitle <- paste0("Most Frequent Occurrences (Top ",tmp.max.analysis.cnt," of ",tmp.row.cnt,")")
+        }
+        tmp.frequency.table2 <- tmp.frequency.table2[1:tmp.max.analysis.cnt,]  
+        op <- par(mar=c(5,4,3,2),bg="white")   # Bottom, left, top, right
+        bp <- barplot(tmp.frequency.table2$x,
                        horiz=TRUE,
                        xlim=c(0,max(tmp.frequency.table2$x)*1.25),
                        col=c("lightsteelblue"),
                        #width allows all x labels to be shown
                        xlab="Encounters (Tumors)")         
-       text(bp, x=0, labels=tmp.frequency.table2$Group.1, pos=4, cex=.85)
-       mtext(side=3, line=1, tmp.col.name, font=2)
-       mtext(side=3, line=0, tmp.chart.subtitle) 
-       par(op)  # reset
-       }
-   
+        text(bp, x=0, labels=tmp.frequency.table2$Group.1, pos=4, cex=.85)
+        mtext(side=3, line=1, p.col.name, font=2)
+        mtext(side=3, line=0, tmp.chart.subtitle) 
+        par(op)  # reset
+        }
+  }
 }
 ```
 
@@ -373,7 +434,7 @@ print(nrow(site$ptobs))
 site$ptobs.code.paths <- unique(site$ptobs$code.path)                           
 ```
 
-### Loading original patient data for `r dataset$site'
+### Loading original patient data for `r dataset$site`
  -- variables used in QA process (exclusion criteria and receptor status)
 
 ```{r}
@@ -455,7 +516,7 @@ print(nrow(site$ptobs))
 
 ```{r}
 # Variable Initialization
-v.script.log <- data.frame(p.new.col.name="",p.code.string.1="",p.code.string.2="",log.msg="",log.action.taken="")
+v.script.log <- data.frame(p.new.col.name=NA,p.code.string.1=NA,p.code.string.2=NA,log.msg=NA,log.action.taken=NA)
 message("Rows in tumor.site: ", nrow(tumor.site))
 tmp.tumor.site <- q.site.datamart
 
@@ -469,29 +530,39 @@ for (r in 1:nrow(v.col.terms)) {
                                                 v.col.terms$col.data.type[r]) 
 }
 q.site.datamart <- tmp.tumor.site
+v.script.log <- v.script.log[! (is.na(v.script.log$p.new.col.name)),]
+```
 
-# Summary of actions taken
+###  Summary of Variables Loaded and Actions Taken
+
+```{r Variable Summary Report} 
 names(q.site.datamart)
 message("Rows in tumor.site: ", nrow(q.site.datamart))
 print(v.script.log)
+```
+
+### Problems Encountered: `r nrow(v.script.log[!grepl("Success",v.script.log$log.action.taken),])`
+
+```{r Error Log} 
 message("Flagged Issues w/ Variables")
 print(v.script.log[!grepl("Success",v.script.log$log.action.taken),])
 ```
 
 ### Descriptive Analysis
 
-```{r Descriptive Analysis}
-#for (tmp.col.index in 4:7) # Skip P#, E# and Site columns
+```{r Descriptive Analysis} 
 for (tmp.col.index in 4:(ncol(q.site.datamart))) # Skip P#, E# and Site columns
   {  
-  BCRup.DescribeDatamartColumn(q.site.datamart,tmp.col.index) 
-  BCRup.VisualizeDatamartColumn(q.site.datamart,tmp.col.index) 
+  tmp.col.name <- names(q.site.datamart[tmp.col.index])                         
+  BCRup.VisualizeDatamartColumn(q.site.datamart,tmp.col.name)
+  BCRup.DescribeDatamartColumn(q.site.datamart, tmp.col.name)    
   }
 
 # Provides a presentation similar to a standard 'Table One' 
 for (tmp.col.index in 4:(ncol(q.site.datamart))) # Skip P#, E# and Site columns
   {  
-  BCRup.DescribeDatamartColumn(q.site.datamart,tmp.col.index) 
+  tmp.col.name <- names(q.site.datamart[tmp.col.index])
+  BCRup.DescribeDatamartColumn(q.site.datamart, tmp.col.name)  
   }
 ```
 
@@ -511,7 +582,7 @@ v.site.study.prefix.id <- "15"
 message(getwd())
 v.site.study.ids <- read.csv(paste0("~/GPC-Development/bc-datamart/KUMC-StudyIds-2015-09-22.csv"))
 v.site.survey.set <- read.csv(paste0("~/GPC-Development/bc-data-files/",dataset$site,"-16-BC-deid-pt-sample.csv"))
-v.site.survey.set$gpc.study.id <- paste0(v.site.study.prefix.id,sprintf("%04d",v.final.site.survey.set$row_number+100))  # Study ids start at 101
+v.site.survey.set$gpc.study.id <- paste0(v.site.study.prefix.id,sprintf("%04d",v.site.survey.set$row_number+100))  # Study ids start at 101
 v.site.pts.consented <- merge(v.site.survey.set,
                               v.site.study.ids,
                               by.x="gpc.study.id",
