@@ -26,6 +26,8 @@
 # 02-Oct SAVEPOINT (RMD file committed to TortoiseHg)
 # 05-Oct Uses 'v.col.terms' data typing to drive 'visualizations'
 # 05-Oct SAVEPOINT (RMD file committed to TortoiseHg)
+# 05-Oct Uses 'studyid-to-rownumber' mapping file
+# 05-Oct SAVEPOINT (RMD file committed to TortoiseHg)
 # ============================================================================
 ```
 
@@ -580,14 +582,14 @@ for (tmp.col.index in 4:(ncol(q.site.datamart))) # Skip P#, E# and Site columns
 
 v.site.study.prefix.id <- "15"
 message(getwd())
-v.site.study.ids <- read.csv(paste0("~/GPC-Development/bc-datamart/KUMC-StudyIds-2015-09-22.csv"))
+#v.site.study.ids <- read.csv(paste0("~/GPC-Development/bc-datamart/KUMC-StudyIds-2015-09-22.csv"))
+v.site.study.ids <- read.csv(paste0("~/GPC-Development/bc-datamart/KUMC-study_id_to_order_num.csv"))
 v.site.survey.set <- read.csv(paste0("~/GPC-Development/bc-data-files/",dataset$site,"-16-BC-deid-pt-sample.csv"))
-v.site.survey.set$gpc.study.id <- paste0(v.site.study.prefix.id,sprintf("%04d",v.site.survey.set$row_number+100))  # Study ids start at 101
-v.site.pts.consented <- merge(v.site.survey.set,
-                              v.site.study.ids,
-                              by.x="gpc.study.id",
-                              by.y="record_id")
-v.site.pts.consented <- v.site.pts.consented[,c("patient_num","gpc.study.id")]
+v.site.survey.set <- merge(v.site.survey.set, v.site.study.ids,
+                           by.x="row_number",
+                           by.y="ORDER_ID")
+colnames(v.site.survey.set)[colnames(v.site.survey.set)=="ORDER_ID"] <- "gpc.study.id"
+v.site.pts.consented <- v.site.survey.set
 tmp.sdpc <- merge(q.site.datamart,v.site.pts.consented,
                                   by.x="patient.num",
                                   by.y="patient_num")
