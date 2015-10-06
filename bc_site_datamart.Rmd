@@ -28,6 +28,8 @@
 # 05-Oct SAVEPOINT (RMD file committed to TortoiseHg)
 # 05-Oct Uses 'studyid-to-rownumber' mapping file
 # 05-Oct SAVEPOINT (RMD file committed to TortoiseHg)
+# 06-Oct Revised column order of final datamart (moving study id and row_number to the front)
+# 05-Oct SAVEPOINT (RMD file committed to TortoiseHg)
 # ============================================================================
 ```
 
@@ -585,16 +587,18 @@ message(getwd())
 #v.site.study.ids <- read.csv(paste0("~/GPC-Development/bc-datamart/KUMC-StudyIds-2015-09-22.csv"))
 v.site.study.ids <- read.csv(paste0("~/GPC-Development/bc-datamart/KUMC-study_id_to_order_num.csv"))
 v.site.survey.set <- read.csv(paste0("~/GPC-Development/bc-data-files/",dataset$site,"-16-BC-deid-pt-sample.csv"))
+v.site.survey.set <- v.site.survey.set[,c("row_number","patient_num")]
 v.site.survey.set <- merge(v.site.survey.set, v.site.study.ids,
                            by.x="row_number",
                            by.y="ORDER_ID")
-colnames(v.site.survey.set)[colnames(v.site.survey.set)=="ORDER_ID"] <- "gpc.study.id"
+colnames(v.site.survey.set)[colnames(v.site.survey.set)=="STUDY_ID"] <- "gpc.study.id"
+colnames(v.site.survey.set)[colnames(v.site.survey.set)=="row_number"] <- "gpc.sample.set.row.number"
 v.site.pts.consented <- v.site.survey.set
 tmp.sdpc <- merge(q.site.datamart,v.site.pts.consented,
                                   by.x="patient.num",
                                   by.y="patient_num")
 # Move Study id to front of the pack
-tmp.sdpc <- tmp.sdpc[,c(3,1,2,ncol(q.site.datamart),5:ncol(tmp.sdpc)-1 )]
+tmp.sdpc <- tmp.sdpc[,c(3,1,2,ncol(tmp.sdpc),ncol(tmp.sdpc)-1,4:(ncol(tmp.sdpc)-2))]
 z.site.datamart.pts.consented <- tmp.sdpc
 ```
 
