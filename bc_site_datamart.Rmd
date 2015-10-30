@@ -32,6 +32,11 @@
 # 05-Oct SAVEPOINT (RMD file committed to TortoiseHg)
 # 13-Oct Reads data sources from bc-data-files directory
 # 14-Oct Now filters for only 'consented' patients
+# 15-Oct SAVEPOINT (RMD file committed to TortoiseHg)
+# 15-Oct Output data files to deestination directory
+# 28-Oct Handle birthdates that are NA (work-around for UIOWA)
+# 30-Oct Re-fetch birthdates for NAs (aka UIOWA)
+# 30-Oct SAVEPOINT (RMD file committed to TortoiseHg)
 # ============================================================================
 ```
 
@@ -53,9 +58,19 @@ opts_chunk$set(echo=FALSE)
 source('/d1/home/vleonardo/GPC-Development/bc_qa/bc_qa_txform.R')  
 ```
 
-### Load Data Dictionary For Column Naming And Search Terms 
+### Load Look-up Tables (Site Filenames & Variable-Names)
 
 ```{r Load Search Term Dictionary, include=FALSE}
+v.site.files <- data.frame(site='KUMC', source.db='KUMC-16-kumcBC.db')
+v.site.files <- rbind(v.site.files, data.frame(site='MCRF', source.db='MCRF-34-BC_Final_MCRF.db'))
+v.site.files <- rbind(v.site.files, data.frame(site='MCW', source.db='MCW-31-gpc_breastcancer_export_3_3_2015.db'))
+v.site.files <- rbind(v.site.files, data.frame(site='UIOWA', source.db='UIOWA-38-BRCA'))
+v.site.files <- rbind(v.site.files, data.frame(site='UMN', source.db='UMN-30-UMN BC SQLLite v2 with seq num.db'))
+v.site.files <- rbind(v.site.files, data.frame(site='UNMC', source.db='UNMC-37-UNMC_BCS_with560.db'))
+#v.site.files <- rbind(v.site.files, data.frame(site='UTHSCSA', source.db='UTHSCSA-35-bc_560.db'))
+v.site.files <- rbind(v.site.files, data.frame(site='UTSW', source.db='UTSW-32-bc_utsw20150304.db'))
+v.site.files <- rbind(v.site.files, data.frame(site='WISC', source.db='WISC-21-gpcnetworkwisc_02_27_2.db'))
+
 v.col.terms  <- data.frame(term.1='Breast', term.2='Breast', col.name='Seer.Site.Breast', col.data.type='CHAR')
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='0160', term.2='race 1', col.name='NAACCR.0160.Race.1', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='0161', term.2='race 2', col.name='NAACCR.0161.Race.2', col.data.type='CHAR'))
@@ -96,7 +111,7 @@ message("Number of search terms identified: ",nrow(v.col.terms))
 ```
 
 ```{r AddVariable - Add new column to aggregated datamart, based on search strings}
-BCRup.AddVariableToDatamart <- function(p.datamart, p.site.ptobs, 
+BCRup.AddVariableToDatamart <- function(p.datamart, p.site.variables, p.site.ptobs, 
                                         p.code.string.1, p.code.string.2, 
                                         p.new.col.name, p.code.data.type) {
 
@@ -113,9 +128,9 @@ BCRup.AddVariableToDatamart <- function(p.datamart, p.site.ptobs,
   # Ensure only 1 variable matches search terms
   message("... searching variable names containing: '",
           p.code.string.1,"' & '",p.code.string.2,"'")
-  tmp.var.found.cnt <- nrow(subset(bs, 
-                          grepl(p.code.string.1,variable,ignore.case=TRUE) &
-                          grepl(p.code.string.2,variable,ignore.case=TRUE) ))  
+  tmp.var.found.cnt <- nrow(subset(p.site.variables, 
+                          grepl(p.code.string.1,concept_path,ignore.case=TRUE) &
+                          grepl(p.code.string.2,concept_path,ignore.case=TRUE) ))  
   message("Number of variables found matching search terms: ",tmp.var.found.cnt)
                           
   # Variable not found!
@@ -166,12 +181,17 @@ BCRup.AddVariableToDatamart <- function(p.datamart, p.site.ptobs,
     if (tmp.ncf.cnt > nrow(p.datamart)) {
         message("... verifying cardinality of result set for variable requested.")
         log.msg <- "Cardinality of variable does not correspond with desired result set."
-        log.action.taken <- "WARNING: Variable values will be set to NA."
+        log.action.taken <- "WARNING: First value has arbitrarily been selected."
         log.record <- data.frame(p.new.col.name,p.code.string.1,p.code.string.2,
                                      log.msg,log.action.taken)
         v.script.log <<- rbind(v.script.log, 
                                log.record) 
-        tmp.valid.terms.flag <- FALSE
+            
+        tmp.new.col.facts <- aggregate(tmp.new.col.facts,
+                                    by=list(tmp.new.col.facts$encounter.num),
+                                    FUN=head,1)
+                
+        tmp.valid.terms.flag <- TRUE
     } else {
       # Ensure observation facts exist for search terms
       message("ncf: ",tmp.ncf.cnt)
@@ -295,18 +315,20 @@ BCRup.DescribeDatamartColumn <- function(p.datamart,p.col.name) {
 # Note - ignores case and punctuation n the concept path /
 BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.name) {
  
- 
      # By-pass descriptor columns, as they are merged w/ their root values
      if (grepl(".Descriptor$",p.col.name)) {
        return("Skipping over 'descriptor' column")
      }
   
-     tmp.col.found.flag <- (nrow(p.datamart[! (is.na(p.datamart[,tmp.col.name])),]) > 0)
+     tmp.col.found.flag <- (nrow(p.datamart[! (is.na(p.datamart[,p.col.name])),]) > 0)
      if  (! tmp.col.found.flag) {
-       message("No 'Visual Analysis', as only NAs are present for column: ",tmp.col.name) 
+       message("No 'Visual Analysis', as only NAs are present for column: ",p.col.name) 
        return("No 'Visual Analysis' performed")
        }
 
+     # Remove any NAs from consideration (as they break the charts)
+     p.datamart <- p.datamart[! (is.na(p.datamart[,p.col.name])),]
+     
      p.col.datatype <- "CHAR"  # Default
      # Handle GPC eligibility variables by determining data type
      if (grepl("^gpc.",p.col.name)) {
@@ -328,7 +350,8 @@ BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.name) {
     
     if (p.col.datatype == "DATE") {
        hist(p.datamart[,p.col.name],
-            breaks="days", format="%b %y",
+            breaks="weeks", format="%b %y",
+            freq=TRUE,
             main=p.col.name,
             col=c("lightsteelblue"),
             xlab="")
@@ -336,6 +359,7 @@ BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.name) {
       if (p.col.datatype == "NUM") {
          hist(p.datamart[,p.col.name],
               breaks=max(p.datamart[,p.col.name]),
+              freq=TRUE,
               main=p.col.name,
               col=c("lightsteelblue"),
               xlab="")
@@ -384,6 +408,25 @@ BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.name) {
 }
 ```
 
+```{r Datamart Summary Statistics}
+BCRup.Datamart.Stats <- function(p.dataset.site,p.datamart) {
+
+message('GPC Site:                ', p.dataset.site)
+message('Patients loaded:         ',length(unique(p.datamart$patient.num)))
+message('Encounters exported:     ',nrow(p.datamart),' (num of rows written)')
+message('Pts/Encounters eligible: ',length(p.datamart$gpc.enctr.eligible[p.datamart$gpc.enctr.eligible]))
+message('Dx Age (Mean):           ',mean(unique(p.datamart[,c("patient.num","gpc.dx.age")])$gpc.dx.age))
+message('GPC Birth Date (Min):    ',min(p.datamart$gpc.date.birth))
+message('NAACCR Birth Date (Min): ',min(p.datamart$NAACCR.0240.Birth.Date))
+message('GPC Birth Date (Max):    ',max(p.datamart$gpc.date.birth))
+message('NAACCR Birth Date (Max): ',max(p.datamart$NAACCR.0240.Birth.Date))
+message('GPC Dx Date (Min):       ',min(p.datamart$gpc.date.dx))
+message('NAACCR Dx Date (Min):    ',min(p.datamart$NAACCR.0390.Dx.Date))
+message('GPC Dx Date (Max):       ',max(p.datamart$gpc.date.dx))
+message('NAACCR Dx Date (Max):    ',max(p.datamart$NAACCR.0390.Dx.Date))
+}
+```
+
 ### Loading 'dataset' object
 
 ```{r}
@@ -394,18 +437,20 @@ BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.name) {
 # about has $record_id $site name, $bc_db filename, $content_length, submitter $name, $issues_other
 # dataset <- input$about
 
-setwd('/d1/home/vleonardo/GPC-Development/bc-data-files')  
+v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'
+v.site <- "UIOWA"
 dataset <- list("")
-dataset$site <- "KUMC"
-# dataset$bc_db <- "bc-redo-alpha-2015-09-08"
-# dataset$bc_db <- "bc-redo-subset"
-dataset$bc_db <- "KUMC-16-kumcBC"
+dataset$site <- v.site
+#dataset$bc_db <- "KUMC-16-kumcBC"
+#dataset$bc_db <- "UMN-30-UMN BC SQLLite v2 with seq num"
+dataset$bc_db <- v.site.files[v.site.files$site==v.site,"source.db"]
 
 message('Dataset identified: ',dataset$bc_db)
-conn.site <- dbConnect(SQLite(),paste0('/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-SourceDbs/',dataset$bc_db,".db") )
+conn.site <- dbConnect(SQLite(),paste0('/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-SourceDbs/',dataset$bc_db) )
 print(dbListTables(conn.site))
 
 # builder.summary reads raw db
+# Note - this is not used for the concept terms, rather 'code paths' from the concept dimension is what is used.
 bs <- (builder.summary(conn.site)[, c('variable', 'pat_qty', 'enc_qty', 'fact_qty')])
 print(bs)
 
@@ -435,7 +480,7 @@ message('SQLITE db file) observation_fact: ',
 # Expected Run-time: 6.5 mins
 site$ptobs <- PHM.LoadObservationsWithConceptDescriptors(conn.site)
 
-saveRDS(site$ptobs,  paste0(dataset$bc_db,"-",Sys.Date(),"-pt-obs.rds"))
+saveRDS(site$ptobs,  paste0(v.output.dir,dataset$bc_db,"-",Sys.Date(),"-pt-obs.rds"))
 print(nrow(site$ptobs))
 site$ptobs.code.paths <- unique(site$ptobs$code.path)                           
 ```
@@ -466,6 +511,19 @@ survey.sample.summary <- count.cases(survey.sample)  # Produce table of criteria
 print(survey.sample.summary)
 ```
 
+### Fetch birth_date for any patients w/o value
+
+```{r}
+# Note - tumor.site can have NAs for some birth_dates (possibly ineligible encounters)
+if (nrow(subset(tumor.site,is.na(date.birth))) > 0) {
+  nrow(subset(tumor.site,is.na(date.birth)))
+  tmp.patient <- dbGetQuery(conn.site,"select patient_num, birth_date from patient_dimension")
+  tumor.site <- merge(tumor.site,tmp.patient)
+  tumor.site$date.birth <- tumor.site$birth_date
+  nrow(subset(tumor.site,is.na(date.birth)))
+}
+```
+
 ### Filter for only eligible encounters(tumors)
 ```{r}
 # Remove original receptor status variables f/ inclusion set, as they are replicated in NAACCR vars
@@ -482,6 +540,8 @@ for (i in 3:ncol(q.site.datamart)) {
 # Add GPC Site Identifier
 q.site.datamart <- cbind(gpc.site.name=dataset$site,q.site.datamart)
 
+# Work-around for UIOWA) GPC.date.birth is NA for some pts, but sqldb has value in patient dimension
+
 # Calculate age at diagnosis
 tmp.dx <- list("")
 tmp.dx <- q.site.datamart[,c("encounter.num","gpc.date.dx","gpc.date.birth")]
@@ -492,8 +552,8 @@ tmp.dx$dx.mmdd <- (as.POSIXlt(tmp.dx$gpc.date.dx)$mon*100) +
                              as.POSIXlt(tmp.dx$gpc.date.dx)$mday 
 tmp.dx$birth.mmdd <- (as.POSIXlt(tmp.dx$gpc.date.birth)$mon*100) +
                              as.POSIXlt(tmp.dx$gpc.date.birth)$mday 
-tmp.dx$age[tmp.dx$dx.mmdd < tmp.dx$birth.mmdd] <- 
-  tmp.dx$age[tmp.dx$dx.mmdd < tmp.dx$birth.mmdd] - 1
+tmp.dx$age[!(is.na(tmp.dx$gpc.date.birth)) & (tmp.dx$dx.mmdd < tmp.dx$birth.mmdd)] <- 
+  tmp.dx$age - 1
 q.site.datamart$gpc.dx.age <- tmp.dx$age[tmp.dx$encounter.num==q.site.datamart$encounter.num]
 # Move column towards beginning of list
 q.site.datamart <- q.site.datamart[,c(1,2,3,ncol(q.site.datamart),5:ncol(q.site.datamart)-1)]
@@ -529,7 +589,9 @@ tmp.tumor.site <- q.site.datamart
 # Add each variable
 for (r in 1:nrow(v.col.terms)) {
   tmp.col.name <- as.character(v.col.terms$col.name[r])
-  tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, site$ptobs, 
+  tmp.tumor.site <- BCRup.AddVariableToDatamart(tmp.tumor.site, 
+                                                site$variables,
+                                                site$ptobs, 
                                                 v.col.terms$term.1[r],
                                                 v.col.terms$term.2[r],
                                                 tmp.col.name, 
@@ -572,9 +634,15 @@ for (tmp.col.index in 4:(ncol(q.site.datamart))) # Skip P#, E# and Site columns
   }
 ```
 
+### Datamart Summary Statistics (ALL PATIENTS): `r dataset$site`
+
+```{r Datamart Summary Statistics - All Patients, echo=FALSE}
+BCRup.Datamart.Stats(dataset$site,q.site.datamart)
+```
+
 ### Merge for Consented Study Ids Only
 
-```{r Filter for Consented Study IDs}
+```{r Filter for Consented Study IDs, eval=FALSE}
 # Iowa: 100101 - 100360
 # KUMC: 150101 - 150360
 # UWISC: 200101 - 200360
@@ -583,11 +651,11 @@ for (tmp.col.index in 4:(ncol(q.site.datamart))) # Skip P#, E# and Site columns
 # UNMC: 350101 - 350360
 # UMN: 400101 - 400360
 # MCRF: 450101 - 450360
-
-v.site.study.prefix.id <- "15"
-message(getwd())
-v.site.consented.study.ids <- read.csv(paste0("~/GPC-Development/bc-datamart/KUMC-Sample-Consented-StudyIds-2015-09-22.csv"))
-v.site.mapping <- read.csv(paste0("~/GPC-Development/bc-datamart/KUMC-study_id_to_order_num.csv"))
+if (FALSE) {
+v.site.study.prefix.id <- "15"  # Not to be confused w/ the REDCap site id
+v.study.mappings.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-StudyIdMappings/'
+v.site.consented.study.ids <- read.csv(paste0(v.study.mappings.dir,dataset$site,"-Sample-Consented-StudyIds-2015-09-22.csv"))
+v.site.mapping <- read.csv(paste0(v.study.mappings.dir,dataset$site,"-study_id_to_order_num.csv"))
 v.site.consented.mapping <- merge(v.site.mapping,v.site.consented.study.ids,
                                   by.x="STUDY_ID",
                                   by.y="record_id")
@@ -605,17 +673,40 @@ tmp.sdpc <- merge(q.site.datamart,v.site.pts.consented,
                                   by.y="patient_num")
 # Move Study id to front of the pack
 tmp.sdpc <- tmp.sdpc[,c(3,1,2,ncol(tmp.sdpc),ncol(tmp.sdpc)-1,4:(ncol(tmp.sdpc)-2))]
-z.site.datamart.pts.consented <- tmp.sdpc
+q.site.datamart <- tmp.sdpc
+}
 ```
 
+### Export Datamart
 
+```{r Export Datamart}
+message('Output directory: ',getwd())
+v.filename <- paste0(v.output.dir,dataset$site,"-",dataset$record_id,"-BCDatamart-Consented.csv")
+write.csv(q.site.datamart, file = v.filename, row.names=FALSE)
+message('Number of rows written: ',nrow(q.site.datamart))
 
-```{r Send patient sampling to CSV file}
-setwd('/d1/home/vleonardo/GPC-Development/bc-datamart')  
+v.filename <- paste0(v.output.dir,dataset$site,"-",dataset$record_id,"-BCDatamart-IssuesLog.csv")
+write.csv(v.script.log[!grepl("Success",v.script.log$log.action.taken),], file = v.filename, row.names=FALSE)
+message('Number of issues written: ',nrow(v.script.log[!grepl("Success",v.script.log$log.action.taken),]))
+```
 
-message(paste('Output directory: ',getwd()) )
-v.filename <- paste0(dataset$site,"-",dataset$record_id,"-BCDatamart-Consented.csv")
-write.csv(z.site.datamart.pts.consented, file = v.filename, row.names=FALSE)
-message('Tumor-level datamart: ',v.filename)
-message('... ',nrow(z.site.datamart.pts.consented),' rows written.')
+### Datamart Summary Statistics (Consented Pts Only): `r dataset$site`
+
+```{r Datamart Summary Statistics - Consented, echo=FALSE, eval=FALSE}
+BCRup.Datamart.Stats(dataset$site,q.site.datamart)
+```
+
+### Datamart Description: `r dataset$site`
+
+```{r Datamart Description, echo=FALSE}
+# use of 'print' in markdown creates a new bordered block in the output
+print("Column Stats: gpc.stage.ss")
+print(as.data.frame(table(q.site.datamart$gpc.stage.ss)))
+
+print("Column Stats: NAACCR.0440.Grade.Descriptor")
+print(as.data.frame(table(q.site.datamart$NAACCR.0440.Grade.Descriptor)))
+
+message('Problems encountered:  ',nrow(v.script.log[!grepl("Success",v.script.log$log.action.taken),]))
+print(paste0(Sys.time()))
+v.script.log[!grepl("Success",v.script.log$log.action.taken),]
 ```
