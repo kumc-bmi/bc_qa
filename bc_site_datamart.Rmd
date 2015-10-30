@@ -37,6 +37,8 @@
 # 28-Oct Handle birthdates that are NA (work-around for UIOWA)
 # 30-Oct Re-fetch birthdates for NAs (aka UIOWA)
 # 30-Oct SAVEPOINT (RMD file committed to TortoiseHg)
+# 30-Oct Changed names of output files, making site the suffix
+# 30-Oct SAVEPOINT (RMD file committed to TortoiseHg)
 # ============================================================================
 ```
 
@@ -438,7 +440,7 @@ message('NAACCR Dx Date (Max):    ',max(p.datamart$NAACCR.0390.Dx.Date))
 # dataset <- input$about
 
 v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'
-v.site <- "UIOWA"
+v.site <- "WISC"
 dataset <- list("")
 dataset$site <- v.site
 #dataset$bc_db <- "KUMC-16-kumcBC"
@@ -480,7 +482,7 @@ message('SQLITE db file) observation_fact: ',
 # Expected Run-time: 6.5 mins
 site$ptobs <- PHM.LoadObservationsWithConceptDescriptors(conn.site)
 
-saveRDS(site$ptobs,  paste0(v.output.dir,dataset$bc_db,"-",Sys.Date(),"-pt-obs.rds"))
+saveRDS(site$ptobs,  paste0(v.output.dir,"BCDatamart-PtObs-",dataset$site,"rds"))
 print(nrow(site$ptobs))
 site$ptobs.code.paths <- unique(site$ptobs$code.path)                           
 ```
@@ -640,6 +642,19 @@ for (tmp.col.index in 4:(ncol(q.site.datamart))) # Skip P#, E# and Site columns
 BCRup.Datamart.Stats(dataset$site,q.site.datamart)
 ```
 
+### Export 'All-Elibible' Encounters => Datamart
+
+```{r Export Datamart}
+message('Output directory: ',getwd())
+v.filename <- paste0(v.output.dir,"BCDatamart-AllEligible-",dataset$site,".csv")
+write.csv(q.site.datamart, file = v.filename, row.names=FALSE)
+message('Number of rows written: ',nrow(q.site.datamart))
+
+v.filename <- paste0(v.output.dir,"BCDatamart-IssuesLog-",dataset$site,".csv")
+write.csv(v.script.log[!grepl("Success",v.script.log$log.action.taken),], file = v.filename, row.names=FALSE)
+message('Number of issues written: ',nrow(v.script.log[!grepl("Success",v.script.log$log.action.taken),]))
+```
+
 ### Merge for Consented Study Ids Only
 
 ```{r Filter for Consented Study IDs, eval=FALSE}
@@ -675,19 +690,6 @@ tmp.sdpc <- merge(q.site.datamart,v.site.pts.consented,
 tmp.sdpc <- tmp.sdpc[,c(3,1,2,ncol(tmp.sdpc),ncol(tmp.sdpc)-1,4:(ncol(tmp.sdpc)-2))]
 q.site.datamart <- tmp.sdpc
 }
-```
-
-### Export Datamart
-
-```{r Export Datamart}
-message('Output directory: ',getwd())
-v.filename <- paste0(v.output.dir,dataset$site,"-",dataset$record_id,"-BCDatamart-Consented.csv")
-write.csv(q.site.datamart, file = v.filename, row.names=FALSE)
-message('Number of rows written: ',nrow(q.site.datamart))
-
-v.filename <- paste0(v.output.dir,dataset$site,"-",dataset$record_id,"-BCDatamart-IssuesLog.csv")
-write.csv(v.script.log[!grepl("Success",v.script.log$log.action.taken),], file = v.filename, row.names=FALSE)
-message('Number of issues written: ',nrow(v.script.log[!grepl("Success",v.script.log$log.action.taken),]))
 ```
 
 ### Datamart Summary Statistics (Consented Pts Only): `r dataset$site`
