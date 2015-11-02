@@ -39,6 +39,8 @@
 # 30-Oct SAVEPOINT (RMD file committed to TortoiseHg)
 # 30-Oct Changed names of output files, making site the suffix
 # 30-Oct SAVEPOINT (RMD file committed to TortoiseHg)
+# 02-Nov Consolidated 'All-Site Consented' datamart
+# 02-Nov SAVEPOINT (RMD file committed to TortoiseHg)
 # ============================================================================
 ```
 
@@ -636,66 +638,17 @@ for (tmp.col.index in 4:(ncol(q.site.datamart))) # Skip P#, E# and Site columns
   }
 ```
 
-### Datamart Summary Statistics (ALL PATIENTS): `r dataset$site`
-
-```{r Datamart Summary Statistics - All Patients, echo=FALSE}
-BCRup.Datamart.Stats(dataset$site,q.site.datamart)
-```
-
-### Export 'All-Elibible' Encounters => Datamart
+### Export Encounters => Datamart
 
 ```{r Export Datamart}
 message('Output directory: ',getwd())
-v.filename <- paste0(v.output.dir,"BCDatamart-AllEligible-",dataset$site,".csv")
+v.filename <- paste0(v.output.dir,"BCDatamart-AllPts-AllEnctrs-",dataset$site,".csv")
 write.csv(q.site.datamart, file = v.filename, row.names=FALSE)
 message('Number of rows written: ',nrow(q.site.datamart))
 
 v.filename <- paste0(v.output.dir,"BCDatamart-IssuesLog-",dataset$site,".csv")
 write.csv(v.script.log[!grepl("Success",v.script.log$log.action.taken),], file = v.filename, row.names=FALSE)
 message('Number of issues written: ',nrow(v.script.log[!grepl("Success",v.script.log$log.action.taken),]))
-```
-
-### Merge for Consented Study Ids Only
-
-```{r Filter for Consented Study IDs, eval=FALSE}
-# Iowa: 100101 - 100360
-# KUMC: 150101 - 150360
-# UWISC: 200101 - 200360
-# UTSW: 250101 - 250360
-# MCW: 300101 - 300360
-# UNMC: 350101 - 350360
-# UMN: 400101 - 400360
-# MCRF: 450101 - 450360
-if (FALSE) {
-v.site.study.prefix.id <- "15"  # Not to be confused w/ the REDCap site id
-v.study.mappings.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-StudyIdMappings/'
-v.site.consented.study.ids <- read.csv(paste0(v.study.mappings.dir,dataset$site,"-Sample-Consented-StudyIds-2015-09-22.csv"))
-v.site.mapping <- read.csv(paste0(v.study.mappings.dir,dataset$site,"-study_id_to_order_num.csv"))
-v.site.consented.mapping <- merge(v.site.mapping,v.site.consented.study.ids,
-                                  by.x="STUDY_ID",
-                                  by.y="record_id")
-v.site.survey.set <- read.csv(paste0("~/GPC-Development/bc-data-files/Phase1-PtSamplingCSVs/",dataset$site,"-16-BC-deid-pt-sample.csv"))
-
-v.site.survey.set <- v.site.survey.set[,c("row_number","patient_num")]
-v.site.survey.set <- merge(v.site.survey.set, v.site.consented.mapping,
-                           by.x="row_number",
-                           by.y="ORDER_ID")
-colnames(v.site.survey.set)[colnames(v.site.survey.set)=="STUDY_ID"] <- "gpc.study.id"
-colnames(v.site.survey.set)[colnames(v.site.survey.set)=="row_number"] <- "gpc.order.id"
-v.site.pts.consented <- v.site.survey.set
-tmp.sdpc <- merge(q.site.datamart,v.site.pts.consented,
-                                  by.x="patient.num",
-                                  by.y="patient_num")
-# Move Study id to front of the pack
-tmp.sdpc <- tmp.sdpc[,c(3,1,2,ncol(tmp.sdpc),ncol(tmp.sdpc)-1,4:(ncol(tmp.sdpc)-2))]
-q.site.datamart <- tmp.sdpc
-}
-```
-
-### Datamart Summary Statistics (Consented Pts Only): `r dataset$site`
-
-```{r Datamart Summary Statistics - Consented, echo=FALSE, eval=FALSE}
-BCRup.Datamart.Stats(dataset$site,q.site.datamart)
 ```
 
 ### Datamart Description: `r dataset$site`
@@ -712,3 +665,91 @@ message('Problems encountered:  ',nrow(v.script.log[!grepl("Success",v.script.lo
 print(paste0(Sys.time()))
 v.script.log[!grepl("Success",v.script.log$log.action.taken),]
 ```
+
+
+### Datamart Summary Statistics (ALL PATIENTS): `r dataset$site`
+
+```{r Datamart Summary Statistics - All Patients, echo=FALSE}
+BCRup.Datamart.Stats(dataset$site,q.site.datamart)
+```
+
+
+### Merge for Consented Study Ids Only
+
+```{r Filter for Consented Study IDs, eval=FALSE}
+BCRup.GetConsentedPtData <- function(p.site) {
+# Iowa: 100101 - 100360
+# KUMC: 150101 - 150360
+# UWISC: 200101 - 200360
+# UTSW: 250101 - 250360
+# MCW: 300101 - 300360
+# UNMC: 350101 - 350360
+# UMN: 400101 - 400360
+# MCRF: 450101 - 450360
+  
+# Load site's allpt-allenctr datamart
+v.filename <- paste0(v.output.dir,"BCDatamart-AllPts-AllEnctrs-",p.site,".csv")
+tmp.site.allpt.datamart <- read.csv(v.filename)
+message("Reading 'all-pt all enctr' datamart: ",v.filename)
+message("... ",nrow(tmp.site.datamart)," rows read.")
+
+# Load site's list of 'Consented Study Ids'
+v.study.mappings.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-StudyIdMappings/'
+v.site.consented.study.ids <- read.csv(paste0(v.study.mappings.dir,dataset$site,"-Sample-Consented-StudyIds-2015-09-22.csv"))
+
+# Load ma
+v.site.mapping <- read.csv(paste0(v.study.mappings.dir,dataset$site,"-study_id_to_order_num.csv"))
+v.site.consented.mapping <- merge(v.site.mapping,v.site.consented.study.ids,
+                                  by.x="STUDY_ID",
+                                  by.y="record_id")
+v.site.survey.set <- read.csv(paste0("~/GPC-Development/bc-data-files/Phase1-PtSamplingCSVs/",dataset$site,"-16-BC-deid-pt-sample.csv"))
+
+v.site.survey.set <- v.site.survey.set[,c("row_number","patient_num")]
+v.site.survey.set <- merge(v.site.survey.set, v.site.consented.mapping,
+                           by.x="row_number",
+                           by.y="ORDER_ID")
+colnames(v.site.survey.set)[colnames(v.site.survey.set)=="STUDY_ID"] <- "gpc.study.id"
+colnames(v.site.survey.set)[colnames(v.site.survey.set)=="row_number"] <- "gpc.order.id"
+v.site.pts.consented <- v.site.survey.set
+tmp.sdpc <- merge(tmp.site.allpt.datamart,
+                  v.site.pts.consented,
+                  by.x="patient.num",
+                  by.y="patient_num")
+# Move Study id to front of the pack
+tmp.sdpc <- tmp.sdpc[,c(3,1,2,ncol(tmp.sdpc),ncol(tmp.sdpc)-1,4:(ncol(tmp.sdpc)-2))]
+tmp.site.consented.datamart <- tmp.sdpc
+return(tmp.site.consented.datamart)
+}
+```
+
+# STAGE 2 - ALL-SITE DATAMART, CONSOLIDATE AND FILTER FOR CONSENTED STUDY IDS
+
+```{r Build consolidated datamart}
+v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'  
+v.sites <- c('KUMC','KUMC','MCRF','MCW','UIOWA','UMN','UNMC','UTSW','WISC')
+q.all.site.consented.datamart <- BCRup.GetConsentedPtData(v.sites[1])
+for (i in v.sites[2:length(v.sites)]) {
+  tmp.site.consented.datamart <- BCRup.GetConsentedPtData(v.sites[i])
+  q.all.site.consented.datamart <- rbind(q.all.site.consented.datamart,tmp.site.consented.datamart)
+  message("... Rows added for ",v.site[i],": ",nrow(tmp.site.consented.datamart))
+
+# Export 'All-Site Consented' datamart
+q.all.site.consented.datamart <- q.all.site.consented.datamart[order(q.all.site.consented.datamart$gpc.study.id,
+                                                                     q.all.site.consented.datamart$encounter.num),]
+v.filename <- paste0(v.output.dir,"BCDatamart-AllSite-Consented.csv")
+write.csv(q.all.site.consented.datamart, file = v.filename, row.names=FALSE)
+message('Number of rows written: ',nrow(q.all.site.consented.datamart))
+
+```
+  
+}
+
+
+```
+
+### Datamart Summary Statistics (Consented Pts Only): `r dataset$site`
+
+```{r Datamart Summary Statistics - Consented, echo=FALSE, eval=FALSE}
+BCRup.Datamart.Stats(dataset$site,q.site.datamart)
+```
+
