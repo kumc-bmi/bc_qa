@@ -41,6 +41,10 @@
 # 30-Oct SAVEPOINT (RMD file committed to TortoiseHg)
 # 02-Nov Consolidated 'All-Site Consented' datamart
 # 02-Nov SAVEPOINT (RMD file committed to TortoiseHg)
+# 02-Nov Handle gpc.sex that are NA (work-around for UIOWA)
+# 03-Nov Apply date-shift to consented patients
+# 16-Nov Final packaging of 'All-Site, Consented' datamart
+# 02-Nov SAVEPOINT (RMD file committed to TortoiseHg)
 # ============================================================================
 ```
 
@@ -412,25 +416,6 @@ BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.name) {
 }
 ```
 
-```{r Datamart Summary Statistics}
-BCRup.Datamart.Stats <- function(p.dataset.site,p.datamart) {
-
-message('GPC Site:                ', p.dataset.site)
-message('Patients loaded:         ',length(unique(p.datamart$patient.num)))
-message('Encounters exported:     ',nrow(p.datamart),' (num of rows written)')
-message('Pts/Encounters eligible: ',length(p.datamart$gpc.enctr.eligible[p.datamart$gpc.enctr.eligible]))
-message('Dx Age (Mean):           ',mean(unique(p.datamart[,c("patient.num","gpc.dx.age")])$gpc.dx.age))
-message('GPC Birth Date (Min):    ',min(p.datamart$gpc.date.birth))
-message('NAACCR Birth Date (Min): ',min(p.datamart$NAACCR.0240.Birth.Date))
-message('GPC Birth Date (Max):    ',max(p.datamart$gpc.date.birth))
-message('NAACCR Birth Date (Max): ',max(p.datamart$NAACCR.0240.Birth.Date))
-message('GPC Dx Date (Min):       ',min(p.datamart$gpc.date.dx))
-message('NAACCR Dx Date (Min):    ',min(p.datamart$NAACCR.0390.Dx.Date))
-message('GPC Dx Date (Max):       ',max(p.datamart$gpc.date.dx))
-message('NAACCR Dx Date (Max):    ',max(p.datamart$NAACCR.0390.Dx.Date))
-}
-```
-
 ### Loading 'dataset' object
 
 ```{r}
@@ -442,7 +427,7 @@ message('NAACCR Dx Date (Max):    ',max(p.datamart$NAACCR.0390.Dx.Date))
 # dataset <- input$about
 
 v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'
-v.site <- "WISC"
+v.site <- "UIOWA"
 dataset <- list("")
 dataset$site <- v.site
 #dataset$bc_db <- "KUMC-16-kumcBC"
@@ -484,7 +469,7 @@ message('SQLITE db file) observation_fact: ',
 # Expected Run-time: 6.5 mins
 site$ptobs <- PHM.LoadObservationsWithConceptDescriptors(conn.site)
 
-saveRDS(site$ptobs,  paste0(v.output.dir,"BCDatamart-PtObs-",dataset$site,"rds"))
+saveRDS(site$ptobs,  paste0(v.output.dir,"BCDatamart-PtObs-",dataset$site,".rds"))
 print(nrow(site$ptobs))
 site$ptobs.code.paths <- unique(site$ptobs$code.path)                           
 ```
@@ -515,15 +500,16 @@ survey.sample.summary <- count.cases(survey.sample)  # Produce table of criteria
 print(survey.sample.summary)
 ```
 
-### Fetch birth_date for any patients w/o value
+### Fetch birth_date and sex for any patients w/o value
 
 ```{r}
 # Note - tumor.site can have NAs for some birth_dates (possibly ineligible encounters)
 if (nrow(subset(tumor.site,is.na(date.birth))) > 0) {
   nrow(subset(tumor.site,is.na(date.birth)))
-  tmp.patient <- dbGetQuery(conn.site,"select patient_num, birth_date from patient_dimension")
+  tmp.patient <- dbGetQuery(conn.site,"select patient_num, birth_date, sex_cd from patient_dimension")
   tumor.site <- merge(tumor.site,tmp.patient)
   tumor.site$date.birth <- tumor.site$birth_date
+  tumor.site$sex <- tumor.site$sex_cd
   nrow(subset(tumor.site,is.na(date.birth)))
 }
 ```
@@ -666,13 +652,23 @@ print(paste0(Sys.time()))
 v.script.log[!grepl("Success",v.script.log$log.action.taken),]
 ```
 
-
 ### Datamart Summary Statistics (ALL PATIENTS): `r dataset$site`
 
 ```{r Datamart Summary Statistics - All Patients, echo=FALSE}
-BCRup.Datamart.Stats(dataset$site,q.site.datamart)
+message('GPC Site:                ', dataset$site)
+message('Patients loaded:         ',length(unique(q.site.datamart$patient.num)))
+message('Encounters exported:     ',nrow(q.site.datamart),' (num of rows written)')
+message('Pts/Encounters eligible: ',length(q.site.datamart$gpc.enctr.eligible[q.site.datamart$gpc.enctr.eligible]))
+message('Dx Age (Mean):           ',mean(unique(q.site.datamart[,c("patient.num","gpc.dx.age")])$gpc.dx.age))
+message('GPC Birth Date (Min):    ',min(q.site.datamart$gpc.date.birth))
+message('NAACCR Birth Date (Min): ',min(q.site.datamart$NAACCR.0240.Birth.Date))
+message('GPC Birth Date (Max):    ',max(q.site.datamart$gpc.date.birth))
+message('NAACCR Birth Date (Max): ',max(q.site.datamart$NAACCR.0240.Birth.Date))
+message('GPC Dx Date (Min):       ',min(q.site.datamart$gpc.date.dx))
+message('NAACCR Dx Date (Min):    ',min(q.site.datamart$NAACCR.0390.Dx.Date))
+message('GPC Dx Date (Max):       ',max(q.site.datamart$gpc.date.dx))
+message('NAACCR Dx Date (Max):    ',max(q.site.datamart$NAACCR.0390.Dx.Date))
 ```
-
 
 ### Merge for Consented Study Ids Only
 
@@ -689,49 +685,89 @@ BCRup.GetConsentedPtData <- function(p.site) {
   
 # Load site's allpt-allenctr datamart
 v.filename <- paste0(v.output.dir,"BCDatamart-AllPts-AllEnctrs-",p.site,".csv")
-tmp.site.allpt.datamart <- read.csv(v.filename)
 message("Reading 'all-pt all enctr' datamart: ",v.filename)
-message("... ",nrow(tmp.site.datamart)," rows read.")
+tmp.site.allpt.datamart <- read.csv(v.filename)
+message("... ",nrow(tmp.site.allpt.datamart)," rows read.")
 
-# Load site's list of 'Consented Study Ids'
+# Load site mapping file of consented study_ids to order_ids to patient_nums
+# || PATIENT_NUM|| ORDER_ID || STUDY_ID  || DATE_SHIFT ||
 v.study.mappings.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-StudyIdMappings/'
-v.site.consented.study.ids <- read.csv(paste0(v.study.mappings.dir,dataset$site,"-Sample-Consented-StudyIds-2015-09-22.csv"))
+v.site.consented.mapping <- read.csv(paste0(v.study.mappings.dir,p.site,"-patient-mapping.csv"))
+v.site.consented.mapping <- setnames(v.site.consented.mapping,
+                       old=c("patient_num","order_id","study_id","date_shift"),
+                       new=c("patient.num","gpc.order.id","gpc.study.id","gpc.date.shift"))
+nrow(v.site.consented.mapping)
 
-# Load ma
-v.site.mapping <- read.csv(paste0(v.study.mappings.dir,dataset$site,"-study_id_to_order_num.csv"))
-v.site.consented.mapping <- merge(v.site.mapping,v.site.consented.study.ids,
-                                  by.x="STUDY_ID",
-                                  by.y="record_id")
-v.site.survey.set <- read.csv(paste0("~/GPC-Development/bc-data-files/Phase1-PtSamplingCSVs/",dataset$site,"-16-BC-deid-pt-sample.csv"))
-
-v.site.survey.set <- v.site.survey.set[,c("row_number","patient_num")]
-v.site.survey.set <- merge(v.site.survey.set, v.site.consented.mapping,
-                           by.x="row_number",
-                           by.y="ORDER_ID")
-colnames(v.site.survey.set)[colnames(v.site.survey.set)=="STUDY_ID"] <- "gpc.study.id"
-colnames(v.site.survey.set)[colnames(v.site.survey.set)=="row_number"] <- "gpc.order.id"
-v.site.pts.consented <- v.site.survey.set
+# Filter site datamart for consented pts
 tmp.sdpc <- merge(tmp.site.allpt.datamart,
-                  v.site.pts.consented,
+                  v.site.consented.mapping,
                   by.x="patient.num",
-                  by.y="patient_num")
-# Move Study id to front of the pack
-tmp.sdpc <- tmp.sdpc[,c(3,1,2,ncol(tmp.sdpc),ncol(tmp.sdpc)-1,4:(ncol(tmp.sdpc)-2))]
+                  by.y="patient.num")
+length(unique(tmp.sdpc$patient.num))
+
+# Move Study id and Date Shift to front of the pack
+tmp.sdpc <- tmp.sdpc[,c(3,ncol(tmp.sdpc)-1,ncol(tmp.sdpc)-2,1,2,ncol(tmp.sdpc),4:(ncol(tmp.sdpc)-3))]
+
+# Apply date shift
+tmp.sdpc$gpc.date.birth <- as.Date(tmp.sdpc$gpc.date.birth) + tmp.sdpc$gpc.date.shift
+message("... applying date shift for gpc.date.birth")
+tmp.sdpc$gpc.date.dx    <- as.Date(tmp.sdpc$gpc.date.dx) + tmp.sdpc$gpc.date.shift
+message("... applying date shift for gpc.date.dx")
+tmp.sdpc <- setnames(tmp.sdpc,
+                     old=c("gpc.date.birth","gpc.date.dx"),
+                     new=c("gpc.date.birth.shifted","gpc.date.dx.actl"))
+for (i in v.col.terms$col.name[v.col.terms$col.data.type=="DATE"]) {
+  message("... applying date shift for ",i)
+  tmp.sdpc[,i] <- as.Date(tmp.sdpc[,i]) + tmp.sdpc[,"gpc.date.shift"]
+  tmp.sdpc <- setnames(tmp.sdpc,
+                       old=i,
+                       new=paste(i,".actl"))
+}
+
 tmp.site.consented.datamart <- tmp.sdpc
+length(unique(tmp.site.consented.datamart$patient.num))
 return(tmp.site.consented.datamart)
 }
 ```
 
-# STAGE 2 - ALL-SITE DATAMART, CONSOLIDATE AND FILTER FOR CONSENTED STUDY IDS
+# STAGE 2 - BUILD SITE-SPECIFIC CONSENTED DATAMARTS (ONE AT A TIME)
 
-```{r Build consolidated datamart}
+```{r Build site-specific consented datamarts -- One at a time}
+if (g.allsites.switch) {
+
 v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'  
-v.sites <- c('KUMC','KUMC','MCRF','MCW','UIOWA','UMN','UNMC','UTSW','WISC')
+#v.sites <- c('KUMC','MCRF','MCW','UIOWA','UMN','UNMC','UTSW','WISC')
+v.sites <- c('MCRF')
 q.all.site.consented.datamart <- BCRup.GetConsentedPtData(v.sites[1])
+
+q.all.site.consented.datamart <- q.all.site.consented.datamart[order(q.all.site.consented.datamart$gpc.study.id,
+                                                                     q.all.site.consented.datamart$encounter.num),]
+v.filename <- paste0(v.output.dir,"BCDatamart-Site-Consented-",v.sites[1],".csv")
+write.csv(q.all.site.consented.datamart, file = v.filename, row.names=FALSE)
+message('Number of rows written: ',nrow(q.all.site.consented.datamart))
+
+}
+
+```
+
+# STAGE 3 - ALL-SITE DATAMART, CONSOLIDATE AND FILTER FOR CONSENTED STUDY IDS
+
+```{r Build site-specific consented datamarts -- One at a time}
+if (g.allsites.switch) {
+
+v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'  
+#v.sites <- c('KUMC','MCRF','MCW','UIOWA','UMN','UNMC','UTSW','WISC')
+v.sites <- c('KUMC','MCRF')
+v.filename <- paste0(v.output.dir,"BCDatamart-Site-Consented-",v.sites[1],".csv")
+q.all.site.consented.datamart <- read.csv(v.filename)
+message("... Rows added for ",v.site[1],": ",nrow(q.all.site.consented.datamart))
 for (i in v.sites[2:length(v.sites)]) {
-  tmp.site.consented.datamart <- BCRup.GetConsentedPtData(v.sites[i])
+  print(i)
+  v.filename <- paste0(v.output.dir,"BCDatamart-Site-Consented-",i,".csv")
+  tmp.site.consented.datamart <- read.csv(v.filename) 
   q.all.site.consented.datamart <- rbind(q.all.site.consented.datamart,tmp.site.consented.datamart)
-  message("... Rows added for ",v.site[i],": ",nrow(tmp.site.consented.datamart))
+  message("... Rows added for ",i,": ",nrow(tmp.site.consented.datamart))
+}
 
 # Export 'All-Site Consented' datamart
 q.all.site.consented.datamart <- q.all.site.consented.datamart[order(q.all.site.consented.datamart$gpc.study.id,
@@ -740,16 +776,51 @@ v.filename <- paste0(v.output.dir,"BCDatamart-AllSite-Consented.csv")
 write.csv(q.all.site.consented.datamart, file = v.filename, row.names=FALSE)
 message('Number of rows written: ',nrow(q.all.site.consented.datamart))
 
-```
-  
 }
 
-
 ```
+
+
+### Datamart Summary Statistics (ALL PATIENTS): `r dataset$site`
+
+```{r Datamart Summary Statistics - All Patients, echo=FALSE}
+message('GPC Site:                ', dataset$site)
+message('Patients loaded:         ',length(unique(q.all.site.consented.datamart$patient.num)))
+message('Encounters exported:     ',nrow(q.all.site.consented.datamart),' (num of rows written)')
+message('Pts/Encounters eligible: ',length(q.all.site.consented.datamart$gpc.enctr.eligible[q.all.site.consented.datamart$gpc.enctr.eligible]))
+message('Dx Age (Mean):           ',mean(unique(q.all.site.consented.datamart[,c("patient.num","gpc.dx.age")])$gpc.dx.age))
+message('GPC Birth Date (Min):    ',min(q.all.site.consented.datamart$gpc.date.birth.shifted))
+message('NAACCR Birth Date (Min): ',min(q.all.site.consented.datamart$NAACCR.0240.Birth.Date.Shifted))
+message('GPC Birth Date (Max):    ',max(q.all.site.consented.datamart$gpc.date.birth.shifted))
+message('NAACCR Birth Date (Max): ',max(q.all.site.consented.datamart$NAACCR.0240.Birth.Date.Shifted))
+message('GPC Dx Date (Min):       ',min(q.all.site.consented.datamart$gpc.date.dx.shifted))
+message('NAACCR Dx Date (Min):    ',min(q.all.site.consented.datamart$NAACCR.0390.Dx.Date.Shifted))
+message('GPC Dx Date (Max):       ',max(q.all.site.consented.datamart$gpc.date.dx.shifted))
+message('NAACCR Dx Date (Max):    ',max(q.all.site.consented.datamart$NAACCR.0390.Dx.Date.Shifted))
+```
+
 
 ### Datamart Summary Statistics (Consented Pts Only): `r dataset$site`
 
 ```{r Datamart Summary Statistics - Consented, echo=FALSE, eval=FALSE}
-BCRup.Datamart.Stats(dataset$site,q.site.datamart)
+if (g.allsites.switch) {
+
+BCRup.Datamart.Stats('ALL SITES',q.all.site.consented.datamart)
+
+# Descriptive Analysis} 
+for (tmp.col.index in 4:(ncol(q.all.site.consented.datamart))) # Skip P#, E# and Site columns
+  {  
+  tmp.col.name <- names(q.all.site.consented.datamart[tmp.col.index])                         
+  BCRup.VisualizeDatamartColumn(q.all.site.consented.datamart,tmp.col.name)
+  BCRup.DescribeDatamartColumn(q.all.site.consented.datamart, tmp.col.name)    
+  }
+
+# Provides a presentation similar to a standard 'Table One' 
+for (tmp.col.index in 4:(ncol(q.all.site.consented.datamart))) # Skip P#, E# and Site columns
+  {  
+  tmp.col.name <- names(q.all.site.consented.datamart[tmp.col.index])
+  BCRup.DescribeDatamartColumn(q.all.site.consented.datamart, tmp.col.name)  
+  }
+}
 ```
 
