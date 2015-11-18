@@ -64,6 +64,7 @@ opts_chunk$set(echo=FALSE)
 
 # BC Function library
 source('/d1/home/vleonardo/GPC-Development/bc_qa/bc_qa_txform.R')  
+g.allsites.switch <<- FALSE
 ```
 
 ### Load Look-up Tables (Site Filenames & Variable-Names)
@@ -94,6 +95,7 @@ v.col.terms <- rbind(v.col.terms, data.frame(term.1='0400', term.2='primary', co
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='0410', term.2='laterality', col.name='NAACCR.0410.Laterality', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='0440', term.2='grade', col.name='NAACCR.0440.Grade', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='0490', term.2='confirmation', col.name='NAACCR.0490.Confirmation', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='0521', term.2='morph', col.name='NAACCR.0521.Morphology', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='0560', term.2='hospital', col.name='NAACCR.0560.Seqno.Hosp', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='0610', term.2='class', col.name='NAACCR.0610.Class.Case', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='0670', term.2='surg', col.name='NAACCR.0670.Surg.Prim.Site', col.data.type='CHAR'))
@@ -105,16 +107,16 @@ v.col.terms <- rbind(v.col.terms, data.frame(term.1='1860', term.2='recurrence',
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='1861', term.2='flag', col.name='NAACCR.1861.Recurrence.Date.1st.Flag', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='2850', term.2='dx', col.name='NAACCR.2850.CSMets.Dx', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='2860', term.2='eval', col.name='NAACCR.2860.CSMets.Eval', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='2869', term.2='factor', col.name='NAACCR.2869.CSSF.15', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='2876', term.2='factor', col.name='NAACCR.2876.CSSF.22', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='2877', term.2='factor', col.name='NAACCR.2877.CSSF.23', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='2880', term.2='factor', col.name='NAACCR.2880.CSSF.01', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='2890', term.2='factor', col.name='NAACCR.2890.CSSF.02', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='2940', term.2='AJCC-6', col.name='NAACCR.2940.AJCC-6.T', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='3000', term.2='AJCC-6', col.name='NAACCR.3000.AJCC-6.Stage', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2869', term.2='factor', col.name='NAACCR.2869.HER2.CSSF15', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2876', term.2='factor', col.name='NAACCR.2876.MS.Method.CSSF22', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2877', term.2='factor', col.name='NAACCR.2877.MS.Result.CSSF23', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2880', term.2='factor', col.name='NAACCR.2880.ER.CSSF01', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2890', term.2='factor', col.name='NAACCR.2890.PR.CSSF02', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2940', term.2='AJCC-6', col.name='NAACCR.2940.AJCC6.T', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='3000', term.2='AJCC-6', col.name='NAACCR.3000.AJCC6.Stage', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='3020', term.2='SS2000', col.name='NAACCR.3020.SS2000', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='3400', term.2='AJCC-7', col.name='NAACCR.3400.AJCC-7.T', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='3430', term.2='AJCC-7', col.name='NAACCR.3430.AJCC-7.Stage', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='3400', term.2='AJCC-7', col.name='NAACCR.3400.AJCC7.T', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='3430', term.2='AJCC-7', col.name='NAACCR.3430.AJCC7.Stage', col.data.type='CHAR'))
 message("Number of search terms identified: ",nrow(v.col.terms))
 ```
 
@@ -427,7 +429,7 @@ BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.name) {
 # dataset <- input$about
 
 v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'
-v.site <- "UIOWA"
+v.site <- "MCRF"
 dataset <- list("")
 dataset$site <- v.site
 #dataset$bc_db <- "KUMC-16-kumcBC"
@@ -654,7 +656,7 @@ v.script.log[!grepl("Success",v.script.log$log.action.taken),]
 
 ### Datamart Summary Statistics (ALL PATIENTS): `r dataset$site`
 
-```{r Datamart Summary Statistics - All Patients, echo=FALSE}
+```{r Datamart Summary Statistics - All Patients (Before), echo=FALSE}
 message('GPC Site:                ', dataset$site)
 message('Patients loaded:         ',length(unique(q.site.datamart$patient.num)))
 message('Encounters exported:     ',nrow(q.site.datamart),' (num of rows written)')
@@ -709,6 +711,7 @@ length(unique(tmp.sdpc$patient.num))
 tmp.sdpc <- tmp.sdpc[,c(3,ncol(tmp.sdpc)-1,ncol(tmp.sdpc)-2,1,2,ncol(tmp.sdpc),4:(ncol(tmp.sdpc)-3))]
 
 # Apply date shift
+tmp.sdpc$gpc.date.shift <- abs(tmp.sdpc$gpc.date.shift)
 tmp.sdpc$gpc.date.birth <- as.Date(tmp.sdpc$gpc.date.birth) + tmp.sdpc$gpc.date.shift
 message("... applying date shift for gpc.date.birth")
 tmp.sdpc$gpc.date.dx    <- as.Date(tmp.sdpc$gpc.date.dx) + tmp.sdpc$gpc.date.shift
@@ -752,7 +755,7 @@ message('Number of rows written: ',nrow(q.all.site.consented.datamart))
 
 # STAGE 3 - ALL-SITE DATAMART, CONSOLIDATE AND FILTER FOR CONSENTED STUDY IDS
 
-```{r Build site-specific consented datamarts -- One at a time}
+```{r Consolidate and filter for consented study ids}
 if (g.allsites.switch) {
 
 v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'  
@@ -780,10 +783,38 @@ message('Number of rows written: ',nrow(q.all.site.consented.datamart))
 
 ```
 
+# STAGE 4 - APPLY STANDARDIZED DECODING FOR SELECTED COLUMNS (Columns where sites did not provide code names)
+```{r Decoding for select columns}
+if (g.allsites.switch) {
+v.codebook <- read.csv("/d1/home/vleonardo/GPC-Development/bc-datamart/i2b2 codebook-decoded-subset.csv",stringsAsFactors=FALSE)
+v.naaccr.code.list <- c('0610','2850','2860','2869','2876','2877','2880','2890','2940','3000','3020','3400','3430')
+v.consented.datamart <- read.csv("/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/BCDatamart-AllSite-Consented.csv")
+for (i.naaccr in v.naaccr.code.list) {
+  print(i.naaccr) 
+  tmp.col.name <- as.character(v.col.terms$col.name[grepl(i.naaccr,v.col.terms$col.name)])
+  tmp.col.descriptor <- paste0(v.col.terms$col.name[grepl(i.naaccr,v.col.terms$col.name)],'.Descriptor')
+  v.consented.datamart$code_value <- as.character(v.consented.datamart[,tmp.col.name])
+#  v.consented.datamart$label <- unique(v.codebook$label[v.codebook$code_value==v.consented.datamart$code_value])
+  v.consented.datamart <- merge(v.consented.datamart,v.codebook[,c("code_value","label")],
+        by.x=c("code_value"), by.y=c("code_value"),all.x=TRUE)
+  v.consented.datamart[,tmp.col.descriptor] <- v.consented.datamart$label
+  v.consented.datamart$code_value <- NULL
+  v.consented.datamart$label <- NULL
+
+}
+
+# Export 'All-Site Consented' datamart
+v.filename <- paste0(v.output.dir,"BCDatamart-AllSite-Consented-Decoded.csv")
+write.csv(v.consented.datamart, file = v.filename, row.names=FALSE)
+message('Number of rows written: ',nrow(v.consented.datamart))
+
+}
+```
 
 ### Datamart Summary Statistics (ALL PATIENTS): `r dataset$site`
 
 ```{r Datamart Summary Statistics - All Patients, echo=FALSE}
+if (g.allsites.switch) {
 message('GPC Site:                ', dataset$site)
 message('Patients loaded:         ',length(unique(q.all.site.consented.datamart$patient.num)))
 message('Encounters exported:     ',nrow(q.all.site.consented.datamart),' (num of rows written)')
@@ -797,6 +828,7 @@ message('GPC Dx Date (Min):       ',min(q.all.site.consented.datamart$gpc.date.d
 message('NAACCR Dx Date (Min):    ',min(q.all.site.consented.datamart$NAACCR.0390.Dx.Date.Shifted))
 message('GPC Dx Date (Max):       ',max(q.all.site.consented.datamart$gpc.date.dx.shifted))
 message('NAACCR Dx Date (Max):    ',max(q.all.site.consented.datamart$NAACCR.0390.Dx.Date.Shifted))
+}
 ```
 
 
