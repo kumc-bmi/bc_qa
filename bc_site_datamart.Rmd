@@ -45,6 +45,8 @@
 # 03-Nov Apply date-shift to consented patients
 # 16-Nov Final packaging of 'All-Site, Consented' datamart
 # 02-Nov SAVEPOINT (RMD file committed to TortoiseHg)
+# 19-Nov Decoding of 13 variables (where concept_name is not available)
+# 19-Nov SAVEPOINT (RMD file committed to TortoiseHg)
 # ============================================================================
 ```
 
@@ -107,11 +109,11 @@ v.col.terms <- rbind(v.col.terms, data.frame(term.1='1860', term.2='recurrence',
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='1861', term.2='flag', col.name='NAACCR.1861.Recurrence.Date.1st.Flag', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='2850', term.2='dx', col.name='NAACCR.2850.CSMets.Dx', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='2860', term.2='eval', col.name='NAACCR.2860.CSMets.Eval', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='2869', term.2='factor', col.name='NAACCR.2869.HER2.CSSF15', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='2876', term.2='factor', col.name='NAACCR.2876.MS.Method.CSSF22', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='2877', term.2='factor', col.name='NAACCR.2877.MS.Result.CSSF23', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='2880', term.2='factor', col.name='NAACCR.2880.ER.CSSF01', col.data.type='CHAR'))
-v.col.terms <- rbind(v.col.terms, data.frame(term.1='2890', term.2='factor', col.name='NAACCR.2890.PR.CSSF02', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2869', term.2='factor', col.name='NAACCR.2869.HER2.CSSSF15', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2876', term.2='factor', col.name='NAACCR.2876.MS.Method.CSSSF22', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2877', term.2='factor', col.name='NAACCR.2877.MS.Result.CSSSF23', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2880', term.2='factor', col.name='NAACCR.2880.ER.CSSSF01', col.data.type='CHAR'))
+v.col.terms <- rbind(v.col.terms, data.frame(term.1='2890', term.2='factor', col.name='NAACCR.2890.PR.CSSSF02', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='2940', term.2='AJCC-6', col.name='NAACCR.2940.AJCC6.T', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='3000', term.2='AJCC-6', col.name='NAACCR.3000.AJCC6.Stage', col.data.type='CHAR'))
 v.col.terms <- rbind(v.col.terms, data.frame(term.1='3020', term.2='SS2000', col.name='NAACCR.3020.SS2000', col.data.type='CHAR'))
@@ -429,7 +431,7 @@ BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.name) {
 # dataset <- input$about
 
 v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'
-v.site <- "MCRF"
+v.site <- "KUMC"
 dataset <- list("")
 dataset$site <- v.site
 #dataset$bc_db <- "KUMC-16-kumcBC"
@@ -471,7 +473,7 @@ message('SQLITE db file) observation_fact: ',
 # Expected Run-time: 6.5 mins
 site$ptobs <- PHM.LoadObservationsWithConceptDescriptors(conn.site)
 
-saveRDS(site$ptobs,  paste0(v.output.dir,"BCDatamart-PtObs-",dataset$site,".rds"))
+#saveRDS(site$ptobs,  paste0(v.output.dir,"BCDatamart-PtObs-",dataset$site,".rds"))
 print(nrow(site$ptobs))
 site$ptobs.code.paths <- unique(site$ptobs$code.path)                           
 ```
@@ -486,7 +488,7 @@ message('Number of terms loaded: ',nrow(bcterm$term204))
 tumor.site <- bc.exclusions(conn.site)   
 
 print(names(tumor.site))
-saveRDS(tumor.site,  paste0(dataset$bc_db,"-",Sys.Date(),"-tumor-site.rds"))
+saveRDS(tumor.site,  paste0(v.output.dir,dataset$bc_db,"-",Sys.Date(),"-tumor-site.rds"))
 x.tumor.site <- tumor.site  # Holding area for restoration/debugging purposes
 #tumor.site <- readRDS(paste0(dataset$bc_db,"-",Sys.Date(),"-tumor-site.rds"))
 message('Number of tumors loaded: ',(nrow(tumor.site)))
@@ -733,7 +735,7 @@ return(tmp.site.consented.datamart)
 }
 ```
 
-# STAGE 2 - BUILD SITE-SPECIFIC CONSENTED DATAMARTS (ONE AT A TIME)
+### STAGE 2 - BUILD SITE-SPECIFIC CONSENTED DATAMARTS (ONE AT A TIME)
 
 ```{r Build site-specific consented datamarts -- One at a time}
 if (g.allsites.switch) {
@@ -747,13 +749,14 @@ q.all.site.consented.datamart <- q.all.site.consented.datamart[order(q.all.site.
                                                                      q.all.site.consented.datamart$encounter.num),]
 v.filename <- paste0(v.output.dir,"BCDatamart-Site-Consented-",v.sites[1],".csv")
 write.csv(q.all.site.consented.datamart, file = v.filename, row.names=FALSE)
+message('Number of pts consented: ',length(unique(q.all.site.consented.datamart$patient.num)))
 message('Number of rows written: ',nrow(q.all.site.consented.datamart))
 
 }
 
 ```
 
-# STAGE 3 - ALL-SITE DATAMART, CONSOLIDATE AND FILTER FOR CONSENTED STUDY IDS
+### STAGE 3 - ALL-SITE DATAMART, CONSOLIDATE 
 
 ```{r Consolidate and filter for consented study ids}
 if (g.allsites.switch) {
@@ -783,15 +786,15 @@ message('Number of rows written: ',nrow(q.all.site.consented.datamart))
 
 ```
 
-# STAGE 4 - APPLY STANDARDIZED DECODING FOR SELECTED COLUMNS (Columns where sites did not provide code names)
+### STAGE 4 - APPLY STANDARDIZED DECODING FOR SELECTED COLUMNS (Columns where sites did not provide code names)
 ```{r Decoding for select columns}
 if (g.allsites.switch) {
 v.codebook <- read.csv("/d1/home/vleonardo/GPC-Development/bc-datamart/i2b2 codebook-decoded-subset.csv",stringsAsFactors=FALSE)
 v.naaccr.code.list <- c('0610','2850','2860','2869','2876','2877','2880','2890','2940','3000','3020','3400','3430')
 v.consented.datamart <- read.csv("/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/BCDatamart-AllSite-Consented.csv")
-for (i.naaccr in v.naaccr.code.list) {
-  print(i.naaccr) 
+for (i.naaccr in v.naaccr.code.list) { 
   tmp.col.name <- as.character(v.col.terms$col.name[grepl(i.naaccr,v.col.terms$col.name)])
+  message('... decoding: ',i.naaccr,'-',tmp.col.name)
   tmp.col.descriptor <- paste0(v.col.terms$col.name[grepl(i.naaccr,v.col.terms$col.name)],'.Descriptor')
   v.consented.datamart$code_value <- as.character(v.consented.datamart[,tmp.col.name])
 #  v.consented.datamart$label <- unique(v.codebook$label[v.codebook$code_value==v.consented.datamart$code_value])
