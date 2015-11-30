@@ -1,0 +1,85 @@
+# Breast Cancer - Site Datamart
+```{r echo=FALSE}
+# ============================================================================
+###  Creates site-specific tumor-level datamart
+# Input Dataframes
+#   dataset       - desriptors for site's input dataset 
+#   tumor.site    - pt tumors listing
+#   survey.sample - complex frame created by bc_excl
+# 
+# Note - script was modeled after 'bc_random_smaple.rmd'
+#
+# 25-Nov Genesis (Parceled out f/ original bc_site_datamart)
+# 25-Nov SAVEPOINT (RMD file committed to TortoiseHg)
+# ============================================================================
+```
+
+### Package Set-Up and Initialization 
+
+```{r Package Set-Up, include=FALSE}
+
+# Include function libraries
+source('/d1/home/vleonardo/PHM-Development/PHM-LIBRARY.rmd')  # Loads PHM functions
+source('/d1/home/vleonardo/GPC-Development/bc-datamart/bc_dm_library.R')  # Loads PHM functions
+
+PHM.PackageSetup()
+
+# Don't wrap so much
+options(width=300)
+opts_chunk$set(echo=FALSE)
+
+```
+
+### ALL-SITE DATAMART (Consented Pts Only) - Summary Statistics
+
+``` {r Summary Statistics}
+BCRup.Summary.Statistics(v.consented.datamart)
+```
+
+### ALL-SITE DATAMART (Consented Pts Only) - Descriptive Analysis 
+
+```{r Datamart Descriptive Analysis - Consented, echo=FALSE, eval=FALSE}
+
+v.consented.datamart <- read.csv("/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/BCDatamart-ALLSITE-CONSENTED.csv",stringsAsFactors=FALSE)
+
+v.col.terms <- BCRup.Initialize.Col.Terms()
+
+# Descriptive Analysis} 
+for (tmp.col.index in 7:(ncol(v.consented.datamart))) # Skip P#, E# and Site columns
+  {  
+  tmp.col.name <- names(v.consented.datamart[tmp.col.index])                         
+  message('... generating analytics for ',tmp.col.name)
+  BCRup.VisualizeDatamartColumn(v.consented.datamart,tmp.col.name)
+  BCRup.DescribeDatamartColumn(v.consented.datamart, tmp.col.name)    
+  }
+
+# Provides a consolitedate presentation similar to a standard 'Table One' 
+for (tmp.col.index in 7:(ncol(v.consented.datamart))) # Skip P#, E# and Site columns
+  {  
+  tmp.col.name <- names(v.consented.datamart[tmp.col.index])
+  BCRup.DescribeDatamartColumn(v.consented.datamart, tmp.col.name)  
+  }
+
+# Encounters By Site
+p <- v.consented.datamart
+p.site.cnt <- length(unique(p$gpc.site.name))
+ggplot(p, aes(x=gpc.site.name)) + 
+  ggtitle("Encounters (Tumors)") +
+  labs(x="",y="") +
+  theme(plot.title = element_text(color=blues9[9], face="bold", size=32, hjust=0),
+        axis.text.x = element_text(size=18,face="bold")) +
+  geom_bar(width=.5,  fill=blues9[4:9])
+
+# Consented Patients By Site
+p <- unique(v.consented.datamart[,c("gpc.site.name","patient.num")])
+p.site.cnt <- length(unique(p$gpc.site.name))
+ggplot(p, aes(x=gpc.site.name)) + 
+  ggtitle("Consented Patients") +
+  labs(x="",y="") +
+  theme(plot.title = element_text(color=blues9[9], face="bold", size=32, hjust=0),
+        axis.text.x = element_text(size=18,face="bold")) +
+  geom_bar(width=.5,  fill=blues9[4:9]) # generates n rgb values, plus an offset towards darker side of the scale
+   
+
+```
+

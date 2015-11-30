@@ -1,0 +1,118 @@
+# Breast Cancer - All-Site Datamart
+###    - Filters dataset to only include consented patients
+```{r echo=FALSE}
+# ============================================================================
+# 30-Nov Genesis (Parceled out f/ original bc_site_datamart)
+# 24-Nov SAVEPOINT (RMD file committed to TortoiseHg)
+# ============================================================================
+```
+
+### Package Set-Up and Initialization 
+
+```{r Package Set-Up, include=FALSE}
+
+# Include PHM function libraries
+source('/d1/home/vleonardo/PHM-Development/PHM-LIBRARY.rmd')  # Loads PHM functions
+# library(ggplot2)
+library(reshape)
+PHM.PackageSetup()
+
+# Don't wrap so much
+options(width=300)
+opts_chunk$set(echo=FALSE)
+
+# BC Function library
+source('/d1/home/vleonardo/GPC-Development/bc-datamart/bc_dm_library.R')  
+```
+
+### STAGE 2 - BUILD SITE-SPECIFIC CONSENTED DATAMARTS (ONE AT A TIME)
+
+```{r Build site-specific consented datamarts -- One at a time}
+
+v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'  
+v.sites <- c('WISC')  # Originally, was a list of all sites
+message("Getting consented patients for ",v.sites[1])
+v.site.consented.datamart <- BCRup.GetConsentedPtData(v.sites[1])
+
+# Final packaging for output
+v.site.consented.datamart$gpc.sex_cd <- NULL
+v.site.consented.datamart$gpc.birth_date <- NULL
+v.site.consented.datamart <- v.site.consented.datamart[order(
+  v.site.consented.datamart$gpc.study.id,
+                                                                     v.site.consented.datamart$encounter.num),]
+v.filename <- paste0(v.output.dir,"BCDatamart-Site-Consented-",v.sites[1],".csv")
+write.csv(v.site.consented.datamart, file = v.filename, row.names=FALSE)
+message('Number of pts consented: ',length(unique(v.site.consented.datamart$patient.num)))
+message('Number of rows written: ',nrow(v.site.consented.datamart))
+
+```
+
+### STAGE 3 - ALL-SITE DATAMART, CONSOLIDATE 
+
+```{r Consolidate and filter for consented study ids}
+
+v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'  
+#v.sites <- c('KUMC','MCRF','MCW','UIOWA','UMN','UNMC','UTSW','WISC')
+v.sites <- c('KUMC','MCRF','UIOWA','UMN','UTSW','WISC')
+v.filename <- paste0(v.output.dir,"BCDatamart-Site-Consented-",v.sites[1],".csv")
+v.consented.datamart <- read.csv(v.filename,stringsAsFactors=FALSE)
+message("... Rows added for ",v.sites[1])
+for (i in v.sites[2:length(v.sites)]) {
+  v.filename <- paste0(v.output.dir,"BCDatamart-Site-Consented-",i,".csv")
+  tmp.site.consented.datamart <- read.csv(v.filename) 
+  v.consented.datamart <- rbind(v.consented.datamart,tmp.site.consented.datamart)
+  message("... Rows added for ",i)
+}
+message(' ')
+print(setNames(aggregate(cbind(patient.num,encounter.num)~gpc.site.name,
+                data=v.consented.datamart,
+                function(x) length(unique(x))),
+          c("GPC Site","Patients","Enctr(Tumors)")))
+
+# Export 'All-Site Consented' datamart
+v.consented.datamart <- v.consented.datamart[
+  order(v.consented.datamart$gpc.site.name,
+        v.consented.datamart$gpc.study.id,
+        v.consented.datamart$encounter.num),]
+v.filename <- paste0(v.output.dir,"BCDatamart-ALLSITE-CONSENTED.csv")
+write.csv(v.consented.datamart, file = v.filename, row.names=FALSE)
+message(' ')
+message('Total rows written: ',
+        nrow(v.consented.datamart), " enctrs/tumors  ",
+        length(unique(v.consented.datamart$patient.num))," pts")
+
+```
+
+### STAGE 4 - APPLY STANDARDIZED DECODING FOR SELECTED COLUMNS (Columns where sites did not provide code names)
+# Note - Decoding is no longer performed
+```{r Decoding for select columns}
+# v.codebook <- read.csv("/d1/home/vleonardo/GPC-Development/bc-datamart/i2b2 codebook-decoded-subset.csv",stringsAsFactors=FALSE)
+# v.naaccr.code.list <- c('0610','0670','0820','0830','2850','2860','2869','2876','2877','2880','2890','2940','3000','3020','3400','3430')
+# v.consented.datamart <- read.csv("/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/BCDatamart-ALLSITE-CONSENTED.csv",stringsAsFactors=FALSE)
+# for (i.naaccr in v.naaccr.code.list) { 
+#   tmp.col.name <- as.character(v.col.terms$col.name[grepl(i.naaccr,v.col.terms$col.name)])
+#   message('... decoding: ',i.naaccr,'-',tmp.col.name)
+#   tmp.col.descriptor <- paste0(v.col.terms$col.name[grepl(i.naaccr,v.col.terms$col.name)],'.Descriptor')
+#   v.consented.datamart$code_value <- as.character(v.consented.datamart[,tmp.col.name])
+# #  v.consented.datamart$label <- unique(v.codebook$label[v.codebook$code_value==v.consented.datamart$code_value])
+#   v.consented.datamart <- merge(v.consented.datamart,v.codebook[,c("code_value","label")],
+#         by.x=c("code_value"), by.y=c("code_value"),all.x=TRUE)
+#   v.consented.datamart[,tmp.col.descriptor] <- v.consented.datamart$label
+#   v.consented.datamart$code_value <- NULL
+#   v.consented.datamart$label <- NULL
+# 
+# }
+# 
+# # Export 'All-Site Consented' datamart
+# v.consented.datamart <- v.consented.datamart[with(v.consented.datamart,order(gpc.site.name,gpc.study.id, encounter.num)),]
+# v.filename <- paste0(v.output.dir,"BCDatamart-ALLSITE-CONSENTED-DECODED.csv")
+# write.csv(v.consented.datamart, file = v.filename, row.names=FALSE)
+# message('Number of rows written: ',nrow(v.consented.datamart))
+
+```
+
+### ALL-SITE DATAMART - Summary Statistics
+
+``` {r Summary Statistics}
+BCRup.Summary.Statistics(v.consented.datamart)
+```
