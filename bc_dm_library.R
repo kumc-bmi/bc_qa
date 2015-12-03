@@ -7,7 +7,7 @@
 #   survey.sample - complex frame created by bc_excl
 # 
 # 25-Nov Genesis (Parceled out f/ original bc_site_datamart)
-# 25-Nov SAVEPOINT (RMD file committed to TortoiseHg)
+# 30-Nov SAVEPOINT (RMD file committed to TortoiseHg)
 # ============================================================================
 
 #=============================================================================
@@ -248,7 +248,8 @@ BCRup.DescribeDatamartColumn <- function(p.datamart,p.col.name) {
        } 
     
     if ((p.col.datatype == "DATE") | (p.col.datatype == "NUM")) {
-       print(summary(p.datamart[,p.col.name]))
+      print(p.col.name) 
+      print(summary(subset(p.datamart,select=p.col.name)))
     } else {# Handle as character
        # Descriptive analysis for variable added
        tmp.next.col <- which(colnames(p.datamart)==p.col.name) + 1
@@ -262,9 +263,14 @@ BCRup.DescribeDatamartColumn <- function(p.datamart,p.col.name) {
        colnames(tmp.frequency.table)[colnames(tmp.frequency.table)=="Var1"] <- tmp.col.name
        colnames(tmp.frequency.table)[colnames(tmp.frequency.table)=="Freq"] <- "Enctrs"
   
-       print(tmp.frequency.table, right=FALSE)  
+       tmp.frequency.table <- setNames(aggregate(cbind(patient.num,encounter.num)~p.datamart[,tmp.col.name],
+                                data=p.datamart,
+                                function(x) length(unique(x))),
+                      c(tmp.col.name,"Patients","Enctr(Tumors)"))
+       print(tmp.frequency.table[,c(2,3,1)])
+
        }
-   
+    message('')
 }
 
 #=============================================================================
@@ -275,7 +281,7 @@ BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.name) {
      if (grepl(".Descriptor$",p.col.name)) {
        return("Skipping over 'descriptor' column")
      }
-  
+     
      tmp.col.found.flag <- (nrow(p.datamart[! (is.na(p.datamart[,p.col.name])),]) > 0)
      if  (! tmp.col.found.flag) {
        message("No 'Visual Analysis', as only NAs are present for column: ",p.col.name) 
@@ -327,8 +333,8 @@ BCRup.VisualizeDatamartColumn <- function(p.datamart,p.col.name) {
            
         # Charts
         pie(table(p.datamart[,p.col.name]),
-            main=p.col.name)  
-       
+            main=p.col.name,col=brewer.pal(9, "Blues"))  
+        
         p.datamart$col.expanded <- p.datamart[,p.col.name]
         # Add descriptor, if not a GPC Eligibility variable
         if (! grepl("^gpc.",p.col.name)) {
@@ -423,20 +429,9 @@ BCRup.GetConsentedPtData <- function(p.site) {
 
 #=============================================================================
 BCRup.Summary.Statistics <- function (p.datamart) {
-  message('ALL-SITE DATAMART (Consented Pts Only)')
-  message('')
-  message('')
-  message('Total Encounters By Site:')
-  print(table(v.consented.datamart$gpc.site.name))
-  message('')
-  message('')
-  message('Total Patients By Site:')
-  print(table(unique(v.consented.datamart[,c("gpc.site.name","patient.num")])$gpc.site.name))
-  message('')
-  message('')
-  message('Patients loaded:         ',length(unique(p.datamart$patient.num)))
+  message('Patients exported:         ',length(unique(p.datamart$patient.num)))
   message('Encounters exported:     ',nrow(p.datamart),' (num of rows written)')
-  message('Pts/Encounters eligible: ',length(p.datamart$gpc.enctr.eligible[p.datamart$gpc.enctr.eligible]))
+  message('Encounters eligible:     ',length(p.datamart$gpc.enctr.eligible[p.datamart$gpc.enctr.eligible]))
   message('Dx Age (Mean):           ',format(mean(unique(p.datamart[,c("patient.num","gpc.dx.age")])$gpc.dx.age),digits=4))
   message('GPC Birth Date (Min):    ',min(p.datamart$gpc.date.birth.actl))
   message('NAACCR Birth Date (Min): ',min(p.datamart$NAACCR.0240.Birth.Date[! is.na(p.datamart$NAACCR.0240.Birth.Date)]))
@@ -448,7 +443,6 @@ BCRup.Summary.Statistics <- function (p.datamart) {
   message('GPC Dx Date (Max):       ',max(p.datamart$gpc.date.dx))
   message('NAACCR Dx Date (Max):    ',max(p.datamart$NAACCR.0390.Dx.Date[! is.na(p.datamart$NAACCR.0390.Dx.Date)]))
   
-  message(' ')
   print(setNames(aggregate(cbind(patient.num,encounter.num)~gpc.site.name,
                            data=p.datamart,
                            function(x) length(unique(x))),
