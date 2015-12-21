@@ -8,7 +8,7 @@
 #   survey.sample - complex frame created by bc_excl
 # 
 # 30-Nov Genesis (Parceled out f/ original bc_site_datamart)
-# 25-Nov SAVEPOINT (RMD file committed to TortoiseHg)
+# 30-Nov SAVEPOINT (RMD file committed to TortoiseHg)
 #
 # ============================================================================
 ```
@@ -22,6 +22,7 @@ source('/d1/home/vleonardo/PHM-Development/PHM-LIBRARY.rmd')  # Loads PHM functi
 
 # library(ggplot2)
 library(reshape)
+library(RColorBrewer)
 PHM.PackageSetup()
 
 # Don't wrap so much
@@ -165,7 +166,7 @@ tmp.dx$dx.mmdd <- (as.POSIXlt(tmp.dx$gpc.date.dx)$mon*100) +
 tmp.dx$birth.mmdd <- (as.POSIXlt(tmp.dx$gpc.date.birth)$mon*100) +
                              as.POSIXlt(tmp.dx$gpc.date.birth)$mday 
 tmp.dx$age[!(is.na(tmp.dx$gpc.date.birth)) & (tmp.dx$dx.mmdd < tmp.dx$birth.mmdd)] <- 
-  tmp.dx$age - 1
+  tmp.dx$age[!(is.na(tmp.dx$gpc.date.birth)) & (tmp.dx$dx.mmdd < tmp.dx$birth.mmdd)] - 1
 q.site.datamart$gpc.dx.age <- tmp.dx$age[tmp.dx$encounter.num==q.site.datamart$encounter.num]
 # Move column towards beginning of list
 q.site.datamart <- q.site.datamart[,c(1,2,3,ncol(q.site.datamart),5:ncol(q.site.datamart)-1)]

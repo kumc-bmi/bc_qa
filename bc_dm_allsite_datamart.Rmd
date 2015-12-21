@@ -3,7 +3,7 @@
 ```{r echo=FALSE}
 # ============================================================================
 # 30-Nov Genesis (Parceled out f/ original bc_site_datamart)
-# 24-Nov SAVEPOINT (RMD file committed to TortoiseHg)
+# 30-Nov SAVEPOINT (RMD file committed to TortoiseHg)
 # ============================================================================
 ```
 
@@ -23,6 +23,8 @@ opts_chunk$set(echo=FALSE)
 
 # BC Function library
 source('/d1/home/vleonardo/GPC-Development/bc-datamart/bc_dm_library.R')  
+BCRup.Initialize.Site.Files()
+v.col.terms <- BCRup.Initialize.Col.Terms()
 ```
 
 ### STAGE 2 - BUILD SITE-SPECIFIC CONSENTED DATAMARTS (ONE AT A TIME)
@@ -30,7 +32,7 @@ source('/d1/home/vleonardo/GPC-Development/bc-datamart/bc_dm_library.R')
 ```{r Build site-specific consented datamarts -- One at a time}
 
 v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'  
-v.sites <- c('WISC')  # Originally, was a list of all sites
+v.sites <- c('UTSW')  # Originally, was a list of all sites
 message("Getting consented patients for ",v.sites[1])
 v.site.consented.datamart <- BCRup.GetConsentedPtData(v.sites[1])
 
@@ -53,7 +55,7 @@ message('Number of rows written: ',nrow(v.site.consented.datamart))
 
 v.output.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/'  
 #v.sites <- c('KUMC','MCRF','MCW','UIOWA','UMN','UNMC','UTSW','WISC')
-v.sites <- c('KUMC','MCRF','UIOWA','UMN','UTSW','WISC')
+v.sites <- c('KUMC','MCRF','MCW','UIOWA','UMN','UNMC','UTSW','WISC')
 v.filename <- paste0(v.output.dir,"BCDatamart-Site-Consented-",v.sites[1],".csv")
 v.consented.datamart <- read.csv(v.filename,stringsAsFactors=FALSE)
 message("... Rows added for ",v.sites[1])
