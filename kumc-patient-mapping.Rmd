@@ -1,0 +1,46 @@
+### Merge for Consented Study Ids Only
+
+```{r}
+  
+
+  # Load site's list of 'Consented Study Ids'
+  # || gpc.study.id ||
+  v.study.mappings.dir <- '/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-StudyIdMappings/'
+  v.site.consented.study.ids <- read.csv(paste0(v.study.mappings.dir,"KUMC-StudyIDs for MR Consent 2015-11-06.csv"))
+  nrow(v.site.consented.study.ids)
+
+  # Load site's  study_id to order_id mapping'
+  # || ORDER_ID || STUDY_ID ||
+  v.site.order.ids <- read.csv(paste0(v.study.mappings.dir,"KUMC-study_id_to_order_num.csv"))
+  colnames(v.site.order.ids)[colnames(v.site.order.ids)=="STUDY_ID"] <- "gpc.study.id"
+  colnames(v.site.order.ids)[colnames(v.site.order.ids)=="ORDER_ID"] <- "gpc.order.id"
+  v.site.mapping <- merge(v.site.order.ids,v.site.consented.study.ids)
+  nrow(v.site.mapping)
+
+  # Get record_numbers to patient_numbers
+  v.site.survey.set <- read.csv(paste0("~/GPC-Development/bc-data-files/Phase1-PtSamplingCSVs/",dataset$site,"-16-BC-deid-pt-sample.csv"))
+  v.site.survey.set <- v.site.survey.set[,c("row_number","patient_num")]
+  colnames(v.site.survey.set)[colnames(v.site.survey.set)=="row_number"] <- "gpc.order.id"
+  v.site.survey.set <- v.site.survey.set[,c("gpc.order.id","patient_num")]
+  v.site.mapping <- merge(v.site.mapping,v.site.survey.set) # by=gpc.order.id  
+  v.site.mapping <- v.site.mapping[,c("gpc.order.id","patient_num", "gpc.study.id")]
+# || gpc.order.id || patient_num || gpc.study.id || row_number
+  nrow(v.site.mapping)
+
+  # Get date-shift
+  conn.site <- dbConnect(SQLite(),paste0('/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-StudyIdMappings/KUMC-id-patient-dimension.db') )
+  print(dbListTables(conn.site))
+  kumc.crosswalk <- dbGetQuery(conn.site,"select patient_num, -date_shift date_shift from bc_crosswalk")
+  colnames(kumc.crosswalk)[colnames(kumc.crosswalk)=="PATIENT_NUM"] <- "patient_num"
+  colnames(kumc.crosswalk)[colnames(kumc.crosswalk)=="DATE_SHIFT"] <- "date_shift"
+  kumc.crosswalk <- unique(kumc.crosswalk)
+  v.site.mapping <- merge(v.site.mapping,kumc.crosswalk) # by=patient_num
+  nrow(v.site.mapping)
+
+  # Format and write CSV patient mapping file
+  colnames(v.site.mapping)[colnames(v.site.mapping)=="gpc.order.id"] <- "order_id"
+  colnames(v.site.mapping)[colnames(v.site.mapping)=="gpc.study.id"] <- "study_id"
+  v.filename <- paste0(v.study.mappings.dir,'KUMC-patient-mapping.csv')
+  write.csv(v.site.mapping, file = v.filename, row.names=FALSE)
+
+```

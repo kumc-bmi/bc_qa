@@ -1,0 +1,282 @@
+variable_name,code_prefix,orig_code_value,code_value,label
+0610 Class of Case,NAACCR|610:,00,NAACCR|610:00,Initial diagnosis at the reporting facility AND all treatment or a decision not to treat was done ELSEWHERE
+0610 Class of Case,NAACCR|610:,10,NAACCR|610:10,"Initial diagnosis at the reporting facility or in a staff physician's office AND PART OR ALL of first course treatment or a decision not to treat was at the reporting facility, NOS"
+0610 Class of Case,NAACCR|610:,11,NAACCR|610:11,Initial diagnosis in staff physician's office AND PART of first course treatment was done at the reporting facility
+0610 Class of Case,NAACCR|610:,12,NAACCR|610:12,Initial diagnosis in staff physician's office AND ALL first course treatment or a decision not to treat was done at the reporting facility
+0610 Class of Case,NAACCR|610:,13,NAACCR|610:13,Initial diagnosis at the reporting facility AND PART of first course treatment was done at the reporting facility
+0610 Class of Case,NAACCR|610:,14,NAACCR|610:14,Initial diagnosis at the reporting facility AND ALL first course treatment or a decision not to treat was done at the reporting facility
+0610 Class of Case,NAACCR|610:,20,NAACCR|610:20,"Initial diagnosis elsewhere AND PART OR ALL of first course treatment was done at the reporting facility, NOS"
+0610 Class of Case,NAACCR|610:,21,NAACCR|610:21,Initial diagnosis elsewhere AND PART of treatment was done at the reporting facility
+0610 Class of Case,NAACCR|610:,22,NAACCR|610:22,Initial diagnosis elsewhere AND ALL first course treatment was done at the reporting facility
+0610 Class of Case,NAACCR|610:,30,NAACCR|610:30,"Initial diagnosis and all first course treatment elsewhere AND reporting facility participated in DIAGNOSTIC WORKUP (for example, consult only, staging workup after initial diagnosis elsewhere)"
+0610 Class of Case,NAACCR|610:,31,NAACCR|610:31,Initial diagnosis and all first course treatment elsewhere AND reporting facility provided IN-TRANSIT care
+0610 Class of Case,NAACCR|610:,32,NAACCR|610:32,Diagnosis AND all first course treatment provided elsewhere AND patient presents at reporting facility with disease RECURRENCE OR PERSISTENCE
+0610 Class of Case,NAACCR|610:,33,NAACCR|610:33,Diagnosis AND all first course treatment provided elsewhere AND patient presents at reporting facility with disease HISTORY ONLY
+0610 Class of Case,NAACCR|610:,34,NAACCR|610:34,"Type of case not required by CoC to be accessioned (for example, a benign colon tumor) AND initial diagnosis AND part or all of first course treatment by reporting facility"
+0610 Class of Case,NAACCR|610:,35,NAACCR|610:35,Case diagnosed before program's Reference Date AND initial diagnosis AND PART OR ALL of first course treatment by reporting facility
+0610 Class of Case,NAACCR|610:,36,NAACCR|610:36,"Type of case not required by CoC to be accessioned (for example, a benign colon tumor) AND initial diagnosis elsewhere AND part of all of first course treatment by reporting facility"
+0610 Class of Case,NAACCR|610:,37,NAACCR|610:37,Case diagnosed before program's Reference Date AND initial diagnosis elsewhere AND all or part of first course treatment by reporting facility
+0610 Class of Case,NAACCR|610:,38,NAACCR|610:38,"Initial diagnosis established by AUTOPSY at the reporting facility, cancer not suspected prior to death"
+0610 Class of Case,NAACCR|610:,40,NAACCR|610:40,Diagnosis AND all first course treatment given at the same staff physician's office
+0610 Class of Case,NAACCR|610:,41,NAACCR|610:41,Diagnosis and all first course treatment given in two or more different staff physician offices
+0610 Class of Case,NAACCR|610:,42,NAACCR|610:42,"Non-staff physician or non-CoC accredited clinic or other facility, not part of reporting facility, accessioned by reporting facility for diagnosis and/or treatment by that entity (for example, hospital abstracts cases from an independent radiation facility)"
+0610 Class of Case,NAACCR|610:,43,NAACCR|610:43,PATHOLOGY or other lab specimens ONLY
+0610 Class of Case,NAACCR|610:,49,NAACCR|610:49,DEATH CERTIFICATE ONLY
+0610 Class of Case,NAACCR|610:,99,NAACCR|610:99,Nonanalytic case of unknown relationship to facility (not for use by CoC accredited cancer programs for analytic cases.); UNKNOWN
+2940 Derived AJCC-6 T,NAACCR|2940:,99,NAACCR|2940:99,TX 
+2940 Derived AJCC-6 T,NAACCR|2940:,00,NAACCR|2940:00,T0 
+2940 Derived AJCC-6 T,NAACCR|2940:,05,NAACCR|2940:05,Tis 
+2940 Derived AJCC-6 T,NAACCR|2940:,10,NAACCR|2940:10,T1 
+2940 Derived AJCC-6 T,NAACCR|2940:,11,NAACCR|2940:11,T1mic 
+2940 Derived AJCC-6 T,NAACCR|2940:,12,NAACCR|2940:12,T1a 
+2940 Derived AJCC-6 T,NAACCR|2940:,15,NAACCR|2940:15,T1b 
+2940 Derived AJCC-6 T,NAACCR|2940:,18,NAACCR|2940:18,T1c 
+2940 Derived AJCC-6 T,NAACCR|2940:,20,NAACCR|2940:20,T2 
+2940 Derived AJCC-6 T,NAACCR|2940:,21,NAACCR|2940:21,T2a 
+2940 Derived AJCC-6 T,NAACCR|2940:,22,NAACCR|2940:22,T2b 
+2940 Derived AJCC-6 T,NAACCR|2940:,30,NAACCR|2940:30,T3 
+2940 Derived AJCC-6 T,NAACCR|2940:,31,NAACCR|2940:31,T3a 
+2940 Derived AJCC-6 T,NAACCR|2940:,32,NAACCR|2940:32,T3b 
+2940 Derived AJCC-6 T,NAACCR|2940:,40,NAACCR|2940:40,T4 
+2940 Derived AJCC-6 T,NAACCR|2940:,49,NAACCR|2940:49,T4 NOS 
+2940 Derived AJCC-6 T,NAACCR|2940:,41,NAACCR|2940:41,T4a 
+2940 Derived AJCC-6 T,NAACCR|2940:,42,NAACCR|2940:42,T4b 
+2940 Derived AJCC-6 T,NAACCR|2940:,43,NAACCR|2940:43,T4c 
+2940 Derived AJCC-6 T,NAACCR|2940:,44,NAACCR|2940:44,T4d 
+2940 Derived AJCC-6 T,NAACCR|2940:,88,NAACCR|2940:88,Not applicable 
+2960 Derived AJCC-6 N,NAACCR|2960:,99,NAACCR|2960:99,NX 
+2960 Derived AJCC-6 N,NAACCR|2960:,00,NAACCR|2960:00,N0 
+2960 Derived AJCC-6 N,NAACCR|2960:,10,NAACCR|2960:10,N1 
+2960 Derived AJCC-6 N,NAACCR|2960:,20,NAACCR|2960:20,N2 
+2960 Derived AJCC-6 N,NAACCR|2960:,21,NAACCR|2960:21,N2a 
+2960 Derived AJCC-6 N,NAACCR|2960:,22,NAACCR|2960:22,N2b 
+2960 Derived AJCC-6 N,NAACCR|2960:,30,NAACCR|2960:30,N3 
+2960 Derived AJCC-6 N,NAACCR|2960:,31,NAACCR|2960:31,N3a 
+2960 Derived AJCC-6 N,NAACCR|2960:,32,NAACCR|2960:32,N3b 
+2960 Derived AJCC-6 N,NAACCR|2960:,33,NAACCR|2960:33,N3c 
+2960 Derived AJCC-6 N,NAACCR|2960:,88,NAACCR|2960:88,Not applicable 
+2980 Derived AJCC-6 M,NAACCR|2980:,99,NAACCR|2980:99,MX
+2980 Derived AJCC-6 M,NAACCR|2980:,0,NAACCR|2980:0,M0
+2980 Derived AJCC-6 M,NAACCR|2980:,10,NAACCR|2980:10,M1
+3000 Derived AJCC-6 Stage Grp,NAACCR|3000:,00,NAACCR|3000:00,Stage 0 
+3000 Derived AJCC-6 Stage Grp,NAACCR|3000:,10,NAACCR|3000:10,Stage I 
+3000 Derived AJCC-6 Stage Grp,NAACCR|3000:,32,NAACCR|3000:32,Stage IIA 
+3000 Derived AJCC-6 Stage Grp,NAACCR|3000:,33,NAACCR|3000:33,Stage IIB 
+3000 Derived AJCC-6 Stage Grp,NAACCR|3000:,52,NAACCR|3000:52,Stage IIIA 
+3000 Derived AJCC-6 Stage Grp,NAACCR|3000:,53,NAACCR|3000:53,Stage IIIB 
+3000 Derived AJCC-6 Stage Grp,NAACCR|3000:,54,NAACCR|3000:54,Stage IIIC 
+3000 Derived AJCC-6 Stage Grp,NAACCR|3000:,70,NAACCR|3000:70,Stage IV 
+3000 Derived AJCC-6 Stage Grp,NAACCR|3000:,88,NAACCR|3000:88,Not applicable 
+3000 Derived AJCC-6 Stage Grp,NAACCR|3000:,99,NAACCR|3000:99,Stage Unknown 
+3020 Derived SS2000,NAACCR|3020:,0,NAACCR|3020:0,In Situ 
+3020 Derived SS2000,NAACCR|3020:,1,NAACCR|3020:1,Localized 
+3020 Derived SS2000,NAACCR|3020:,2,NAACCR|3020:2,"Regional, direct extension "
+3020 Derived SS2000,NAACCR|3020:,3,NAACCR|3020:3,"Regional, lymph nodes only "
+3020 Derived SS2000,NAACCR|3020:,4,NAACCR|3020:4,"Regional, extension and nodes "
+3020 Derived SS2000,NAACCR|3020:,5,NAACCR|3020:5,"Regional, NOS "
+3020 Derived SS2000,NAACCR|3020:,7,NAACCR|3020:7,Distant 
+3020 Derived SS2000,NAACCR|3020:,8,NAACCR|3020:8,Not applicable 
+3020 Derived SS2000,NAACCR|3020:,9,NAACCR|3020:9,Unknown/Unstaged 
+3400 Derived AJCC-7 T,NAACCR|3400:,999,NAACCR|3400:999,TX 
+3400 Derived AJCC-7 T,NAACCR|3400:,000,NAACCR|3400:000,T0 
+3400 Derived AJCC-7 T,NAACCR|3400:,050,NAACCR|3400:050,Tis 
+3400 Derived AJCC-7 T,NAACCR|3400:,100,NAACCR|3400:100,T1 
+3400 Derived AJCC-7 T,NAACCR|3400:,110,NAACCR|3400:110,T1mic 
+3400 Derived AJCC-7 T,NAACCR|3400:,120,NAACCR|3400:120,T1a 
+3400 Derived AJCC-7 T,NAACCR|3400:,150,NAACCR|3400:150,T1b 
+3400 Derived AJCC-7 T,NAACCR|3400:,180,NAACCR|3400:180,T1c 
+3400 Derived AJCC-7 T,NAACCR|3400:,200,NAACCR|3400:200,T2 
+3400 Derived AJCC-7 T,NAACCR|3400:,300,NAACCR|3400:300,T3 
+3400 Derived AJCC-7 T,NAACCR|3400:,400,NAACCR|3400:400,T4 
+3400 Derived AJCC-7 T,NAACCR|3400:,410,NAACCR|3400:410,T4a 
+3400 Derived AJCC-7 T,NAACCR|3400:,420,NAACCR|3400:420,T4b 
+3400 Derived AJCC-7 T,NAACCR|3400:,430,NAACCR|3400:430,T4c 
+3400 Derived AJCC-7 T,NAACCR|3400:,440,NAACCR|3400:440,T4d 
+3400 Derived AJCC-7 T,NAACCR|3400:,888,NAACCR|3400:888,Not applicable 
+3410 Derived AJCC-7 N,NAACCR|3410:,999,NAACCR|3410:999,NX 
+3410 Derived AJCC-7 N,NAACCR|3410:,000,NAACCR|3410:000,N0 
+3410 Derived AJCC-7 N,NAACCR|3410:,100,NAACCR|3410:100,N1 
+3410 Derived AJCC-7 N,NAACCR|3410:,200,NAACCR|3410:200,N2 
+3410 Derived AJCC-7 N,NAACCR|3410:,210,NAACCR|3410:210,N2a 
+3410 Derived AJCC-7 N,NAACCR|3410:,220,NAACCR|3410:220,N2b 
+3410 Derived AJCC-7 N,NAACCR|3410:,300,NAACCR|3410:300,N3 
+3410 Derived AJCC-7 N,NAACCR|3410:,310,NAACCR|3410:310,N3a 
+3410 Derived AJCC-7 N,NAACCR|3410:,320,NAACCR|3410:320,N3b 
+3410 Derived AJCC-7 N,NAACCR|3410:,330,NAACCR|3410:330,N3c 
+3410 Derived AJCC-7 N,NAACCR|3410:,888,NAACCR|3410:888,Not applicable 
+3420 Derived AJCC-7 M,NAACCR|3420:,999,NAACCR|3420:999,MX 
+3420 Derived AJCC-7 M,NAACCR|3420:,000,NAACCR|3420:000,M0 
+3420 Derived AJCC-7 M,NAACCR|3420:,010,NAACCR|3420:010,M0(i+) 
+3420 Derived AJCC-7 M,NAACCR|3420:,100,NAACCR|3420:100,M1 
+3420 Derived AJCC-7 M,NAACCR|3420:,888,NAACCR|3420:888,Not applicable 
+3430 Derived AJCC-7 Stage Grp,NAACCR|3430:,000,NAACCR|3430:000,Stage 0 
+3430 Derived AJCC-7 Stage Grp,NAACCR|3430:,120,NAACCR|3430:120,Stage IA 
+3430 Derived AJCC-7 Stage Grp,NAACCR|3430:,150,NAACCR|3430:150,Stage IB 
+3430 Derived AJCC-7 Stage Grp,NAACCR|3430:,320,NAACCR|3430:320,Stage IIA 
+3430 Derived AJCC-7 Stage Grp,NAACCR|3430:,330,NAACCR|3430:330,Stage IIB 
+3430 Derived AJCC-7 Stage Grp,NAACCR|3430:,520,NAACCR|3430:520,Stage IIIA 
+3430 Derived AJCC-7 Stage Grp,NAACCR|3430:,530,NAACCR|3430:530,Stage IIIB 
+3430 Derived AJCC-7 Stage Grp,NAACCR|3430:,540,NAACCR|3430:540,Stage IIIC 
+3430 Derived AJCC-7 Stage Grp,NAACCR|3430:,700,NAACCR|3430:700,Stage IV 
+3430 Derived AJCC-7 Stage Grp,NAACCR|3430:,888,NAACCR|3430:888,Not applicable 
+3430 Derived AJCC-7 Stage Grp,NAACCR|3430:,999,NAACCR|3430:999,Stage Unknown 
+2850 CS Mets at DX,NAACCR|2850:,00,NAACCR|2850:00,No distant metastasis
+2850 CS Mets at DX,NAACCR|2850:,05,NAACCR|2850:05,"No clinical or radiographic evidence of distant metastasis, but deposits of molecularly or  microscopically  detected tumor cells in circulating blood, bone marrow or other non-regional nodal tissue that are 0.2 millimeters (mm)  or less in a patient without symptoms or signs of metastasis"
+2850 CS Mets at DX,NAACCR|2850:,07,NAACCR|2850:07,Stated as M0(i+) with no other information on distant metastasis
+2850 CS Mets at DX,NAACCR|2850:,10,NAACCR|2850:10,Distant lymph node(s)
+2850 CS Mets at DX,NAACCR|2850:,40,NAACCR|2850:40,Distant metastasis except distant lymph node(s) (code 10)
+2850 CS Mets at DX,NAACCR|2850:,42,NAACCR|2850:42,Further contiguous extension
+2850 CS Mets at DX,NAACCR|2850:,44,NAACCR|2850:44,Metastasis
+2850 CS Mets at DX,NAACCR|2850:,50,NAACCR|2850:50,(40 - 44) + 10
+2850 CS Mets at DX,NAACCR|2850:,60,NAACCR|2850:60,"Distant metastasis, NOS"
+2850 CS Mets at DX,NAACCR|2850:,99,NAACCR|2850:99,Unknown; distant metastasis not stated
+2860 CS Mets Eval,NAACCR|2860:,0,NAACCR|2860:0,Does not meet criteria for AJCC pathologic staging of distant metastasis:
+2860 CS Mets Eval,NAACCR|2860:,1,NAACCR|2860:1,Does not meet criteria for AJCC pathologic staging of distant metastasis:
+2860 CS Mets Eval,NAACCR|2860:,2,NAACCR|2860:2,"Meets criteria for AJCC pathologic staging of distant metastasis: No pathologic examination of metastatic specimen done prior to death, but positive metastatic evidence derived from autopsy (tumor was suspected or diagnosed prior to autopsy)."
+2860 CS Mets Eval,NAACCR|2860:,3,NAACCR|2860:3,"Meets criteria for AJCC pathologic staging of distant metastasis: Specimen from metastatic site microscopically positive WITHOUT pre-surgical systemic treatment or radiation OR specimen from metastatic site microscopically positive, unknown if pre-surgical systemic treatment or radiation performed OR specimen from metastatic site microscopically positive prior to neoadjuvant treatment."
+2860 CS Mets Eval,NAACCR|2860:,5,NAACCR|2860:5,"Does not meet criteria for AJCC y-pathologic (yp) staging of distant metastasis: Specimen from metastatic site microscopically positive WITH pre-surgical systemic treatment or radiation, BUT metastasis based on clinical evidence."
+2860 CS Mets Eval,NAACCR|2860:,6,NAACCR|2860:6,"Meets criteria for AJCC y-pathologic (yp) staging of distant metastasis: Specimen from metastatic site microscopically positive WITH pre-surgical systemic treatment or radiation, BUT metastasis based on pathologic evidence."
+2860 CS Mets Eval,NAACCR|2860:,8,NAACCR|2860:8,Meets criteria for AJCC autopsy (a) staging of distant metastasis: Evidence from autopsy based on examination of positive metastatic tissue AND tumor was unsuspected or undiagnosed prior to autopsy.
+2860 CS Mets Eval,NAACCR|2860:,9,NAACCR|2860:9,Not assessed; cannot be assessed
+2880 CS Site-Specific Factor 1,NAACCR|2880:,000,NAACCR|2880:000,OBSOLETE DATA CONVERTED V0203 (See code 998-Test not done (test not ordered and not performed)
+2880 CS Site-Specific Factor 1,NAACCR|2880:,010,NAACCR|2880:010,Positive/elevated
+2880 CS Site-Specific Factor 1,NAACCR|2880:,020,NAACCR|2880:020,Negative/normal; within normal limits
+2880 CS Site-Specific Factor 1,NAACCR|2880:,030,NAACCR|2880:030,Borderline; undetermined whether positive or negative
+2880 CS Site-Specific Factor 1,NAACCR|2880:,080,NAACCR|2880:080,"OBSOLETE DATA CONVERTED V0203 (See Code 997-Test ordered, results not in chart)"
+2880 CS Site-Specific Factor 1,NAACCR|2880:,988,NAACCR|2880:988,Not applicable:  Information not collected for this case
+2880 CS Site-Specific Factor 1,NAACCR|2880:,996,NAACCR|2880:996,"Test ordered, results not interpretable"
+2880 CS Site-Specific Factor 1,NAACCR|2880:,997,NAACCR|2880:997,"Test ordered, results not in chart"
+2880 CS Site-Specific Factor 1,NAACCR|2880:,998,NAACCR|2880:998,Test not done (test not ordered and not performed)
+2880 CS Site-Specific Factor 1,NAACCR|2880:,999,NAACCR|2880:999,Unknown or no information
+2890 CS Site-Specific Factor 2,NAACCR|2890:,000,NAACCR|2890:000,OBSOLETE DATA CONVERTED V0203 (See code 998-Test not done (test not ordered and not performed)
+2890 CS Site-Specific Factor 2,NAACCR|2890:,010,NAACCR|2890:010,Positive/elevated
+2890 CS Site-Specific Factor 2,NAACCR|2890:,020,NAACCR|2890:020,Negative/normal; within normal limits
+2890 CS Site-Specific Factor 2,NAACCR|2890:,030,NAACCR|2890:030,Borderline; undetermined whether positive or negative
+2890 CS Site-Specific Factor 2,NAACCR|2890:,080,NAACCR|2890:080,"OBSOLETE DATA CONVERTED V0203 (See Code 997-Test ordered, results not in chart)"
+2890 CS Site-Specific Factor 2,NAACCR|2890:,988,NAACCR|2890:988,Not applicable:  Information not collected for this case
+2890 CS Site-Specific Factor 2,NAACCR|2890:,996,NAACCR|2890:996,"Test ordered, results not interpretable"
+2890 CS Site-Specific Factor 2,NAACCR|2890:,997,NAACCR|2890:997,"Test ordered, results not in chart"
+2890 CS Site-Specific Factor 2,NAACCR|2890:,998,NAACCR|2890:998,Test not done (test not ordered and not performed)
+2890 CS Site-Specific Factor 2,NAACCR|2890:,999,NAACCR|2890:999,Unknown or no information
+2869 CS Site-Specific Factor 15,NAACCR|2869:,010,NAACCR|2869:010,Positive/elevated; amplified
+2869 CS Site-Specific Factor 15,NAACCR|2869:,020,NAACCR|2869:020,Negative/normal; within normal limits; not amplified
+2869 CS Site-Specific Factor 15,NAACCR|2869:,030,NAACCR|2869:030,Borderline; equivocal; indeterminate; undetermined whether positive or negative
+2869 CS Site-Specific Factor 15,NAACCR|2869:,988,NAACCR|2869:988,Not applicable: Information not collected for this case
+2869 CS Site-Specific Factor 15,NAACCR|2869:,997,NAACCR|2869:997,"Test(s) ordered, results not in chart"
+2869 CS Site-Specific Factor 15,NAACCR|2869:,998,NAACCR|2869:998,Test(s) not done (test(s) not ordered and not performed)
+2869 CS Site-Specific Factor 15,NAACCR|2869:,999,NAACCR|2869:999,Unknown or no information. Not documented in patient record
+2876 CS Site Specific Factor 22,NAACCR|2876:,010,NAACCR|2876:010,Oncotype DX
+2876 CS Site Specific Factor 22,NAACCR|2876:,020,NAACCR|2876:020,MammaPrint (MammoPrint)
+2876 CS Site Specific Factor 22,NAACCR|2876:,030,NAACCR|2876:030,Other
+2876 CS Site Specific Factor 22,NAACCR|2876:,040,NAACCR|2876:040,"Test performed, type of test unknown"
+2876 CS Site Specific Factor 22,NAACCR|2876:,988,NAACCR|2876:988,Not applicable: Information not collected for this case
+2876 CS Site Specific Factor 22,NAACCR|2876:,997,NAACCR|2876:997,OBSOLETE DATA CONVERTED V0203
+2877 CS Site Specific Factor 23,NAACCR|2877:,000,NAACCR|2877:0,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,001,NAACCR|2877:1,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,002,NAACCR|2877:2,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,003,NAACCR|2877:3,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,004,NAACCR|2877:4,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,005,NAACCR|2877:5,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,006,NAACCR|2877:6,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,007,NAACCR|2877:7,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,008,NAACCR|2877:8,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,009,NAACCR|2877:9,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,010,NAACCR|2877:10,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,011,NAACCR|2877:11,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,012,NAACCR|2877:12,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,013,NAACCR|2877:13,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,014,NAACCR|2877:14,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,015,NAACCR|2877:15,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,016,NAACCR|2877:16,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,017,NAACCR|2877:17,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,018,NAACCR|2877:18,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,019,NAACCR|2877:19,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,020,NAACCR|2877:20,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,021,NAACCR|2877:21,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,022,NAACCR|2877:22,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,023,NAACCR|2877:23,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,024,NAACCR|2877:24,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,025,NAACCR|2877:25,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,026,NAACCR|2877:26,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,027,NAACCR|2877:27,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,028,NAACCR|2877:28,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,029,NAACCR|2877:29,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,030,NAACCR|2877:30,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,031,NAACCR|2877:31,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,032,NAACCR|2877:32,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,033,NAACCR|2877:33,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,034,NAACCR|2877:34,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,035,NAACCR|2877:35,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,036,NAACCR|2877:36,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,037,NAACCR|2877:37,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,038,NAACCR|2877:38,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,039,NAACCR|2877:39,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,040,NAACCR|2877:40,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,041,NAACCR|2877:41,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,042,NAACCR|2877:42,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,043,NAACCR|2877:43,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,044,NAACCR|2877:44,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,045,NAACCR|2877:45,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,046,NAACCR|2877:46,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,047,NAACCR|2877:47,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,048,NAACCR|2877:48,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,049,NAACCR|2877:49,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,050,NAACCR|2877:50,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,051,NAACCR|2877:51,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,052,NAACCR|2877:52,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,053,NAACCR|2877:53,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,054,NAACCR|2877:54,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,055,NAACCR|2877:55,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,056,NAACCR|2877:56,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,057,NAACCR|2877:57,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,058,NAACCR|2877:58,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,059,NAACCR|2877:59,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,060,NAACCR|2877:60,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,061,NAACCR|2877:61,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,062,NAACCR|2877:62,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,063,NAACCR|2877:63,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,064,NAACCR|2877:64,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,065,NAACCR|2877:65,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,066,NAACCR|2877:66,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,067,NAACCR|2877:67,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,068,NAACCR|2877:68,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,069,NAACCR|2877:69,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,070,NAACCR|2877:70,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,071,NAACCR|2877:71,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,072,NAACCR|2877:72,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,073,NAACCR|2877:73,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,074,NAACCR|2877:74,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,075,NAACCR|2877:75,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,076,NAACCR|2877:76,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,077,NAACCR|2877:77,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,078,NAACCR|2877:78,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,079,NAACCR|2877:79,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,080,NAACCR|2877:80,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,081,NAACCR|2877:81,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,082,NAACCR|2877:82,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,083,NAACCR|2877:83,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,084,NAACCR|2877:84,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,085,NAACCR|2877:85,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,086,NAACCR|2877:86,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,087,NAACCR|2877:87,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,088,NAACCR|2877:88,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,089,NAACCR|2877:89,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,090,NAACCR|2877:90,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,091,NAACCR|2877:91,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,092,NAACCR|2877:92,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,093,NAACCR|2877:93,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,094,NAACCR|2877:94,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,095,NAACCR|2877:95,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,096,NAACCR|2877:96,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,097,NAACCR|2877:97,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,098,NAACCR|2877:98,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,099,NAACCR|2877:99,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,100,NAACCR|2877:100,Value of actual score (nearest whole percentage)
+2877 CS Site Specific Factor 23,NAACCR|2877:,200,NAACCR|2877:200,Low risk of recurrence (good prognosis)
+2877 CS Site Specific Factor 23,NAACCR|2877:,205,NAACCR|2877:205,"OBSOLETE DATA CONVERTED V0203 (See Code 400-High risk of recurrence, porr prognosis)"
+2877 CS Site Specific Factor 23,NAACCR|2877:,300,NAACCR|2877:300,Intermediate risk of recurrence
+2877 CS Site Specific Factor 23,NAACCR|2877:,400,NAACCR|2877:400,High risk of recurrence (poor prognosis)
+2877 CS Site Specific Factor 23,NAACCR|2877:,988,NAACCR|2877:988,Not applicable: Information not collected for this case
+2877 CS Site Specific Factor 23,NAACCR|2877:,997,NAACCR|2877:997,"Test ordered, results not in chart"
+2877 CS Site Specific Factor 23,NAACCR|2877:,998,NAACCR|2877:998,Test not done (test not ordered and not performed)
+2877 CS Site Specific Factor 23,NAACCR|2877:,999,NAACCR|2877:999,Unknown or no information
