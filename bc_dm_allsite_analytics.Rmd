@@ -1,0 +1,326 @@
+# Breast Cancer All-Site Datamart - Consented Patients Only
+```{r echo=FALSE}
+# ============================================================================
+###  Creates site-specific tumor-level datamart
+# Input Dataframes
+#   dataset       - desriptors for site's input dataset 
+#   tumor.site    - pt tumors listing
+#   survey.sample - complex frame created by bc_excl
+# 
+# Note - script was modeled after 'bc_random_smaple.rmd'
+#
+# 25-Nov Genesis (Parceled out f/ original bc_site_datamart)
+# 30-Nov SAVEPOINT (RMD file committed to TortoiseHg)
+# ============================================================================
+```
+#### Summary Statistics
+#### Data Dictionary
+#### Table 1 Statistics (All Variables)
+#### Descriptive Analysis (For Each Variable)
+#### Cross-Site Analysis of Key Variables
+
+### Study Exclusion Criteria
+#### - Sex not equal to female
+#### - Less than 18 years of age
+#### - Prior cancer diagnosis
+#### - Breast cancer was not microscopically confirmed
+#### - Only tumor morphology was lobular carcinoma in situ
+#### - Stage IV breast cancer
+#### - Known to be deceased
+
+```{r Package Set-Up, include=FALSE}
+
+# Include function libraries
+source('/d1/home/vleonardo/PHM-Development/PHM-LIBRARY.rmd')  # Loads PHM functions
+source('/d1/home/vleonardo/GPC-Development/bc-datamart/bc_dm_library.R')  # Loads PHM functions
+
+PHM.PackageSetup()
+library(RColorBrewer)
+
+# Don't wrap so much
+options(width=300)
+opts_chunk$set(echo=FALSE)  # PDF creates better sized charts 
+
+```
+
+### Summary Statistics
+
+``` {r Summary Statistics}
+v.consented.datamart <- read.csv("/d1/home/vleonardo/GPC-Development/bc-data-files/Phase1-DatamartOutput/BCDatamart-ALLSITE-CONSENTED.csv",stringsAsFactors=FALSE)
+BCRup.Summary.Statistics(v.consented.datamart)
+```
+
+### Data Dictionary
+
+```{r Data Dictionary, echo=FALSE, eval=TRUE}
+
+message("RECORD IDENTIFIERS & ELIGIBILTY CRITERIA")
+print(str(v.consented.datamart[1:25]))
+
+message("NAACCR VARIABLES")
+v.col.terms <- BCRup.Initialize.Col.Terms()
+print(str(v.consented.datamart[26:ncol(v.consented.datamart)]))
+```
+
+### Table 1 Statistics  (All Variables)
+
+```{r Datamart Table 1 - Consented, echo=FALSE, eval=TRUE}
+# Provides a consolitedate presentation similar to a standard 'Table One' 
+for (tmp.col.index in 7:(ncol(v.consented.datamart))) # Skip P#, E# and Site columns
+  {  
+  tmp.col.name <- names(v.consented.datamart[tmp.col.index])
+  BCRup.DescribeDatamartColumn(v.consented.datamart, tmp.col.name)  
+  }
+```
+
+### Descriptive Analysis (For Each Variable)
+
+```{r Datamart Descriptive Analysis - Consented, echo=FALSE, eval=TRUE}
+
+for (tmp.col.index in 7:(ncol(v.consented.datamart))) # Skip P#, E# and Site columns
+  {  
+  tmp.col.name <- names(v.consented.datamart[tmp.col.index])                         
+  #BCRup.DescribeDatamartColumn(v.consented.datamart, tmp.col.name) 
+  BCRup.VisualizeDatamartColumn(v.consented.datamart,tmp.col.name)
+  BCRup.DescribeDatamartColumn(v.consented.datamart, tmp.col.name)  
+  }
+```
+
+### Cross-Site Analysis of Key Variables
+
+```{r Visual Analysis - Consented, echo=FALSE, eval=TRUE}
+
+#################################################################
+# Set-up for site-breakdowns
+v.site.cnt <- length(unique(v.consented.datamart$gpc.site.name))
+
+# Establish color palette
+v.gpc.site.colors <- c(blues9[9],"#A40047",'#008A60',"#EFB000","#790018","#AC1F2D","#013972","#A7003B")
+v.vpl.blues <- brewer.pal(9, "Blues")
+
+#################################################################
+# Consented Patients By Site
+p <- unique(v.consented.datamart[,c("gpc.site.name","patient.num")])
+
+ggplot(p, aes(x=gpc.site.name,ymax=..count..))  + 
+  ggtitle("Consented Patients") +
+  labs(x="",y="") +  # Labels for x & y axes
+  theme(plot.title = element_text(color="darkslategray", face="bold", size=32, hjust=0),
+        axis.text.x = element_text(size=18,face="bold",color="darkslategray"),
+        axis.text.y = element_text(size=12,face="bold"),
+        legend.title=element_blank()) +
+#  geom_bar(width=.5,  fill=blues9[(10-v.site.cnt):9]) +  # Generates n rgb values, plus an offset towards darker side of the scale
+  geom_bar(width=.5,  fill=v.gpc.site.colors) +  # Generates n rgb values, plus an offset towards darker side of the scale
+  scale_y_continuous(limits = c(0,150)) +  # Extend y-axis so values don't get cropped
+  stat_bin(geom="text",aes(label=..count..),vjust=-0.5) # Display values above bars
+
+#################################################################
+# Encounters By Site
+p <- v.consented.datamart
+ggplot(p, aes(x=gpc.site.name,ymax=..count..))  + 
+  ggtitle("Encounters (Tumors)") +
+  labs(x="",y="") +  # Labels for x & y axes
+  theme(plot.title = element_text(color="darkslategray", face="bold", size=32, hjust=0),
+        axis.text.x = element_text(size=18,face="bold",color="darkslategray")) +
+  geom_bar(width=.5,  fill=v.gpc.site.colors) +  # Generates n rgb values, plus an offset towards darker side of the scale
+  scale_y_continuous(limits = c(0,150)) +  # Extend y-axis so values don't get cropped
+  stat_bin(geom="text",aes(label=..count..),vjust=-0.5) # Display values above bars
+
+#################################################################
+# ER1
+tmp.col.name <- "NAACCR.2880.ER.CSSSF01"
+p <- v.consented.datamart[,c("gpc.site.name",tmp.col.name)]
+colnames(p)[colnames(p)==tmp.col.name] <- "tmp.col.name"
+p$tmp.col.descriptor <- "Coded As Missing"
+p$tmp.col.descriptor[is.na(p$tmp.col.name)] <- "Code Not Provided"
+p[grepl("10",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Positive"
+p[grepl("20",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Negative"
+p[grepl("30",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Borderline"
+p$tmp.col.descriptor <- factor(p$tmp.col.descriptor,levels=c("Positive","Negative","Coded As Missing","Code Not Provided"))
+
+ggplot(p, aes(x=gpc.site.name,fill=tmp.col.descriptor))  + 
+  geom_bar(stat="bin",width=.75,color="darkgray") +  # 'bin' counts cases, 'identity' represents values
+  scale_fill_manual(values=c("darkred","darkgreen","darkgray","aliceblue")) +
+  ggtitle("CSSSF01 - ER (Estrogen Receptor)") +
+  labs(x="",y="Encounters (Tumors)") +  # Labels for x & y axes
+  theme(plot.title = element_text(color="darkslategray", face="bold", size=24, hjust=0),
+        axis.text.x = element_text(size=12,face="bold",color="darkslategray"),
+        axis.text.y = element_text(size=12,face="bold"),
+        legend.title=element_blank()) +
+  guides(fill = guide_legend(reverse=TRUE)) +  
+  # Generates n rgb values, plus an offset towards darker side of the scale
+  scale_y_continuous(limits = c(0,150))  # Extend y-axis so values don't get cropped
+
+#################################################################
+# PR1
+tmp.col.name <- "NAACCR.2890.PR.CSSSF02"
+p <- v.consented.datamart[,c("gpc.site.name",tmp.col.name)]
+colnames(p)[colnames(p)==tmp.col.name] <- "tmp.col.name"
+p$tmp.col.descriptor <- "Coded As Missing"
+p$tmp.col.descriptor[is.na(p$tmp.col.name)] <- "Code Not Provided"
+p[grepl("10",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Positive"
+p[grepl("20",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Negative"
+p[grepl("30",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Borderline"
+p$tmp.col.descriptor <- factor(p$tmp.col.descriptor,levels=c("Positive","Negative","Coded As Missing","Code Not Provided"))
+
+ggplot(p, aes(x=gpc.site.name,fill=tmp.col.descriptor))  + 
+  geom_bar(stat="bin",width=.75,color="darkgray") +  # 'bin' counts cases, 'identity' represents values
+  scale_fill_manual(values=c("darkred","darkgreen","darkgray","aliceblue")) +
+  ggtitle("CSSSF02 - PR (Progesterone Receptor)") +
+  labs(x="",y="Encounters (Tumors)") +  # Labels for x & y axes
+  theme(plot.title = element_text(color="darkslategray", face="bold", size=24, hjust=0),
+        axis.text.x = element_text(size=12,face="bold",color="darkslategray"),
+        axis.text.y = element_text(size=12,face="bold"),
+        legend.title=element_blank()) +
+  guides(fill = guide_legend(reverse=TRUE)) +  
+  # Generates n rgb values, plus an offset towards darker side of the scale
+  scale_y_continuous(limits = c(0,150))  # Extend y-axis so values don't get cropped
+
+##############################################################
+# HER2
+tmp.col.name <- "NAACCR.2869.HER2.CSSSF15"
+p <- v.consented.datamart[,c("gpc.site.name",tmp.col.name)]
+colnames(p)[colnames(p)==tmp.col.name] <- "tmp.col.name"
+p$tmp.col.descriptor <- "Coded As Missing"
+p$tmp.col.descriptor[is.na(p$tmp.col.name)] <- "Code Not Provided"
+p[grepl("10",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Positive"
+p[grepl("20",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Negative"
+p[grepl("30",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Borderline"
+p$tmp.col.descriptor <- factor(p$tmp.col.descriptor,levels=c("Positive","Borderline","Negative","Coded As Missing","Code Not Provided"))
+
+ggplot(p, aes(x=gpc.site.name,fill=tmp.col.descriptor))  + 
+  geom_bar(stat="bin",width=.75,color="darkgray") +  # 'bin' counts cases, 'identity' represents values
+  scale_fill_manual(values=c("darkred","red","darkgreen","darkgray","aliceblue")) +
+  ggtitle("CSSSF15 - HER2 (Human Epidermal Growth Factor Receptor 2)") +
+  labs(x="",y="Encounters (Tumors)") +  # Labels for x & y axes
+  theme(plot.title = element_text(color="darkslategray", face="bold", size=24, hjust=0),
+        axis.text.x = element_text(size=12,face="bold",color="darkslategray"),
+        axis.text.y = element_text(size=12,face="bold"),
+        legend.title=element_blank()) +
+  guides(fill = guide_legend(reverse=TRUE)) +
+  # Generates n rgb values, plus an offset towards darker side of the scale
+  scale_y_continuous(limits = c(0,150))  # Extend y-axis so values don't get cropped
+
+##############################################################
+# Muligene Signature Method
+tmp.col.name <- "NAACCR.2876.MS.Method.CSSSF22"
+p <- v.consented.datamart[,c("gpc.site.name",tmp.col.name)]
+
+colnames(p)[colnames(p)==tmp.col.name] <- "tmp.col.name"
+p$tmp.col.descriptor <- "Coded As Missing"
+p$tmp.col.descriptor[is.na(p$tmp.col.name)] <- "Code Not Provided"
+p[grepl("10",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Oncotype DX"
+p[grepl("20",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "MammaPrint"
+p[grepl("30",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Other"
+p[grepl("40",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Other"
+p$tmp.col.descriptor <- factor(p$tmp.col.descriptor,levels=c("Oncotype DX","MammaPrint","Other","Coded As Missing","Code Not Provided"))
+
+ggplot(p, aes(x=gpc.site.name,fill=tmp.col.descriptor))  + 
+  geom_bar(stat="bin",width=.75,color="darkgray") +  # 'bin' counts cases, 'identity' represents values
+  scale_fill_manual(values=c(blues9[9],"lightsteelblue",blues9[8],"darkgray","aliceblue")) +
+  ggtitle("CSSSF22 - Multigene Signature Method") +
+  labs(x="",y="Encounters (Tumors)") +  # Labels for x & y axes
+  theme(plot.title = element_text(color="darkslategray", face="bold", size=24, hjust=0),
+        axis.text.x = element_text(size=12,face="bold",color="darkslategray"),
+        axis.text.y = element_text(size=12,face="bold"),
+        legend.title=element_blank()) +
+  guides(fill = guide_legend(reverse=TRUE)) +
+  # Generates n rgb values, plus an offset towards darker side of the scale
+  scale_y_continuous(limits = c(0,150))  # Extend y-axis so values don't get cropped
+
+##############################################################
+# MGS Result
+tmp.col.name <- "NAACCR.2877.MS.Result.CSSSF23"
+p <- v.consented.datamart[,c("gpc.site.name",tmp.col.name)]
+
+colnames(p)[colnames(p)==tmp.col.name] <- "tmp.col.name"
+p$tmp.col.descriptor <- "Actl Score Provided"
+p$tmp.col.descriptor[is.na(p$tmp.col.name)] <- "Score Not Provided"
+p[grepl("200",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Low Risk"
+p[grepl("300",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Intermediate Risk"
+p[grepl("400",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "High Risk"
+p[grepl("988|997|998|999",p[,"tmp.col.name"]),"tmp.col.descriptor"] <- "Coded As Missing"
+p$tmp.col.descriptor <- factor(p$tmp.col.descriptor,levels=c("Actl Score Provided","Low Risk","Intermediate Risk","High Risk","Coded As Missing","Score Not Provided"))
+
+ggplot(p, aes(x=gpc.site.name,fill=tmp.col.descriptor))  + 
+  geom_bar(stat="bin",width=.75,color="darkgray") +  # 'bin' counts cases, 'identity' represents values
+  scale_fill_manual(values=c(blues9[9],"darkgreen","red","darkred","darkgray","aliceblue")) +
+  ggtitle("CSSSF23 - Multigene Signature Score") +
+  labs(x="",y="Encounters (Tumors)") +  # Labels for x & y axes
+  theme(plot.title = element_text(color="darkslategray", face="bold", size=24, hjust=0),
+        axis.text.x = element_text(size=12,face="bold",color="darkslategray"),
+        axis.text.y = element_text(size=12,face="bold"),
+        legend.title=element_blank()) +
+  guides(fill = guide_legend(reverse=TRUE)) +
+  scale_y_continuous(limits = c(0,150))  # Extend y-axis so values don't get cropped
+
+##############################################################
+# 380 Seqno Central
+tmp.col.name <- "NAACCR.0380.Seqno.Central.Descriptor"
+p <- v.consented.datamart[,c("gpc.site.name",tmp.col.name)]
+
+colnames(p)[colnames(p)==tmp.col.name] <- "tmp.col.name"
+p$tmp.col.descriptor <- p$tmp.col.name
+
+ggplot(p, aes(x=gpc.site.name,fill=tmp.col.descriptor))  + 
+  geom_bar(stat="bin",width=.75,color="darkgray") +  # 'bin' counts cases, 'identity' represents values
+#  scale_fill_manual(values=c(blues9[9],"darkgreen","red","darkred","darkgray","aliceblue")) +
+  ggtitle("0380 - Sequence Number Central Descriptor") +
+  labs(x="",y="Encounters (Tumors)") +  # Labels for x & y axes
+  theme(plot.title = element_text(color="darkslategray", face="bold", size=24, hjust=0),
+        axis.text.x = element_text(size=12,face="bold",color="darkslategray"),
+        axis.text.y = element_text(size=12,face="bold"),
+        legend.title=element_blank()) +
+  guides(fill = guide_legend(reverse=TRUE)) +
+  scale_y_continuous(limits = c(0,150))  # Extend y-axis so values don't get cropped
+
+##############################################################
+# 560 Seqno Hospital
+tmp.col.name <- "NAACCR.0560.Seqno.Hosp.Descriptor"
+p <- v.consented.datamart[,c("gpc.site.name",tmp.col.name)]
+
+colnames(p)[colnames(p)==tmp.col.name] <- "tmp.col.name"
+p$tmp.col.descriptor <- p$tmp.col.name
+
+ggplot(p, aes(x=gpc.site.name,fill=tmp.col.descriptor))  + 
+  geom_bar(stat="bin",width=.75,color="darkgray") +  # 'bin' counts cases, 'identity' represents values
+#  scale_fill_manual(values=c(blues9[9],"darkgreen","red","darkred","darkgray","aliceblue")) +
+  ggtitle("0560 - Sequence Number Hospital") +
+  labs(x="",y="Encounters (Tumors)") +  # Labels for x & y axes
+  theme(plot.title = element_text(color="darkslategray", face="bold", size=24, hjust=0),
+        axis.text.x = element_text(size=12,face="bold",color="darkslategray"),
+        axis.text.y = element_text(size=12,face="bold"),
+        legend.title=element_blank()) +
+  guides(fill = guide_legend(reverse=TRUE)) +
+  scale_y_continuous(limits = c(0,150))  # Extend y-axis so values don't get cropped
+
+
+##############################################################
+# Sequence Number using 'aligned' i2b2 terms
+tmp.col.name1 <- "NAACCR.0380.Seqno.Central"
+tmp.col.name2 <- "NAACCR.0560.Seqno.Hosp"
+p <- v.consented.datamart[,c("gpc.site.name",tmp.col.name1,tmp.col.name2)]
+
+#colnames(p)[colnames(p)==tmp.col.name] <- "tmp.col.name"
+p$tmp.col.descriptor <- "Code Not Recognized"
+p$tmp.col.descriptor[grepl("00",p[,tmp.col.name1]) | grepl("00",p[,tmp.col.name2])] <- "Only 1 Primary"
+p$tmp.col.descriptor[grepl("01",p[,tmp.col.name1]) | grepl("01",p[,tmp.col.name2])] <- "1st of Mult Primaries"
+p$tmp.col.descriptor[grepl("02|03",p[,tmp.col.name1]) | grepl("02|03",p[,tmp.col.name2])] <- "Other Mult Primaries"
+p$tmp.col.descriptor[grepl("60",p[,tmp.col.name1]) | grepl("60",p[,tmp.col.name1])] <- "Non-Malignant"
+
+# Order stacked bar values
+p$tmp.col.descriptor <- factor(p$tmp.col.descriptor,levels=c("Only 1 Primary","1st of Mult Primaries","Other Mult Primaries","Non-Malignant","Code Not Provided","Coded Not Recognized"))
+
+ggplot(p, aes(x=gpc.site.name,fill=tmp.col.descriptor))  + 
+  geom_bar(stat="bin",width=.75,color="darkgray") +  # 'bin' counts cases, 'identity' represents values
+  scale_fill_manual(values=c("darkred","red","indianred","darkgreen","darkgray","yellow")) +
+  ggtitle("'Aligned' Sequence Number (0380 Central & 0560 Hospital)") +
+  labs(x="",y="Encounters (Tumors)") +  # Labels for x & y axes
+  theme(plot.title = element_text(color="darkslategray", face="bold", size=24, hjust=0),
+        axis.text.x = element_text(size=12,face="bold",color="darkslategray"),
+        axis.text.y = element_text(size=12,face="bold"),
+        legend.title=element_blank()) +
+  guides(fill = guide_legend(reverse=TRUE)) +
+  scale_y_continuous(limits = c(0,150))  # Extend y-axis so values don't get cropped
+```
+
