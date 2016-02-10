@@ -1,4 +1,4 @@
-```{r echo=FALSE}
+```{r req_lib, echo=FALSE}
 library(ggplot2)
 library(reshape)
 ```
@@ -11,11 +11,12 @@ conn.site <- input$conn
 # about has $record_id $site name, $bc_db filename, $content_length, submitter $name, $issues_other
 dataset <- input$about
 
-SITE <- dataset$site
+SITE <- input$site
 
 version.bc_qa <- ''
 try (
-  version.bc_qa <- paste(' version', system('hg id', intern=TRUE)),
+#  version.bc_qa <- paste(' version', system('hg id', intern=TRUE)),
+  version.bc_qa <- paste(' version', 'TODO: git version'),
   silent=TRUE
   )
 
@@ -48,7 +49,7 @@ source('bc_qa_txform.R')
 
 ```{r wrap, echo=FALSE}
 # Don't wrap so much
-options(width=300)
+options(width=120)
 ```
 
 ## Data Summary for `r SITE`
@@ -63,7 +64,7 @@ Issues noted by breast cancer research team via redcap:
 cat(dataset$issues_other)
 ```
 
-```{r echo=FALSE, results='asis'}
+```{r var_count, echo=FALSE, results='asis'}
 # Note - When running interactively, assign ht<- print
 ht(
   caption="Patients, Encounters, and Observations per Variable",
@@ -77,7 +78,7 @@ ht(
 
 Let's compare the variable table submitted vs. the terms in the query from on babel (per #204):
 
-```{r, echo=FALSE}
+```{r bad_rows, echo=FALSE}
 v <- dbGetQuery(conn.site,
 paste0("
 select id, name, concept_path, ", patch.umn('concept_path'), " patched_path
@@ -111,7 +112,7 @@ data.frame(
   qty.bad=nrow(v.bad))
 ```
 
-```{r echo=FALSE, results='asis'}
+```{r aligned-query-terms, echo=FALSE, results='asis'}
 ht(
   caption="Aligned Query Terms",
   v.good
@@ -538,6 +539,28 @@ prop <- enum.sum(tumor.site, 'seq.no')
 pie(prop)
 as.data.frame(addmargins(prop))
 
+```
+
+### List of duplicate tumor records (if any)
+
+This list includes the patient number, the first two digits 
+of the sequence number (seq.no.380) and the number of
+repetions.
+
+```{r echo=FALSE}
+m1 <- "Here is a list of duplicate tumor records\n"
+m2 <- "There are no duplicate tumor records\n"
+v1 <- format(tumor.site$patient_num,justify="right")
+v2 <- substr(tumor.site$seq.no.380,1,2)
+tb <- table(paste(v1,v2))
+tb.dup <- tb[tb>1]
+n <- length(tb.dup)
+if (length(tb.dup)>0) {
+  tb.mess <- c(m1,paste(names(tb.dup),"occurs",tb.dup,"times\n"))
+} else {
+  tb.mess <- m2
+}
+cat(tb.mess)
 ```
 
 ## Eligible Cohort
