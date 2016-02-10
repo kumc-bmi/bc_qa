@@ -1,6 +1,16 @@
 Breast Cancer QA Part 1: Fetch Data Files
 =========================================
 
+This program creates files dataset.csv and bc_fetch_results.RData.
+
+dataset.csv lists the sites and database names.
+
+bc_fetch_results.RData is a list (fetch) with more 
+information to help you access the individual
+databases.
+
+
+
 ```{r echo=FALSE}
 # Don't wrap so much
 options(width=300) 
