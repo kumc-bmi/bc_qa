@@ -1,5 +1,5 @@
 # QA utility functions
-
+#
 # This program creates utility functions for reading in the data and for quality
 # assurance.
 # 
@@ -7,10 +7,8 @@
 #
 # It is needed for several other files, including:
 #   bc_excl_all.Rmd
-# 
 #
-# Modified by Steve Simon on February 10, 2016 (just adding documentation).
-# 
+#
 # Copyright (C) 2016, University of Kansas Medical Center.
 #
 #
