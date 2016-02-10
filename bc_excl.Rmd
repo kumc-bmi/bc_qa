@@ -15,8 +15,7 @@ SITE <- input$site
 
 version.bc_qa <- ''
 try (
-#  version.bc_qa <- paste(' version', system('hg id', intern=TRUE)),
-  version.bc_qa <- paste(' version', 'TODO: git version'),
+  version.bc_qa <- paste(' version', system(' git rev-parse HEAD', intern=TRUE)),
   silent=TRUE
   )
 
