@@ -1,0 +1,61 @@
+# This file lists all the other files found in this directory with a brief
+# explanation of what they do. It ignores .md and .html files, which are 
+# created by R markdown.
+
+# Written by Steve Simon on February 10, 2016.
+
+# Missing files
+ site.tumor.data
+
+# Documented files
+
+ bc_fetch.Rmd, creates files to help with accessing individual databases. 
+ bc_fetch_results.RData, REDCap table listing of dataset file stats 
+ bc_terms_results.RData, i2b2 BCcohort query terms 
+ dataset.csv, Info about individual databases, created by bc_fetch.Rmd
+ README.md, Instruction for general use. 
+ requirements.txt, used by Pyhton for initial installation.
+8
+# Files not yet documented
+
+ bc-variable.csv 
+ bc204_query_definition.xml 
+ bc_access.py 
+ bc_combine.Rmd 
+ bc_dm_allsite_analytics.Rmd 
+ bc_dm_allsite_datamart.Rmd 
+ bc_dm_library.R 
+ bc_dm_stage_site_data.Rmd 
+ bc_excl.Rmd 
+ bc_excl_all.Rmd 
+ bc_qa.Rproj 
+ bc_qa2.Rmd 
+ bc_qa_data_review.Rpres 
+ bc_qa_p1.Rpres 
+ bc_qa_txform.R, Simple utility functions like age.in.years. 
+ bc_random_sample.Rmd 
+ bc_rollup_site.Rmd 
+ bc_site_datamart.Rmd 
+ bcread_api_key.R 
+ crosscheck.Rmd 
+ dataset-example.R 
+ dataset.R 
+ expected_survey.Rmd 
+ figure 
+ find_duplicate_tumors.R 
+ i2b2 codebook-decoded-subset.csv 
+ kumc-patient-mapping.Rmd 
+ kumc_dataset.R 
+ mcrf_dataset.R 
+ mcw_dataset.R 
+ multi_tumor.Rmd 
+ qterms.py 
+ report-each-site.R 
+ report_mail.py 
+ tmp_test.Rmd 
+ uiowa_dataset.R 
+ umn_dataset.R 
+ unmc_dataset.R 
+ uthscsa_dataset.R 
+ version.py 
+ version.pyc 
