@@ -1,0 +1,105 @@
+Tidy data from i2b2
+===================
+
+The i2b2 star schema (@@IOU link) is not tidy:
+  - the fact table is a long-skinny
+  - the concept and modifier dimensions are heirarchical
+
+
+```{r input, echo=FALSE}
+input <- source('dataset.R')$value
+
+conn.site <- input$conn
+
+# about has $record_id $site name, $bc_db filename, $content_length, submitter $name, $issues_other
+dataset <- input$about
+
+SITE <- input$site
+
+version.bc_qa <- ''
+try (
+  version.bc_qa <- paste(' version', system(' git rev-parse HEAD', intern=TRUE)),
+  silent=TRUE
+  )
+
+```
+
+## Tidy data for Patients
+
+This is pretty straightforward...
+
+```{r}
+pat <- dbGetQuery(conn.site, 'select * from patient_dimension')
+head(pat)
+```
+
+TODO: use factors for _cd columns.
+
+
+## Tidy data for NAACCR codes
+
+For example, primary site is one of the terms from our query:
+
+```{r}
+load("bc_terms_results.RData")
+names(bcterm)
+t.incl <- bcterm$t.incl
+t.incl
+```
+
+```{r}
+data.dictionary <- function(conn, prune.path.prefix="\\i2b2") {
+  fix.path <- function(p) gsub(prune.path.prefix, '', p, fixed=TRUE)
+  hier <- dbGetQuery(conn.site, "
+           select ancestor.concept_path ancestor_path
+                , ancestor.name_char ancestor_name
+                , descendant.concept_path descendant_path
+                , descendant.name_char descendant_name
+                , descendant.concept_cd
+           from concept_dimension ancestor
+           join concept_dimension descendant
+             on descendant.concept_path like (ancestor.concept_path || '_%')
+           ")
+  concept.path.levels = fix.path(dbGetQuery(conn.site, "select distinct concept_path from concept_dimension order by concept_path")$concept_path)
+  concept.factor <- function(s) {
+    factor(fix.path(s), levels=concept.path.levels)
+    }
+  concept.code.levels = dbGetQuery(conn.site, "
+                                 select distinct concept_cd from observation_fact
+                                 union 
+                                 select distinct concept_cd from concept_dimension
+                                 order by 1")$concept_cd
+  code.factor <- function(s) factor(s, levels=concept.code.levels)
+  
+  hier$ancestor_path = concept.factor(hier$ancestor_path)
+  hier$descendant_path = concept.factor(hier$descendant_path)
+  hier$concept_cd = code.factor(hier$concept_cd)
+
+  codes.of <- function(ancestor) subset(hier, ancestor_path == ancestor)$concept_cd
+  list(concept.factor=concept.factor, code.factor=code.factor, codes.of=codes.of, hier=hier)
+  }
+
+per.encounter.nominal <- function(conn.site, code.factor) {
+  obs <- dbGetQuery(conn.site, "
+           select distinct f.encounter_num
+                , f.concept_cd
+           from observation_fact f
+           -- where valtype_cd = '@'       -- This is the documented way to pick out nominal data,
+                                           -- but it's missing in the data I'm looking at.
+           where f.concept_cd like '%:_%'  -- In the nonimal case, concept_cd looks like question:answer
+                                           -- in numeric etc., it just looks like question:
+                                           -- and the answer (value) is in some other column such as nval_num.
+           ")
+  obs$concept_cd <- code.factor(obs$concept_cd)
+  obs
+  }
+```
+
+```{r}
+dd <- data.dictionary(conn.site)
+enc.nom <- per.encounter.nominal(conn.site, dd$code.factor)
+
+t.incl$concept_path <- dd$concept.factor(bcterm$t.incl$concept_path)
+
+primary_site <- subset(enc.nom, concept_cd %in% dd$codes.of(t.incl['primary.site', 'concept_path']))
+```
