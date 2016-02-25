@@ -1,27 +1,32 @@
 Tidy data from i2b2
 ===================
 
-The i2b2 star schema (@@IOU link) is not tidy:
+The [i2b2 star schema][fig4] is not [tidy][]:
   - the fact table is a long-skinny
   - the concept and modifier dimensions are heirarchical
 
+[fig4]: http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3000779/figure/fig4/
+[tidy]: https://www.jstatsoft.org/article/view/v059i10
+
+
+```{r libs_opts, echo=FALSE}
+library(reshape2)
+options(width=180)
+
+source('i2b2_shape.R')
+```
+
+## i2b2 data submitted from a GPC site
 
 ```{r input, echo=FALSE}
 input <- source('dataset.R')$value
 
 conn.site <- input$conn
 
-# about has $record_id $site name, $bc_db filename, $content_length, submitter $name, $issues_other
+# about has $record_id $site name, $bc_db filename, $content_length, ...
 dataset <- input$about
-
-SITE <- input$site
-
-version.bc_qa <- ''
-try (
-  version.bc_qa <- paste(' version', system(' git rev-parse HEAD', intern=TRUE)),
-  silent=TRUE
-  )
-
+dataset[, c('record_id', 'site', 'name',
+            'bc_db', 'content_length', 'timestamp')]
 ```
 
 ## Tidy data for Patients
@@ -30,76 +35,99 @@ This is pretty straightforward...
 
 ```{r}
 pat <- dbGetQuery(conn.site, 'select * from patient_dimension')
-head(pat)
+head(pat[-19:-11])
 ```
 
-TODO: use factors for _cd columns.
+**TODO**: consider factors for `..._cd` columns.
 
 
-## Tidy data for NAACCR codes
+## Data dictionary: NAACCR standard terminology and GPC Query Terms
 
-For example, primary site is one of the terms from our query:
+Recall the i2b2 query terms relevant to inclusion/exclusion criteria for
+the [GPC breast cancer survey study][GPC_BC]:
+
+[GPC_BC]: http://www.public-health.uiowa.edu/herce/research/gpc/index.html
 
 ```{r}
 load("bc_terms_results.RData")
-names(bcterm)
+# names(bcterm)
 t.incl <- bcterm$t.incl
-t.incl
+t.excl <- bcterm$excl.all
+
+items <- rbind(t.incl, t.excl)
+# Items without paths are synthetic combinations of other items.
+items <- subset(items, !is.na(items$concept_path))
+# strip trailing whitespace. odd.
+items$name <- gsub(' +$', '', items$name)
+
+items
 ```
 
-```{r}
-data.dictionary <- function(conn, prune.path.prefix="\\i2b2") {
-  fix.path <- function(p) gsub(prune.path.prefix, '', p, fixed=TRUE)
-  hier <- dbGetQuery(conn.site, "
-           select ancestor.concept_path ancestor_path
-                , ancestor.name_char ancestor_name
-                , descendant.concept_path descendant_path
-                , descendant.name_char descendant_name
-                , descendant.concept_cd
-           from concept_dimension ancestor
-           join concept_dimension descendant
-             on descendant.concept_path like (ancestor.concept_path || '_%')
-           ")
-  concept.path.levels = fix.path(dbGetQuery(conn.site, "select distinct concept_path from concept_dimension order by concept_path")$concept_path)
-  concept.factor <- function(s) {
-    factor(fix.path(s), levels=concept.path.levels)
-    }
-  concept.code.levels = dbGetQuery(conn.site, "
-                                 select distinct concept_cd from observation_fact
-                                 union 
-                                 select distinct concept_cd from concept_dimension
-                                 order by 1")$concept_cd
-  code.factor <- function(s) factor(s, levels=concept.code.levels)
-  
-  hier$ancestor_path = concept.factor(hier$ancestor_path)
-  hier$descendant_path = concept.factor(hier$descendant_path)
-  hier$concept_cd = code.factor(hier$concept_cd)
-
-  codes.of <- function(ancestor) subset(hier, ancestor_path == ancestor)$concept_cd
-  list(concept.factor=concept.factor, code.factor=code.factor, codes.of=codes.of, hier=hier)
-  }
-
-per.encounter.nominal <- function(conn.site, code.factor) {
-  obs <- dbGetQuery(conn.site, "
-           select distinct f.encounter_num
-                , f.concept_cd
-           from observation_fact f
-           -- where valtype_cd = '@'       -- This is the documented way to pick out nominal data,
-                                           -- but it's missing in the data I'm looking at.
-           where f.concept_cd like '%:_%'  -- In the nonimal case, concept_cd looks like question:answer
-                                           -- in numeric etc., it just looks like question:
-                                           -- and the answer (value) is in some other column such as nval_num.
-           ")
-  obs$concept_cd <- code.factor(obs$concept_cd)
-  obs
-  }
-```
+Applying the `data.dictionary` to our SQL data gives us convenient access
+to terminology in our dataset; for example, the names corresponding to paths:
 
 ```{r}
 dd <- data.dictionary(conn.site)
-enc.nom <- per.encounter.nominal(conn.site, dd$code.factor)
-
-t.incl$concept_path <- dd$concept.factor(bcterm$t.incl$concept_path)
-
-primary_site <- subset(enc.nom, concept_cd %in% dd$codes.of(t.incl['primary.site', 'concept_path']))
+head(dd$path.name)
 ```
+
+The `norm.path` function prunes some irrelevant info and makes an R factor:
+```{r}
+items$concept_path <- dd$norm.path(items$concept_path)
+```
+
+## Nominal per-tumor data: Primary Site
+
+Recall each tumor record from NAACCR has a distinct i2b2 `encounter_num`.
+
+The `per.encounter.nominal` function gives us all the nominal data on
+a per-encounter basis.
+
+For example, primary site is one of the terms from our query; for each
+encounter: we see the code, name, and path of the primary site:
+
+```{r}
+enc.nom <- per.encounter.nominal(conn.site, dd$code.levels)
+
+primary.site <-
+  subset(enc.nom,
+         concept_cd %in% dd$codes.of(t.incl['primary.site', 'concept_path']))
+
+primary.site <- dd$code.name(primary.site)
+
+# Merge puts the join key first; put the encounter_num back where it was.
+primary.site <- primary.site[, c('encounter_num', 'concept_cd', 'name_char', 'concept_path')]
+head(primary.site)
+```
+
+## Multiple variables: long and wide formats
+
+The `nominal.log` function gives us data on several items in long format:
+
+```{r}
+long <- nominal.long(enc.nom, dd, items)
+unique(long$variable)
+head(long)
+```
+
+We can then use conventional R tools such as `dcast` from [reshape][].
+
+[reshape]: https://github.com/hadley/reshape
+
+```{r}
+wide.coded <- dcast(long, encounter_num ~ variable, value.var='concept_cd')
+head(wide.coded)
+wide.labelled <- dcast(long, encounter_num ~ variable, value.var='name_char')
+head(wide.labelled)
+```
+
+## Colophon: Version Control
+
+```{r version, echo=FALSE}
+version.bc_qa <- try (
+  version.bc_qa <- paste(' version', system(' git rev-parse HEAD', intern=TRUE)),
+  silent=TRUE
+  )
+```
+
+source: [bc_qa](https://github.com/kumc-bmi/bc_qa) `r version.bc_qa`
