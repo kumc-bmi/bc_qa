@@ -1,8 +1,16 @@
+# How to Contribute
+
+@@ https://github.com/blog/1184-contributing-guidelines
+
+ref [good commit messages](https://informatics.kumc.edu/work/wiki/UsingVersionControl#GoodCommitMessages)
+
 ## Open Source License
+
+see LICENSE@@
 
 MIT or Apache2? at your option?
 
-## Style
+## R Coding Style
 
 We're considering adopting [Google's R Style Guide][GR].
 
