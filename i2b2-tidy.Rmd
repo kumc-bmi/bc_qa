@@ -88,12 +88,9 @@ encounter: we see the code, name, and path of the primary site:
 
 ```{r}
 enc.nom <- per.encounter.nominal(conn.site, dd$code.levels)
+head(enc.nom)
 
-primary.site <-
-  subset(enc.nom,
-         concept_cd %in% dd$codes.of(t.incl['primary.site', 'concept_path']))
-
-primary.site <- dd$code.name(primary.site)
+primary.site <- dd$code.name(dd$obs.under(enc.nom, t.incl['primary.site', 'concept_path']))
 
 # Merge puts the join key first; put the encounter_num back where it was.
 primary.site <- primary.site[, c('encounter_num', 'concept_cd', 'name_char', 'concept_path')]
@@ -119,6 +116,52 @@ wide.coded <- dcast(long, encounter_num ~ variable, value.var='concept_cd')
 head(wide.coded)
 wide.labelled <- dcast(long, encounter_num ~ variable, value.var='name_char')
 head(wide.labelled)
+```
+
+## Dates
+
+```{r}
+qterms <- bcterm$term204
+qterms$concept_path <- dd$norm.path(qterms$concept_path)
+
+event.vars <- qterms[grepl('Date', qterms$name)
+                     | grepl('0400 Primary Site', qterms$name)
+                     | grepl('SEER Site\\\\Breast', qterms$concept_path), ]
+rownames(event.vars) <- 
+  gsub(' $', '', gsub('Date', '', gsub('Date of ', '', event.vars$name)))
+
+event.vars
+```
+
+
+```{r}
+when <- per.encounter.date(conn.site, dd$code.levels)
+head(when)
+
+head(dd$obs.at(when, event.vars[1,]$concept_path))
+```
+
+```{r}
+when.long <- date.long(when, dd, event.vars)
+head(when.long)
+
+# We don't seem to have values for all of these date variables.
+unique(when.long$name_char)
+
+when.wide.start <- dcast(when.long,
+                       encounter_num ~ variable, value.var='start_date',
+                       drop=FALSE)
+
+# BLARGH!
+# http://stackoverflow.com/questions/12289731/posixct-values-become-numeric-in-reshape2-dcast
+when.wide.start[-1] <- lapply(when.wide.start[-1], as.POSIXct, origin="1970-01-01")
+head(when.wide.start)
+
+when.wide.end <- dcast(when.long,
+                       encounter_num ~ variable, value.var='end_date',
+                       drop=FALSE)
+when.wide.end[-1] <- lapply(when.wide.end[-1], as.POSIXct, origin="1970-01-01")
+head(when.wide.end)
 ```
 
 ## Colophon: Version Control
