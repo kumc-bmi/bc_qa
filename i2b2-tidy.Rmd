@@ -113,9 +113,9 @@ We can then use conventional R tools such as `dcast` from [reshape][].
 
 ```{r}
 wide.coded <- dcast(long, encounter_num ~ variable, value.var='concept_cd')
-head(wide.coded)
+tail(wide.coded)
 wide.labelled <- dcast(long, encounter_num ~ variable, value.var='name_char')
-head(wide.labelled)
+tail(wide.labelled)
 ```
 
 ## Dates

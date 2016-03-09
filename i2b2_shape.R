@@ -43,31 +43,26 @@ data.dictionary <- function(
   #       handle multiple `c_table_cd` values.
   prune.path <- function(p) gsub(path.extra, '', p, ignore.case=TRUE)
 
-  hier <- dbGetQuery(
+  concept <- dbGetQuery(
     conn.site,
-    "select descendant.concept_path descendant_path
-          , descendant.concept_cd
-          , ancestor.concept_path ancestor_path
-     from concept_dimension descendant
-     left join concept_dimension ancestor
-       on descendant.concept_path like (ancestor.concept_path || '_%')
-     ")
-  path.levels <- prune.path(dbGetQuery(conn, q.path.levels)$concept_path)
+    "select concept_path, concept_cd from concept_dimension")
+  #path.levels <- prune.path(dbGetQuery(conn, q.path.levels)$concept_path)
   code.levels = dbGetQuery(conn, q.code.levels)$concept_cd
   
-  hier$concept_cd = factor(hier$concept_cd, levels=code.levels)
+  concept$concept_cd = factor(concept$concept_cd, levels=code.levels)
 
-  norm.path <- function(p) factor(prune.path(p), levels=path.levels)
-  hier$ancestor_path <-norm.path(prune.path(hier$ancestor_path))
-  hier$descendant_path <- norm.path(hier$descendant_path)
+  #norm.path <- function(p) factor(prune.path(p), levels=path.levels)
+  norm.path <- function(p) prune.path(p)
+  concept$concept_path <-norm.path(prune.path(concept$concept_path))
   
   obs.under <- function(obs, ancestor) {
-    code <- subset(hier, ancestor_path == ancestor)$concept_cd
+    code <- subset(concept, nchar(concept_path) > nchar(ancestor)
+                            & starts.with(concept_path, ancestor))$concept_cd
     subset(obs, concept_cd %in% code)
   }
 
   obs.at <- function(obs, path) {
-    code <- subset(hier, descendant_path == path)$concept_cd
+    code <- subset(concept, concept_path == path)$concept_cd
     subset(obs, concept_cd %in% code)
   }
   
@@ -107,9 +102,11 @@ data.dictionary <- function(
        code.path=code.path,
        code.name=code.name,
        norm.path=norm.path,
-       hier=hier,
-       path.levels=path.levels,
        code.levels=code.levels)
+}
+
+starts.with <- function(haystack, needle) {
+  substr(haystack, 1, nchar(needle)) == needle
 }
 
 per.encounter.nominal <- function(conn, code.levels) {
