@@ -1,100 +1,149 @@
 Breast Cancer QA Part 1: Fetch Data Files
 =========================================
 
-This program creates files dataset.csv and bc_fetch_results.RData.
+```{r file_header, echo=FALSE}
+doc <- list(
+  run.date=date(),
+  version=substr(system(' git rev-parse HEAD', intern=TRUE), 1, 16),
+  copyright_year=2016,
+  copyright_holder="University of Kansas Medical Center"
+  )
 
-dataset.csv lists the sites and database names.
-
-bc_fetch_results.RData is a list (fetch) with more 
-information to help you access the individual
-databases.
-
-
-
-```{r echo=FALSE}
 # Don't wrap so much
 options(width=300) 
 ```
 
-Data files were submitted to redcap:
- - [GPC Breast Cancer Project 1: review of survey population][4044]
+_This is part of [GPC Breast Cancer QA][about],
+copyright (c) `r doc$copyright_year` `r doc$copyright_holder`.
+This program was run on `r doc$date` using [source code][src]
+version `r doc$version`._
+
+[src]: https://github.com/kumc-bmi/bc_qa
+[about]: README.md
+
+ - **inputs**:
+   - Survey responses and data files submitted to the
+     [GPC Breast Cancer Project 1: review of survey population][4044]
+     REDCap project.
+   - `config.csv` - one-record file of configuration settings
+ - *modules / subprograms*
+   - bc_access.py
+ - **outputs**
+   - local copies of data files
+     - unpacked
+   - `dataset.csv` with one row per non-obsolete submission,
+     giving the filename, submitter, timestamp, etc.
 
 [4044]: https://redcap.kumc.edu/redcap_v5.7.7/index.php?pid=4044
+[pyenv]: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 
-*TODO: cite relevant ticket.*
 
-*TODO: attach data dictionary to ticket so others can try this code.*
+## Configuration
 
-Generate an API key and put it, along with your choice of data file directory, in the auxilary `bcread_api_key.R` file a la:
+This script relies on a `config.csv` file to specify a number of parameters:
 
-```{r eval=FALSE}
-v.dbdatafiledir <- '~/bc-data-files'
-Sys.setenv(BCREAD='ABC...')
-'BCREAD'
+  - url - REDCap API url
+  - api_key - API key to read from the project
+  - datafile_dir - where to put fetched files
+  - python_env - [python virtual environment][pyenv] where libraries
+    for `bc_access.py` can be found
+
+```{r read_config, echo=TRUE, error=FALSE}
+config <- read.csv('config.csv', stringsAsFactors=FALSE)
+
+missing_config <- setdiff(c('url', 'api_key', 'datafile_dir', 'python_env'),
+                          names(config))
+stopifnot(length(missing_config) == 0)
 ```
 
-```{r echo=FALSE}
-bc_access <- function(env.key, pyenv, src,
-                      # TODO: document this least authority idiom
-                      .system=system) {
-  exportTemplate    <- 'bc_access --key <key> export'
-  fetchTemplate     <- 'bc_access --key <key> fetch'
-  normalizeTemplate <- 'bc_access normalize'
-  
-  pyscript <- gsub('PYENV', pyenv,
-                   gsub('SRC', src,
-                        'PYENV/bin/python SRC/bc_access.py'))
-  
-  expand <- function(tpl) {
-    gsub('bc_access', pyscript,
-         gsub('<key>', env.key, tpl))
-  }
-  
-  form.data <- .system(expand(exportTemplate), intern=TRUE)
-  fetch.detail <- .system(expand(fetchTemplate), intern=TRUE)
-  normalize.detail <- .system(expand(normalizeTemplate), input=fetch.detail, intern=TRUE)
-  
-  # TODO: least-authority access to open data files
-  list(form.data=form.data,
-       fetch.detail=fetch.detail,
-       normalize.detail=normalize.detail)
+
+```{r wrap_python, echo=FALSE}
+# Wrap bc_access.py functions as a list of R functions
+
+make_python_runner <- function(.system2, env,
+                               virtual_environment, py_script)
+  # Args:
+  #   .system2: access to run subprograms (typically=system2)
+  #   env: character vector of name=value bindings
+  #   virtual_environment: directory containing python binaries and libraries
+  #     ref: http://docs.python-guide.org/en/latest/dev/virtualenvs/
+  #   py_script: full path to python script
+  # returns: a function to run just that python script, given args,
+  #        and return its output
+  function(args, input=NULL) {
+    python_with_libraries <- file.path(virtual_environment, 'bin', 'python')
+    print('run python:')
+    print(c(python_with_libraries, py_script, args))
+    .system2(python_with_libraries, c(py_script, args),
+             stdout=TRUE, env=env, input=input)
+    }
+
+make_bc_access = function(.system2, virtual_environment, src_dir, api_key) {
+  run_bc_access <- make_python_runner(.system2,
+                                      env=paste0('api_key=', api_key),
+                                      virtual_environment=virtual_environment,
+                                      py_script=file.path(src_dir, 'bc_access.py'))
+  list(
+    export=function() run_bc_access(args=c('--key', 'api_key', 'export')),
+    fetch=function() run_bc_access(args=c('--key', 'api_key', 'fetch')),
+    normalize=function(input) run_bc_access(args=c('normalize'), input=input)
+    )
 }
 
 ```
 
-Then we can fetch all the survey and CRF data from that project as well as the submitted data files:
+The `make_bc_access` function encapsulates our python subprogram as
+a list of R functions:
 
-```{r}
-env.key.bc <- source('bcread_api_key.R')$value
+```{r make_bc_access}
+bc_qa_files <- getwd()
 
-runDir <- getwd()
-
-setwd(v.dbdatafiledir)
-# get rid of existing data files
-# system("rm *")
-fetch <- bc_access(env.key.bc, src=runDir, pyenv='/home/dconnolly/pyenv/bcqa')
-fetch$dataDir <- getwd()
-
-setwd(runDir)
+bc_access <- make_bc_access(.system2=system2,
+                            virtual_environment=config$python_env,
+                            src_dir=bc_qa_files,
+                            api_key=config$api_key)
 ```
 
-The form data and file info were provided in CSV format:
 
-```{r}
-text.to.csv <- function(text)
+Let's fetch all the form data submitted to the REDCap project:
+
+```{r fetch_form_data, echo=TRUE}
+parse_csv <- function(text)
   read.csv(textConnection(text),
            stringsAsFactors=FALSE)
 
-fetch$form <- text.to.csv(fetch$form.data)
+fetch <- list()
+fetch$form <- parse_csv(bc_access$export())
 fetch$form[, c('record_id', 'institution', 'name', 'obsolete')]
+```
 
-fetch$file <- text.to.csv(fetch$normalize.detail)
+
+Next, we fetch the attached data files:
+ 
+```{r fetch_data_files, echo=TRUE}
+# bc_access writes data files to the current directory,
+# so change directories before we run it
+setwd(config$datafile_dir)
+# get rid of existing data files?
+# system("rm *")
+fetch$fetch.detail <- bc_access$fetch()
+setwd(bc_qa_files)  # come back
+```
+
+
+Many of the files are compressed in various ways; uncompress them and
+prefix them with site identifier and REDCap record id:
+
+```{r normalize}
+setwd(config$datafile_dir)
+fetch$file <- parse_csv(bc_access$normalize(fetch$fetch.detail))
+setwd(bc_qa_files)  # come back
 fetch$file
 ```
 
-Let's combine the info about datasets:
+Let's combine the info about the submitted datasets:
 
-```{r}
+```{r merge_dataset_info}
 dataset <- merge(fetch$file, fetch$form,
                        by='record_id')
 dataset <- dataset[order(dataset$site),]
@@ -104,22 +153,9 @@ fetch$dataset <- dataset
 fetch$dataset[, c('record_id', 'timestamp', 'site', 'name', 'bc_db', 'patient_qty')]
 ```
 
-We'll use this function to access the files:
+Save data about submissions:
 
-```{r}
-site.data <- function(target) {
-  library(RSQLite)
-  
-  f <- file.path(fetch$dataDir, subset(fetch$file, site == target)$bc_db)
-  dbConnect(SQLite(), dbname=f)
-  }
-fetch$site.data <- site.data
-```
-
-Save our work for use in later articles:
-
-```{r}
+```{r save}
 write.csv(fetch$dataset[, c('record_id', 'timestamp', 'site', 'name', 'bc_db')],
           file='dataset.csv')
-save(fetch, file="bc_fetch_results.RData")
 ```
