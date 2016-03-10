@@ -19,8 +19,22 @@ We're considering adopting [Google's R Style Guide][GR].
 **ISSUE**: Google says:
 > Don't use underscores ( _ ) or hyphens ( - ) in identifiers.
 
-but we deal a lot with SQL column names (esp. from i2b2) where underscores
-are quite conventional.
+But we deal a lot with SQL column names (esp. from i2b2) where underscores
+are quite conventional. And REDCap prohibits dots. And dots have an
+entirely different meaning in python, Java, PHP, etc. So let's lean
+toward `snake_case`.
+
+Likwise, use `data_file.csv` rather than `data-file.csv`; otherwise
+filenames don't alphebetize, which is an annoyance.
+
+ - use verbs for functions,
+ - nouns for data
+
+**open issue**: Regarding order of functions in a .R file,
+  - alphabetical order may make them easier to find
+  - "story telling" order may make them easier to understand
+
+
 
 ### Line Length
 
