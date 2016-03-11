@@ -20,6 +20,8 @@ with the assistance of `r doc$assistants`.
 library("ggplot2")
 library("reshape")
 library("RSQLite")
+save.image("backup.RData")
+rm(list=ls())
 ```
 
 ```{r set-options, echo=TRUE}
@@ -36,112 +38,105 @@ For context, see [485].
 [485]: https://informatics.gpcnetwork.org/trac/Project/ticket/485
 [bc_qa]: https://bitbucket.org/gpcnetwork/bc_qa
 
-```{r review-table-size, echo=TRUE}
+```{r setup-sql-queries, echo=TRUE}
 
-# use-this-database.txt should have one entry, the name of the database.
+# use-this-database.txt should have one entry in the first line,
+# the name of the database. Anything after the first line is ignored.
 
-# for now, I am reading in every table, but as I get better acquainted, 
-# I will only read in those tables that I really need
+# Note: ca = case, co = control.
 
-setwd("../bc_case_control")
+setwd("/d1/home/ssimon/bc_qa/bc_case_control")
 db_name <- read.table(file="use_this_database.txt", stringsAsFactors=FALSE)[1, 1]
+cat("\n\nReading data from ",db_name,".\n")
 conn_site <- dbConnect(SQLite(), dbname=db_name)
 
 sql_query <-NULL
-db_tables <- NULL
+db <- NULL
+```
 
+```{r run-sql-queries}
+
+# read the observation_fact table for cases only, removing duplicates.
+sql_query[["ca"]] <-
+  "select distinct obs.patient_num, obs.concept_cd
+   from observation_fact obs
+   where obs.patient_num in (
+     select distinct ca.patient_num
+     from observation_fact ca where ca.concept_cd = 'SEER_SITE:26000'
+   )"
+
+# read the observation_fact table for controls only, removing duplicates.
+sql_query[["co"]] <-
+  "select distinct obs.patient_num, obs.concept_cd
+   from observation_fact obs
+   where obs.patient_num in (
+     select distinct ca.patient_num
+     from observation_fact ca where ca.concept_cd LIKE ('SEER_SITE:220' || '_%')
+   )"
+
+# read the concept_dimension table.
 sql_query[["concepts"]] <-
-  "select concept_cd, name_char
-   from concept_dimension"
-
-sql_query[["cases"]] <-
-  "select distinct patient_num, concept_cd
-   from observation_fact
-   where concept_cd ='SEER_SITE:26000'"   
-
-sql_query[["controls"]] <-
-  "select distinct patient_num, concept_cd
-   from observation_fact
-   where concept_cd LIKE ('SEER_SITE:220' || '_%')" 
-
-sql_query[["facts"]] <-
-  "select distinct f.patient_num, f.concept_cd from observation_fact f"   
-
-sql_query[["count"]] <-
-  "select concept_cd, count(1) AS 'concept_count'
-   from observation_fact
-   group by concept_cd"
+  "select distinct concept_cd, name_char
+   from concept_dimension
+   order by concept_cd"
 
 for (i in names(sql_query)) {
-  db_tables[[i]] <- dbGetQuery(conn_site, sql_query[[i]])
+  cat("\nRunning ",i," query.\n\n",sep="")
+  db[[i]] <- dbGetQuery(conn_site, sql_query[[i]])
+  print(head(db[[i]]))
 }
-sapply(db_tables,dim)
+sapply(db,dim)
 
-case.patients <-    sort(unique(db_tables$cases$patient_num))
-control.patients <- sort(unique(db_tables$controls$patient_num))
-both.patients <-    intersect(case.patients, control.patients)                          
-n.cases    <- length(case.patients)
-n.controls <- length(control.patients)
-n.both     <- length(both.patients)
+n_ca <- length(unique(db$ca$patient_num))
+n_co <- length(unique(db$co$patient_num))
 ```
 
-There are `r n.cases` cases, as defined by the string(s), `r case_names`. The first
-few patients in the case list are `r head(case.patients)`.
+There are `r length(unique(db$ca$patient_num))` cases and
+`r length(unique(db$co$patient_num))` controls.
 
-There are `r n.controls` controls, as defined by the string(s), `r control_names`. The first
-few patients in the control list are `r head(control.patients)`.
+```{r reshape-event-information, echo=TRUE}
+library("reshape2")
 
-There are `r n.both` patients who are in both the cases and the controls. We will remove these
-from the data set before further analysis.
+# equal to 1 unless NULL
 
+db$all <- rbind(data.frame(db$ca,group="t+;d+"), data.frame(db$co,group="t+;d-"))
 
-```{r merge-event-information, echo=TRUE}
-# Again, this might be simpler and faster in SQL.
+db$counts <- dcast(db$all, group ~ concept_cd, length)
+db$counts[, 1] <- as.character(db$counts[, 1])
+db$counts[1:2, 1:5]
 
-# Anything that is not a case name or control name is a predictor.
-predictor.names <- setdiff(sort(unique(concepts$concept_cd)),c(case.names,control.names))
-# get a count for each predictor.
-tb <- table(tdf1$concept_cd)[predictor.names]
-# remove any predictor that does not occur at least 5 times.
-predictor.names <- names(tb[tb>5])
-tdf6 <- data.frame(concept_cd=predictor.names)
-tdf7 <- merge(tdf1, tdf6)
-# use name_char, as it is more descriptive than concept_cd.
-event_merge <- merge(tdf7, concepts[,c("concept_cd","name_char")])
-tdf8 <- dcast(event_merge, patient_num ~ name_char, is.present)
-dim(tdf8)
-# Replace blanks and dashes with dots
-simple.names <- predictor.names
-for (x in c(" ","-") {
- simple.names <- gsub(x, ".", simple.names, fixed=TRUE)
-}
-# Remove other special characters
-for (x in c("[", "]", "(", ")", ",")) {
- simple.names <- gsub(x, "", simple.names, fixed=TRUE)
-}
-names(tdf8)[-1] <- simple.names
+unique_concepts <- db$concepts[!duplicated(db$concepts$concept_cd), ]
+predictors <- unlist(dimnames(db$counts)[2])[-1]
+labels <- merge(data.frame(concept_cd=predictors),unique_concepts)
+labels$name_char <- substr(labels$name_char,1,50)
+head(labels)
+# unlist will turn the 1 by n matrix into a vector.
+t_pos_d_pos  <- unlist(db$counts[1,-1])
+t_pos_d_neg <- unlist(db$counts[2,-1])
+
+t_neg_d_pos <- n_ca - t_pos_d_pos
+t_neg_d_neg <- n_co - t_pos_d_neg
+
+ppv  <- round(100*t_pos_d_pos / (t_pos_d_pos+t_pos_d_neg))
+npv  <- round(100*t_neg_d_neg / (t_neg_d_pos+t_pos_d_neg))
+
+sens <- round(100*t_pos_d_pos / (t_pos_d_pos+t_neg_d_pos))
+spec <- round(100*t_neg_d_neg / (t_neg_d_neg+t_pos_d_neg))
+
+lp <- "("
+rp <- ")"
+sl <- "/"
+sp <- " "
+pc <- "%"
+ppv_labels <- paste(ppv, pc, sp, lp, t_pos_d_pos, 
+                    sl, t_pos_d_pos+t_pos_d_neg, rp,
+                    sp,predictors,sp,labels$name_char,sep="")
+high_ppv <- ppv>90 & t_pos_d_pos > 100
+# Re-arrange so that highest numerators appear first.
+o <- rev(order(t_pos_d_pos[high_ppv]))
+ppv_labels[high_ppv][o]
 ```
 
-
-
-```{r calculate-simple-tables, echo=TRUE}
-print(predictor.variables)
-tree.formula <- as.formula(paste("cc ~", paste(predictor.variables, collapse=" + ")))
-print(tree.formula)
-library("rpart")
-tree.model <- rpart(tree.formula, data=pd)
-summary(tree.model)
-plot(tree.model)
-text(tree.model)
-model.variables <- names(tree.model$variable.importance)
-for (v in model.variables) {
-  ppv <- round(100 * sum((pd$cc=="Case")    & (pd[,v]==1)) / sum(pd[,v]==1))
-  npv <- round(100 * sum((pd$cc=="Control") & (pd[,v]==0)) / sum(pd[,v]==0))
-  ti <- paste(v,"\nppv = ",ppv,"%; npv = ",npv,"%",sep="")
-  mosaicplot(table(pd[,v], pd$cc), dir=c("h","v"),main=ti)
-}
-
-```
 
 ```{r save-everything, echo=TRUE}
 save.image(file="case_control.RData")
