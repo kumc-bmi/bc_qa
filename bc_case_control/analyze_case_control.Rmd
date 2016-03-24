@@ -4,7 +4,7 @@ doc$run.date <- date()
 doc$version <- system(' git rev-parse HEAD', intern=TRUE)
 doc$author <- "Steve Simon (KUMC)"
 doc$maintainer <- "Steve Simon (KUMC)"
-doc$assistants <- "no one just yet"
+doc$assistants <- "Dan Connolly"
 ```
 
 This program reads data from an i2b2 query and produces
@@ -40,61 +40,126 @@ For context, see [485].
 
 ```{r setup-sql-queries, echo=TRUE}
 
-# use-this-database.txt should have one entry in the first line,
-# the name of the database. Anything after the first line is ignored.
-
-# Note: ca = case, co = control.
+# use-this-database.txt should have one entry for each file.
+# The first file is presumed to be the cases and each of the 
+# remaining files is presumed to be a different control group.
 
 setwd("/d1/home/ssimon/bc_qa/bc_case_control")
-db_name <- read.table(file="use_this_database.txt", stringsAsFactors=FALSE)[1, 1]
-cat("\n\nReading data from ",db_name,".\n")
-conn_site <- dbConnect(SQLite(), dbname=db_name)
+file_info <- read.csv(file="use_this_database.txt", 
+                      header=TRUE, 
+                      stringsAsFactors=FALSE)
+print(file_info)
+variable_groups <- file_info$variable_group
 
 sql_query <-NULL
-db <- NULL
+
+# There are two ways to query the data. The first way
+# is intuitive (to me) but inefficient. The second way
+# is less intuitive but more efficient because it relies
+# on SQL rather than R to count.
+
+# count the overall number of patients in each disease group.
+sql_query[["disease_group_counts"]] <-
+  "select count(distinct patient_num) AS n
+   from observation_fact"
+
+# get distinct patient numbers in each disease group.
+sql_query[["distinct_patients"]] <-
+  "select distinct patient_num
+   from observation_fact"
+
+# read the observation_fact table, removing duplicates.
+sql_query[["patient_level_concepts"]] <-
+  "select distinct obs.patient_num, obs.concept_cd
+   from observation_fact obs"
+
+# count the number of patients who have each fact.
+sql_query[["concept_counts"]] <-
+  "select concept_cd, count(distinct patient_num) AS n
+   from observation_fact
+   group by concept_cd"
+
+
 ```
 
-```{r run-sql-queries}
+```{r get-overall-patient-counts}
+# dp: distinct patient numbers in each disease group
 
-# read the observation_fact table for cases only, removing duplicates.
-sql_query[["ca"]] <-
-  "select distinct obs.patient_num, obs.concept_cd
-   from observation_fact obs
-   where obs.patient_num in (
-     select distinct ca.patient_num
-     from observation_fact ca where ca.concept_cd = 'SEER_SITE:26000'
-   )"
-
-# read the observation_fact table for controls only, removing duplicates.
-sql_query[["co"]] <-
-  "select distinct obs.patient_num, obs.concept_cd
-   from observation_fact obs
-   where obs.patient_num in (
-     select distinct ca.patient_num
-     from observation_fact ca where ca.concept_cd LIKE ('SEER_SITE:220' || '_%')
-   )"
-
-# read the concept_dimension table.
-sql_query[["concepts"]] <-
-  "select distinct concept_cd, name_char
-   from concept_dimension
-   order by concept_cd"
-
-for (i in names(sql_query)) {
-  cat("\nRunning ",i," query.\n\n",sep="")
-  db[[i]] <- dbGetQuery(conn_site, sql_query[[i]])
-  print(head(db[[i]]))
+g0 <- NULL
+dp <- NULL
+file_names <- file_info$file_location[variable_groups=="patients"]
+group_names <- file_info$disease_group[variable_groups=="patients"]
+for (i in 1:length(file_names)) {
+  file_name <- file_names[i]
+  group_name <- group_names[i]
+  cat("\nRunning queries for ", group_name, " (", file_name,  ").\n", sep="")
+  conn_site <- dbConnect(SQLite(), dbname=file_name)
+  g0[[group_name]] <- dbGetQuery(conn_site, sql_query["concept_counts"])
+  cat("\n\nThis is the number of concepts used to define",group_name,".\n\n")
+  print(dim(g0[[group_name]][1]))
+  cat("\n\nHere are the first few concepts used to define",group_name,".\n\n")
+  print(head(g0[[group_name]], 20))
+  dp[[group_name]] <- dbGetQuery(conn_site, sql_query["distinct_patients"])
+  cat("\n\nThis is the number of patients in",group_name,".\n\n")
+  print(dim(dp[[group_name]][1]))
 }
-sapply(db,dim)
-
-n_ca <- length(unique(db$ca$patient_num))
-n_co <- length(unique(db$co$patient_num))
 ```
 
-There are `r length(unique(db$ca$patient_num))` cases and
-`r length(unique(db$co$patient_num))` controls.
+```{r list-patient_selection-codes}
+selection_codes <- g0[[1]]$concept_cd
+for (i in 2:length(file_names)) {
+  selection_codes <- union(selection_codes, g0[[i]]$concept_cd)
+}
+print(sample(selection_codes,100))
+```
 
-```{r reshape-event-information, echo=TRUE}
+```{r get-event-counts}
+g1 <- NULL
+g2 <- NULL
+file_names <- file_info$file_location[variable_groups=="procedure"]
+group_names <- file_info$disease_group[variable_groups=="procedure"]
+for (i in 1:length(file_names)) {
+  file_name <- file_names[i]
+  group_name <- group_names[i]
+  cat("\nRunning queries for ", group_name, " (", file_name,  ").\n", sep="")
+  conn_site <- dbConnect(SQLite(), dbname=file_name)
+  cat("\nQuality check: compare this...\n")
+  g1[[group_name]] <- dbGetQuery(conn_site, sql_query["patient_level_concepts"])
+  print(head(table(g1[[group_name]]$concept_cd)))
+  g2[[group_name]] <- dbGetQuery(conn_site, sql_query["concept_counts"])
+  cat("\nto this...\n\n")
+  print(head(g2[[group_name]]))
+  dbDisconnect(conn_site)
+}
+sapply(g1,dim)
+sapply(g2,dim)
+cc <- g2[[1]]
+names(cc)[2] <- "n1"
+for (i in 2:length(group_names)) {
+  cat("\nMerging ", group_names[i], ".\n\n", sep="")
+  cc <- merge(cc, g2[[group_names[i]]], by="concept_cd", all=TRUE)
+  names(cc)[i+1] <- paste("n",i,sep="")
+}
+cc[is.na(cc)] <- 0
+head(cc,100)
+tail(cc,100)
+
+```
+
+```{r remove-selection_codes}
+# There are hundreds if not thousands of codes used to select the various
+# disease groups. You need to remove these before doing any serious
+# data analysis.
+cc <- merge(cc,data.frame(concept_cd=selection_codes,exclude=1),all=TRUE)
+cc$exclude[is.na(cc$exclude)] <- 0
+cc <- cc[cc$exclude==0,]
+head(cc,50)
+tail(cc,50)
+```
+
+
+```{r reshape-event-information, echo=TRUE, eval=FALSE}
+
 library("reshape2")
 
 # equal to 1 unless NULL
