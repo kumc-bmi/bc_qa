@@ -24,10 +24,21 @@ save.image("backup.RData")
 rm(list=ls())
 ```
 
+```{r create-special-functions}
+list_random_rows <- function(df,n=20) {
+  # select and return a few random rows from a data frame.
+  # If input is a vector, coerce it into a data frame
+  df <- data.frame(df)
+  nrows <- dim(df)[1]
+  selected_rows <- sort(sample(1:nrows,min(n,nrows)))
+  return(df[selected_rows,])
+}
+```
+
 ```{r set-options, echo=TRUE}
 
 # Don't wrap so much
-options(width=100)
+options(width=90)
 
 ```
 
@@ -79,13 +90,19 @@ sql_query[["concept_counts"]] <-
    from observation_fact
    group by concept_cd"
 
+# get decent labels (name_char) from concepts.
+sql_query[["concept_labels"]] <-
+  "select concept_cd, name_char
+   from concept_dimension"
+
 
 ```
 
 ```{r get-overall-patient-counts}
 # dp: distinct patient numbers in each disease group
+# sc: concepts used only in selection of disease groups
 
-g0 <- NULL
+sc <- NULL
 dp <- NULL
 file_names <- file_info$file_location[variable_groups=="patients"]
 group_names <- file_info$disease_group[variable_groups=="patients"]
@@ -94,23 +111,26 @@ for (i in 1:length(file_names)) {
   group_name <- group_names[i]
   cat("\nRunning queries for ", group_name, " (", file_name,  ").\n", sep="")
   conn_site <- dbConnect(SQLite(), dbname=file_name)
-  g0[[group_name]] <- dbGetQuery(conn_site, sql_query["concept_counts"])
-  cat("\n\nThis is the number of concepts used to define",group_name,".\n\n")
-  print(dim(g0[[group_name]][1]))
-  cat("\n\nHere are the first few concepts used to define",group_name,".\n\n")
-  print(head(g0[[group_name]], 20))
+  sc[[group_name]] <- dbGetQuery(conn_site, sql_query["concept_counts"])
   dp[[group_name]] <- dbGetQuery(conn_site, sql_query["distinct_patients"])
   cat("\n\nThis is the number of patients in",group_name,".\n\n")
   print(dim(dp[[group_name]][1]))
 }
+
+for (group_name in group_names) {
+  cat("\n\nThis is the number of concepts used to define",group_name,".\n\n")
+  print(dim(sc[[group_name]][1]))
+  cat("\n\nHere are a few random concepts used to define",group_name,".\n\n")
+  print(list_random_rows(sc[[group_name]], 20))
+}
 ```
 
 ```{r list-patient_selection-codes}
-selection_codes <- g0[[1]]$concept_cd
+selection_codes <- sc[[1]]$concept_cd
 for (i in 2:length(file_names)) {
-  selection_codes <- union(selection_codes, g0[[i]]$concept_cd)
+  selection_codes <- union(selection_codes, sc[[i]]$concept_cd)
 }
-print(sample(selection_codes,100))
+list_random_rows(selection_codes,100)
 ```
 
 ```{r get-event-counts}
@@ -131,8 +151,12 @@ for (i in 1:length(file_names)) {
   print(head(g2[[group_name]]))
   dbDisconnect(conn_site)
 }
+cat("\n\nCompare the dimensions of the files.\n\n")
 sapply(g1,dim)
 sapply(g2,dim)
+```
+
+```{r merge-event-counts}
 cc <- g2[[1]]
 names(cc)[2] <- "n1"
 for (i in 2:length(group_names)) {
@@ -141,8 +165,8 @@ for (i in 2:length(group_names)) {
   names(cc)[i+1] <- paste("n",i,sep="")
 }
 cc[is.na(cc)] <- 0
-head(cc,100)
-tail(cc,100)
+head(cc,20)
+tail(cc,20)
 
 ```
 
@@ -150,58 +174,63 @@ tail(cc,100)
 # There are hundreds if not thousands of codes used to select the various
 # disease groups. You need to remove these before doing any serious
 # data analysis.
-cc <- merge(cc,data.frame(concept_cd=selection_codes,exclude=1),all=TRUE)
+cc <- merge(cc, data.frame(concept_cd=selection_codes, exclude=1), all=TRUE)
 cc$exclude[is.na(cc$exclude)] <- 0
-cc <- cc[cc$exclude==0,]
-head(cc,50)
-tail(cc,50)
+cc <- cc[cc$exclude==0, ]
+cc <- cc[cc$n1 > 100, ]
+list_random_rows(cc,20)
+tail(cc,20)
 ```
 
-
-```{r reshape-event-information, echo=TRUE, eval=FALSE}
-
-library("reshape2")
-
-# equal to 1 unless NULL
-
-db$all <- rbind(data.frame(db$ca,group="t+;d+"), data.frame(db$co,group="t+;d-"))
-
-db$counts <- dcast(db$all, group ~ concept_cd, length)
-db$counts[, 1] <- as.character(db$counts[, 1])
-db$counts[1:2, 1:5]
-
-unique_concepts <- db$concepts[!duplicated(db$concepts$concept_cd), ]
-predictors <- unlist(dimnames(db$counts)[2])[-1]
-labels <- merge(data.frame(concept_cd=predictors),unique_concepts)
-labels$name_char <- substr(labels$name_char,1,50)
-head(labels)
-# unlist will turn the 1 by n matrix into a vector.
-t_pos_d_pos  <- unlist(db$counts[1,-1])
-t_pos_d_neg <- unlist(db$counts[2,-1])
-
-t_neg_d_pos <- n_ca - t_pos_d_pos
-t_neg_d_neg <- n_co - t_pos_d_neg
-
-ppv  <- round(100*t_pos_d_pos / (t_pos_d_pos+t_pos_d_neg))
-npv  <- round(100*t_neg_d_neg / (t_neg_d_pos+t_pos_d_neg))
-
-sens <- round(100*t_pos_d_pos / (t_pos_d_pos+t_neg_d_pos))
-spec <- round(100*t_neg_d_neg / (t_neg_d_neg+t_pos_d_neg))
-
-lp <- "("
-rp <- ")"
-sl <- "/"
-sp <- " "
-pc <- "%"
-ppv_labels <- paste(ppv, pc, sp, lp, t_pos_d_pos, 
-                    sl, t_pos_d_pos+t_pos_d_neg, rp,
-                    sp,predictors,sp,labels$name_char,sep="")
-high_ppv <- ppv>90 & t_pos_d_pos > 100
-# Re-arrange so that highest numerators appear first.
-o <- rev(order(t_pos_d_pos[high_ppv]))
-ppv_labels[high_ppv][o]
+```{r get-nice-names}
+nn <- NULL
+for (i in 1:length(file_names)) {
+  file_name <- file_names[i]
+  group_name <- group_names[i]
+  cat("\nRunning queries for ", group_name, " (", file_name,  ").\n", sep="")
+  conn_site <- dbConnect(SQLite(), dbname=file_name)
+  nn[[group_name]] <- dbGetQuery(conn_site, sql_query["concept_labels"])
+  list_random_rows(nn[[group_name]])
+}
+sapply(nn,dim)
+ni <- rbind(nn[[1]],nn[[2]],nn[[3]],nn[[4]])
+ni <- ni[!duplicated(ni$concept_cd), ]
+list_random_rows(ni)
 ```
 
+```{r calculate-sensitivity-etc, echo=TRUE}
+
+disease.counts <- sapply(dp,dim)[1,]
+# This might be better as a loop.
+cc$m1 <- disease.counts[1]-cc$n1
+cc$m2 <- disease.counts[2]-cc$n2
+cc$m3 <- disease.counts[3]-cc$n3
+cc$m4 <- disease.counts[4]-cc$n4
+
+# Sensitivity is the same for each different control group.
+# Specificity, etc. changes depending on the control group.
+
+cc$sens  <- round(100*cc$n1/(cc$n1+cc$m1))
+
+cc$spec2 <- round(100*cc$m2/(cc$m2+cc$n2))
+cc$spec3 <- round(100*cc$m3/(cc$m3+cc$n3))
+cc$spec4 <- round(100*cc$m4/(cc$m4+cc$n4))
+
+cc$ppv2  <- round(100*cc$n1/(cc$n1+cc$n2))
+cc$ppv3  <- round(100*cc$n1/(cc$n1+cc$n3))
+cc$ppv4  <- round(100*cc$n1/(cc$n1+cc$n4))
+
+cc$npv2  <- round(100*cc$m1/(cc$m1+cc$m2))
+cc$npv3  <- round(100*cc$m1/(cc$m1+cc$m3))
+cc$npv4  <- round(100*cc$m1/(cc$m1+cc$m4))
+
+high_ppv <- which((cc$ppv2 > 60) & (cc$ppv3 > 60) & (cc$ppv4 > 60))
+variable_list <- c("ppv2","ppv3","ppv4","concept_cd")
+
+best_variables <- merge(cc[high_ppv, variable_list], ni, all=FALSE)
+
+print(best_variables)
+```
 
 ```{r save-everything, echo=TRUE}
 save.image(file="case_control.RData")
