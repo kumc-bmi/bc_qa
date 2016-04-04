@@ -1,4 +1,4 @@
-```{r create-basic-documentation, echo=TRUE}
+```{r create_basic_documentation, echo=TRUE}
 doc <- NULL
 doc$run.date <- date()
 doc$version <- system(' git rev-parse HEAD', intern=TRUE)
@@ -7,40 +7,6 @@ doc$maintainer <- "Steve Simon (KUMC)"
 doc$assistants <- "Dan Connolly"
 ```
 
-This program reads data from an i2b2 query and produces
-simple analyses and graphs. It stores the data and some
-intermediate files in an RData file.
-
-This program was run on `r doc$date` using version `r doc$version`.
-The original author is `r doc$author`. `r doc$maintainer`
-is currently maintaining and enhancing this program
-with the assistance of `r doc$assistants`.
-
-```{r load-required-libraries, echo=TRUE}
-library("ggplot2")
-library("reshape")
-library("RSQLite")
-save.image("backup.RData")
-rm(list=ls())
-```
-
-```{r create-special-functions}
-list_random_rows <- function(df,n=20) {
-  # select and return a few random rows from a data frame.
-  # If input is a vector, coerce it into a data frame
-  df <- data.frame(df)
-  nrows <- dim(df)[1]
-  selected_rows <- sort(sample(1:nrows,min(n,nrows)))
-  return(df[selected_rows,])
-}
-```
-
-```{r set-options, echo=TRUE}
-
-# Don't wrap so much
-options(width=90)
-
-```
 
 Case-control
 ============
@@ -49,186 +15,95 @@ For context, see [485].
 [485]: https://informatics.gpcnetwork.org/trac/Project/ticket/485
 [bc_qa]: https://bitbucket.org/gpcnetwork/bc_qa
 
-```{r setup-sql-queries, echo=TRUE}
+This program analyzes a case-control data set. It produces some simple
+tables and graphs.
 
-# use-this-database.txt should have one entry for each file.
-# The first file is presumed to be the cases and each of the 
-# remaining files is presumed to be a different control group.
+A companion program, extract_case_control, produces the data set
+used by this program.
 
-setwd("/d1/home/ssimon/bc_qa/bc_case_control")
-file_info <- read.csv(file="use_this_database.txt", 
-                      header=TRUE, 
-                      stringsAsFactors=FALSE)
-print(file_info)
-variable_groups <- file_info$variable_group
-
-sql_query <-NULL
-
-# There are two ways to query the data. The first way
-# is intuitive (to me) but inefficient. The second way
-# is less intuitive but more efficient because it relies
-# on SQL rather than R to count.
-
-# count the overall number of patients in each disease group.
-sql_query[["disease_group_counts"]] <-
-  "select count(distinct patient_num) AS n
-   from observation_fact"
-
-# get distinct patient numbers in each disease group.
-sql_query[["distinct_patients"]] <-
-  "select distinct patient_num
-   from observation_fact"
-
-# read the observation_fact table, removing duplicates.
-sql_query[["patient_level_concepts"]] <-
-  "select distinct obs.patient_num, obs.concept_cd
-   from observation_fact obs"
-
-# count the number of patients who have each fact.
-sql_query[["concept_counts"]] <-
-  "select concept_cd, count(distinct patient_num) AS n
-   from observation_fact
-   group by concept_cd"
-
-# get decent labels (name_char) from concepts.
-sql_query[["concept_labels"]] <-
-  "select concept_cd, name_char
-   from concept_dimension"
+This program was run on `r doc$date` using version `r doc$version`.
+The original author is `r doc$author`. `r doc$maintainer`
+is currently maintaining and enhancing this program
+with the assistance of `r doc$assistants`.
 
 
+```{r load_required_libraries, echo=TRUE}
+library("ggplot2")
+save.image("backup.RData")
+rm(list=ls())
+cat("\n\nQuality check: Are we in the correct directory?")
+getwd()
+# Don't wrap so much
+options(width=90)
+# Load the case-control data sets
+load("extract_case_control.RData")
 ```
 
-```{r get-overall-patient-counts}
-# dp: distinct patient numbers in each disease group
-# sc: concepts used only in selection of disease groups
 
-sc <- NULL
-dp <- NULL
-file_names <- file_info$file_location[variable_groups=="patients"]
-group_names <- file_info$disease_group[variable_groups=="patients"]
-for (i in 1:length(file_names)) {
-  file_name <- file_names[i]
-  group_name <- group_names[i]
-  cat("\nRunning queries for ", group_name, " (", file_name,  ").\n", sep="")
-  conn_site <- dbConnect(SQLite(), dbname=file_name)
-  sc[[group_name]] <- dbGetQuery(conn_site, sql_query["concept_counts"])
-  dp[[group_name]] <- dbGetQuery(conn_site, sql_query["distinct_patients"])
-  cat("\n\nThis is the number of patients in",group_name,".\n\n")
-  print(dim(dp[[group_name]][1]))
-}
+While you can get the nice labels for icd9 codes from i2b2, it is easier
+just to pull them from another source. I chose labels from the
+[https://www.cms.gov/medicare/coding/ICD9providerdiagnosticcodes/codes.html CMS]
+site. 
 
-for (group_name in group_names) {
-  cat("\n\nThis is the number of concepts used to define",group_name,".\n\n")
-  print(dim(sc[[group_name]][1]))
-  cat("\n\nHere are a few random concepts used to define",group_name,".\n\n")
-  print(list_random_rows(sc[[group_name]], 20))
-}
+Until I get some of the mismatches figured out, I won't try out this code.
+
+```{r get-nice-names, echo=TRUE, eval=FALSE}
+# il = icd9_labels
+icd9_file <- "icd9_labels.csv"
+il <- read.csv(icd9_file, header=TRUE, as.is=TRUE, row.names=NULL)
+# Double check to make sure nothing was converted to factors.
+sapply(il,is.factor)
+il$nice_label <- paste(strip_specials(il$short_label),il$DX,sep="_")
+list_random_rows(il$nice_label)
+sort(setdiff(di$DX,il$DX))
+sort(setdiff(il$DX,di$DX))
 ```
 
-```{r list-patient_selection-codes}
-selection_codes <- sc[[1]]$concept_cd
-for (i in 2:length(file_names)) {
-  selection_codes <- union(selection_codes, sc[[i]]$concept_cd)
-}
-list_random_rows(selection_codes,100)
-```
+The event counts are pretty easy to get now. This code
+might, however, run better if you do the counting in
+SQL instead.
 
-```{r get-event-counts}
-g1 <- NULL
-g2 <- NULL
-file_names <- file_info$file_location[variable_groups=="procedure"]
-group_names <- file_info$disease_group[variable_groups=="procedure"]
-for (i in 1:length(file_names)) {
-  file_name <- file_names[i]
-  group_name <- group_names[i]
-  cat("\nRunning queries for ", group_name, " (", file_name,  ").\n", sep="")
-  conn_site <- dbConnect(SQLite(), dbname=file_name)
-  cat("\nQuality check: compare this...\n")
-  g1[[group_name]] <- dbGetQuery(conn_site, sql_query["patient_level_concepts"])
-  print(head(table(g1[[group_name]]$concept_cd)))
-  g2[[group_name]] <- dbGetQuery(conn_site, sql_query["concept_counts"])
-  cat("\nto this...\n\n")
-  print(head(g2[[group_name]]))
-  dbDisconnect(conn_site)
-}
-cat("\n\nCompare the dimensions of the files.\n\n")
-sapply(g1,dim)
-sapply(g2,dim)
-```
-
-```{r merge-event-counts}
-cc <- g2[[1]]
-names(cc)[2] <- "n1"
-for (i in 2:length(group_names)) {
-  cat("\nMerging ", group_names[i], ".\n\n", sep="")
-  cc <- merge(cc, g2[[group_names[i]]], by="concept_cd", all=TRUE)
-  names(cc)[i+1] <- paste("n",i,sep="")
-}
-cc[is.na(cc)] <- 0
-head(cc,20)
-tail(cc,20)
-
-```
-
-```{r remove-selection_codes}
-# There are hundreds if not thousands of codes used to select the various
-# disease groups. You need to remove these before doing any serious
-# data analysis.
-cc <- merge(cc, data.frame(concept_cd=selection_codes, exclude=1), all=TRUE)
-cc$exclude[is.na(cc$exclude)] <- 0
-cc <- cc[cc$exclude==0, ]
-cc <- cc[cc$n1 > 100, ]
-list_random_rows(cc,20)
-tail(cc,20)
-```
-
-```{r get-nice-names}
-nn <- NULL
-for (i in 1:length(file_names)) {
-  file_name <- file_names[i]
-  group_name <- group_names[i]
-  cat("\nRunning queries for ", group_name, " (", file_name,  ").\n", sep="")
-  conn_site <- dbConnect(SQLite(), dbname=file_name)
-  nn[[group_name]] <- dbGetQuery(conn_site, sql_query["concept_labels"])
-  list_random_rows(nn[[group_name]])
-}
-sapply(nn,dim)
-ni <- rbind(nn[[1]],nn[[2]],nn[[3]],nn[[4]])
-ni <- ni[!duplicated(ni$concept_cd), ]
-list_random_rows(ni)
+```{r get-event-counts, echo=TRUE}
+ec <- table(dj$DX,dj$GP)
+list_random_rows(ec)
 ```
 
 ```{r calculate-sensitivity-etc, echo=TRUE}
-
-disease.counts <- sapply(dp,dim)[1,]
-# This might be better as a loop.
-cc$m1 <- disease.counts[1]-cc$n1
-cc$m2 <- disease.counts[2]-cc$n2
-cc$m3 <- disease.counts[3]-cc$n3
-cc$m4 <- disease.counts[4]-cc$n4
+disease_counts <- table(dp_stack$GP)
+total_matrix <- outer(rep(1,dim(ec)[[1]]),disease_counts)
+ex <- outer(rep(1,dim(ec)[[1]]),disease_counts) - ec
+list_random_rows(ex)
 
 # Sensitivity is the same for each different control group.
 # Specificity, etc. changes depending on the control group.
 
-cc$sens  <- round(100*cc$n1/(cc$n1+cc$m1))
+# This program assumes that the cases are in column i.case
+i.case <- 1
 
-cc$spec2 <- round(100*cc$m2/(cc$m2+cc$n2))
-cc$spec3 <- round(100*cc$m3/(cc$m3+cc$n3))
-cc$spec4 <- round(100*cc$m4/(cc$m4+cc$n4))
+sens <- round(100*ec[, i.case] / total_matrix[, i.case])
+list_random_rows(sens)
 
-cc$ppv2  <- round(100*cc$n1/(cc$n1+cc$n2))
-cc$ppv3  <- round(100*cc$n1/(cc$n1+cc$n3))
-cc$ppv4  <- round(100*cc$n1/(cc$n1+cc$n4))
+spec <- round(100*ec[, -i.case] / total_matrix[, -i.case])
+list_random_rows(spec)
 
-cc$npv2  <- round(100*cc$m1/(cc$m1+cc$m2))
-cc$npv3  <- round(100*cc$m1/(cc$m1+cc$m3))
-cc$npv4  <- round(100*cc$m1/(cc$m1+cc$m4))
+ppv.num <- ec[, rep(i.case, length(disease_counts)-1)]
+ppv.den <- ppv.num + ec[, -i.case]
+ppv   <- round(100*ppv.num / ppv.den)
+dimnames(ppv)[[2]] <- names(disease_counts[-i.case])
+list_random_rows(ppv)
 
-high_ppv <- which((cc$ppv2 > 60) & (cc$ppv3 > 60) & (cc$ppv4 > 60))
-variable_list <- c("ppv2","ppv3","ppv4","concept_cd")
+npv.num <- ex[, rep(i.case, length(disease_counts)-1)]
+npv.den <- npv.num + ex[, -i.case]
+npv   <- round(100*npv.num / npv.den)
+list_random_rows(npv)
 
-best_variables <- merge(cc[high_ppv, variable_list], ni, all=FALSE)
 
+high_ppv <- apply(ppv > 60, 1, all)
+list_random_rows(high_ppv)
+
+best_variables <- ppv[high_ppv, ]
+
+dim(best_variables)
 print(best_variables)
 ```
 

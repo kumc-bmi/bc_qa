@@ -1,0 +1,208 @@
+```{r create_basic_documentation, echo=TRUE}
+doc <- NULL
+doc$run.date <- date()
+doc$version <- system(' git rev-parse HEAD', intern=TRUE)
+doc$author <- "Steve Simon (KUMC)"
+doc$maintainer <- "Steve Simon (KUMC)"
+doc$assistants <- "Dan Connolly"
+```
+
+
+Case-control
+============
+For context, see [485].
+
+[485]: https://informatics.gpcnetwork.org/trac/Project/ticket/485
+[bc_qa]: https://bitbucket.org/gpcnetwork/bc_qa
+
+This program reads data from PCRONET CDM and matches it
+with patient numbers from i2b2 to get a case-control
+data set. It stores the data and some intermediate files in
+an RData file.
+
+The companion program, analyze_case_control,
+takes the resulting data set and conducts simple
+graphs and analyses. 
+
+This program was run on `r doc$date` using version `r doc$version`.
+The original author is `r doc$author`. `r doc$maintainer`
+is currently maintaining and enhancing this program
+with the assistance of `r doc$assistants`.
+
+
+```{r load_required_libraries, echo=TRUE}
+library("ggplot2")
+library("reshape")
+library("ROracle")
+library("RSQLite")
+save.image("backup.RData")
+rm(list=ls())
+cat("\n\nQuality check: Are we in the correct directory?")
+getwd()
+# Don't wrap so much
+options(width=90)
+```
+
+This program also relies on data found in the PCORnet 
+Common Data Model. Here is the code needed to access
+that information and a simple test.
+
+```{r read_config, echo=TRUE, error=FALSE}
+# This code borrowed from cdm_fun.Rmd.
+cdm_config <- read.csv('../cdm_config.csv', stringsAsFactors=FALSE)
+missing_config <- setdiff(c('account', 'password'), names(cdm_config))
+stopifnot(length(missing_config) == 0)
+cdm <- dbConnect(Oracle(), cdm_config$account, cdm_config$password, cdm_config$access)
+cat("Simple test")
+dbGetQuery(cdm, "select * from pcornet_cdm.diagnosis where rownum < 10")
+```
+
+Here are the special functions needed for this program and brief
+tests of their functionality.
+
+```{r create_special_functions}
+list_random_rows <- function(df,n=5) {
+  # select and return first five rows, last five rows, and
+  # a few random rows from a data frame.
+  # If input is a vector, coerce it into a data frame
+  df <- data.frame(df, stringsAsFactors=FALSE)
+  new_list <- NULL
+  nrows <- dim(df)[1]
+  if (nrows<=3*n) {return(list(All_rows=df))}
+  top_name <- paste("First",n,"rows",sep="_")
+  mid_name <- paste("Random",n,"rows",sep="_")
+  bot_name <- paste("Last",n,"rows",sep="_")
+  new_list[[top_name]] <- head(df,n)
+  selected_rows <- sample((n+1):(nrows-n),n)
+  new_list[[mid_name]] <- df[selected_rows, ]
+  new_list[[bot_name]] <- tail(df,n)
+  return(new_list)
+}
+cat("\nSimple test.\n")
+list_random_rows(1:100)
+list_random_rows(c(LETTERS,letters))
+strip_specials <- function(x0) {
+  # This function strips special characters from a character vector,
+  # replacing some of them with an underscore.
+  x0 <- gsub(" ","_",x0,fixed=TRUE)
+  x0 <- gsub('"',"", x0,fixed=TRUE)
+  x0 <- gsub('/',"", x0,fixed=TRUE)
+  x0 <- gsub('+',"", x0,fixed=TRUE)
+}
+```
+
+This section reads in the i2b2 files.
+
+The file, use-this-database.txt should have one entry for each file.
+The first file is presumed to be the cases and each of the 
+remaining files is presumed to be a different control group.
+This file also has information about which site the data 
+comes from and which disease group the patients come from.
+
+```{r setup_sql_queries, echo=TRUE}
+setwd("/d1/home/ssimon/bc_qa/bc_case_control")
+file_info <- read.csv(file="use_this_database.txt", 
+                      header=TRUE, 
+                      stringsAsFactors=FALSE)
+print(file_info)
+```
+
+Now design the appropriate sql queries.
+
+```{r design-sql-queries}
+sql_query <-NULL
+# count the overall number of patients in each disease group.
+sql_query[["disease_group_counts"]] <-
+  "select count(distinct patient_num) AS n
+   from observation_fact"
+
+# get distinct patient numbers in each disease group.
+sql_query[["distinct_patients"]] <-
+  "select distinct patient_num
+   from observation_fact"
+```
+
+Apply these queries to each group. The dimensions in dp
+should match the counts in nd.
+
+```{r get_overall_patient_counts}
+# dp: distinct patient numbers in each disease group
+# nd: number of patients in each disease group
+nd <- NULL
+dp <- NULL
+file_names <- file_info$file_location
+group_names <- file_info$disease_group
+if (any(group_names!=sort(group_names))) {
+  cat("\\n\nWarning: Data should be sorted by disease group")
+}
+for (i in 1:length(file_names)) {
+  file_name <- file_names[i]
+  group_name <- group_names[i]
+  cat("\nRunning queries for ", group_name, " (", file_name,  ").\n", sep="")
+  conn_site <- dbConnect(SQLite(), dbname=file_name)
+  nd[[group_name]] <- dbGetQuery(conn_site, sql_query["disease_group_counts"])
+  dp[[group_name]] <- dbGetQuery(conn_site, sql_query["distinct_patients"])
+  cat("\n\nThis is the number of patients in",group_name,".\n\n")
+  print(dim(dp[[group_name]][1]))
+}
+sapply(dp,dim)
+print(nd)
+```
+
+Stack all the files and note which is in which group.
+
+```{r stack_patient_numbers}
+dbListTables(cdm)
+dp_stack <- data.frame(gp=names(dp[1]), dp[[1]], stringsAsFactors=FALSE)
+for (k in 2:length(dp)) {
+  dp_stack <- rbind(dp_stack, data.frame(gp=names(dp[k]), dp[[k]]))
+}
+table(dp_stack$gp)
+```
+
+Next, you need to write the patient numbers to the same
+location as the PCORnet CDM database.
+
+```{r write_distinct_patient_numbers}
+dbListTables(cdm)
+names(dp_stack) <- toupper(names(dp_stack))
+dbWriteTable(cdm, "DP", dp_stack, overwrite=TRUE)
+dbListTables(cdm)
+```
+
+Now pull out all the diagnosis codes associated with our patient list.
+
+```{r pull_out_diagnoses}
+sql_query[["patient_diagnoses"]] <-
+  "select distinct j.PATIENT_NUM, P.DX, j.GP
+   from pcornet_cdm.diagnosis P
+    RIGHT join DP j
+   on p.PATID = j.PATIENT_NUM"
+di <- dbGetQuery(cdm, sql_query[["patient_diagnoses"]])
+dim(di)
+list_random_rows(di)
+# Some patients in i2b2 have no matches in CDM.
+di$DX[is.na(di$DX)] <- "UNMATCHED"
+num <- table(di$GP[di$DX=="UNMATCHED" & !duplicated(di$PATIENT_NUM)])
+den <- table(di$GP[!duplicated(di$PATIENT_NUM)])
+pct <- round(100*num/den)
+cat(paste(names(num),": ",num,"/",den," (",pct,"%)\n",sep=""),sep="")
+
+leading_digit_counts <- table(substr(di$DX,1,1))
+cat(paste(names(leading_digit_counts),leading_digit_counts,"\n"),sep="")
+```
+
+Now, let's look for any diagnosis codes that occur reasonably
+often among the breast cancer patients.
+
+```{r find_common_dx}
+# dj is the subset of icd9 codes where there are a reasonable number
+# of icd9 codes among the breast cancer cohort.
+tb <- table(di$DX[di$GP=="breastcancer"])
+common_diagnoses <- names(tb)[tb>100]
+dj <- merge(di,data.frame(DX=common_diagnoses),all=FALSE)
+```
+
+```{r save-everything, echo=TRUE}
+save.image(file="extract_case_control.RData")
+```
