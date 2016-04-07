@@ -36,77 +36,172 @@ getwd()
 # Don't wrap so much
 options(width=90)
 # Load the case-control data sets
-load("extract_case_control.RData")
+load("case_control_data.RData")
 ```
 
+Here's a summary of how the data was selected. We
+identified four disease groups in Heron (KUMC's i2b2).
 
-While you can get the nice labels for icd9 codes from i2b2, it is easier
-just to pull them from another source. I chose labels from the
-[https://www.cms.gov/medicare/coding/ICD9providerdiagnosticcodes/codes.html CMS]
-site. 
+Breast cancer (as identified in the SEER Site Summary),
 
-Until I get some of the mismatches figured out, I won't try out this code.
+All other cancers (again from SEER),
 
-```{r get-nice-names, echo=TRUE, eval=FALSE}
-# il = icd9_labels
-icd9_file <- "icd9_labels.csv"
-il <- read.csv(icd9_file, header=TRUE, as.is=TRUE, row.names=NULL)
-# Double check to make sure nothing was converted to factors.
-sapply(il,is.factor)
-il$nice_label <- paste(strip_specials(il$short_label),il$DX,sep="_")
-list_random_rows(il$nice_label)
-sort(setdiff(di$DX,il$DX))
-sort(setdiff(il$DX,di$DX))
+Diabetes (ICD9 250 or ICD10 E08-E13), and
+
+Ischemic heart disease (ICD9 410-414.99 or ICD10 I20-I25).
+
+All males were excluded.
+
+The first group represents cases and the other three
+represent different control groups. Patients who qualified
+for two or more of the above groups were excluded from the
+analysis.
+
+There were no date restrictions. In future versions, we may want
+to consider some date restrictions and try matching subjects on
+age.
+
+We then merged that data with the PCORNET CDM to get 
+any ICD9 codes associated with each patient.
+
+Below, we include only those codes that appear reasonably often
+among the cases.
+
+```{r include only the popular icd9 codes, echo=TRUE}
+cutoff <- 100
+n1 <- length(unique(lb$DX))
+lb <- lb[lb$dx_count >= cutoff, ]
+n2 <- length(unique(lb$DX))
 ```
+
+The initial data set has `r n1` unique ICD9 codes. After eliminating
+the codes that occur less than `r cutoff` times among the cases,
+there are `r n2` unique ICD9 codes left.
 
 The event counts are pretty easy to get now. This code
 might, however, run better if you do the counting in
 SQL instead.
 
 ```{r get-event-counts, echo=TRUE}
-ec <- table(dj$DX,dj$GP)
-list_random_rows(ec)
+# Note: table produces a matrix and not a data frame.
+ec <- table(lb$dx_label,lb$GP)
 ```
 
-```{r calculate-sensitivity-etc, echo=TRUE}
-disease_counts <- table(dp_stack$GP)
-total_matrix <- outer(rep(1,dim(ec)[[1]]),disease_counts)
-ex <- outer(rep(1,dim(ec)[[1]]),disease_counts) - ec
-list_random_rows(ex)
+A simple screen is to look for codes that have a high PPV. That is,
+the codes that occur much more often among the cases relative to how
+often they occur under the controls.
 
-# Sensitivity is the same for each different control group.
-# Specificity, etc. changes depending on the control group.
-
-# This program assumes that the cases are in column i.case
-i.case <- 1
-
-sens <- round(100*ec[, i.case] / total_matrix[, i.case])
-list_random_rows(sens)
-
-spec <- round(100*ec[, -i.case] / total_matrix[, -i.case])
-list_random_rows(spec)
-
-ppv.num <- ec[, rep(i.case, length(disease_counts)-1)]
-ppv.den <- ppv.num + ec[, -i.case]
+```{r calculate-ppv, echo=TRUE}
+ppv.num <- ec[, rep(i.case, length(i.control))]
+ppv.den <- ppv.num + ec[, i.control]
 ppv   <- round(100*ppv.num / ppv.den)
-dimnames(ppv)[[2]] <- names(disease_counts[-i.case])
-list_random_rows(ppv)
+dimnames(ppv)[[2]] <- i.control 
 
-npv.num <- ex[, rep(i.case, length(disease_counts)-1)]
-npv.den <- npv.num + ex[, -i.case]
-npv   <- round(100*npv.num / npv.den)
-list_random_rows(npv)
+high_ppv <- apply(ppv , 1, min)
+o <- rev(order(high_ppv))
+ppv[o, ]
+```
 
+Now let's display the data using odds ratios.
 
-high_ppv <- apply(ppv > 60, 1, all)
-list_random_rows(high_ppv)
+```{r display_or, echo=TRUE}
+su <- merge(st, data.frame(PATIENT_NUM=unique(lb$PATIENT_NUM)))
+disease_counts <- table(su$GP)
+matrix_counts <- matrix(disease_counts,nrow=dim(ec)[[1]],ncol=dim(ec)[[2]],byrow=TRUE)
+ex <- matrix_counts - ec
 
-best_variables <- ppv[high_ppv, ]
+odds_ratios <- round((ec[,c(1,1,1)]/ex[,c(1,1,1)]) / (ec[,c(2,3,4)]/ex[,c(2,3,4)]),1)
+dimnames(odds_ratios)[[2]] <- i.control 
+high_or <- apply(odds_ratios , 1, min)
+o <- rev(order(high_or))
+odds_ratios[o, ]
+```
 
-dim(best_variables)
-print(best_variables)
+Now let's display the data using sensitivity.
+
+```{r display_sens, echo=TRUE}
+sens <- round(100*ec[,1]/(ec[,1]+ex[,1]))
+data.frame(sens=rev(sort(sens)))
+```
+
+The last step in the preliminary screen is to look at specificity.
+It is unclear whether variables with high specificity are
+relevant here.
+
+```{r display_spec, echo=TRUE}
+spec <- round(100*ec[,2:4]/(ec[,2:4]+ex[,2:4]))
+high_spec <- apply(spec, 1, min)
+o <- rev(order(high_spec))
+spec[o, ]
+```
+
+A plot of sensitivity versus specificity might be useful. You should
+use the same coordinate system used by the ROC curve plots.
+
+Points in the upper left corner of the plot are best because they have
+high sensitivity and high specificity, though you should probably weight
+sensitivity more than specificty. These plots are stored separately as
+bitmap files.
+
+```{r graph_sens_spec}
+m <- 0.25 # Margin for text to separate it from the plotting symbol.
+bmp(file="sens_spec%02d.bmp",width=1500,height=2000)
+par(mar=c(4.6,4.6,0.1,0.6))
+for (i in i.control) {
+  plot(100-spec[, i], sens,
+     xlim=c(0,100),
+     ylim=c(0,120),
+     axes=FALSE,
+     xlab="False positive rate",
+     ylab="True positive rate")
+  axis(side=1)
+  axis(side=2, at=20*(0:5))
+  text(100-spec[, i]-m, sens+m/2,
+     names(sens),srt=-45,
+     cex=2,adj=1)
+  text(50,110,i,cex=4)
+}
+dev.off()
+```
+
+Now, let's look at some models. This requires larger data sets
+because you need patient level information, not counts across
+the entire disease group.
+
+As of today, I am not happy with any of these models, so I am
+setting eval=FALSE until I can get more comfortable with them.
+
+The types of models that I might want to look at are
+
+classification trees,
+logic regression,
+lasso, and 
+random forests
+
+There are lots of other models worth considering.
+
+```{r get_icd9_by_patient, echo=TRUE, eval=FALSE}
+library("rpart")
+library("reshape2")
+library("LogicReg")
+library("randomForest")
+library("glmnet")
+cc1 <- lb$GP %in% c("breastcancer","diabetes")
+pc1 <- dcast(lb[cc1, ],PATIENT_NUM + GP ~ dx_label,length)
+pc1[1:5, 1:5]
+lasso_model <- glmnet(x=pc1[,-(1:2)],
+                      y=as.numeric(pc1$GP=="breastcancer"),
+                      family="binomial")
+tree_formula <- paste("GP ~",paste(names(pc)[-(1:2)],collapse="+"))
+tree_model <- rpart(tree_formula,data=pc)
+forest_model <- randomForest(x=pc1[,-(1:2)],y=factor(pc1$GP))
+myanneal <- logreg.anneal.control(start = -1, end = -4, iter = 500, update = 100)
+logic_model <- logreg(resp=as.numeric(pc[,"GP"]=="breastcancer"),
+                      bin=pc[,-(1:2)],
+                      select=1, ntrees=2,
+                      anneal.control=myanneal)
 ```
 
 ```{r save-everything, echo=TRUE}
-save.image(file="case_control.RData")
+save.image(file="analyze_case_control.RData")
 ```

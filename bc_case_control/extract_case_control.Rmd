@@ -43,24 +43,25 @@ getwd()
 options(width=90)
 ```
 
-This program also relies on data found in the PCORnet 
-Common Data Model. Here is the code needed to access
-that information and a simple test.
-
-```{r read_config, echo=TRUE, error=FALSE}
-# This code borrowed from cdm_fun.Rmd.
-cdm_config <- read.csv('../cdm_config.csv', stringsAsFactors=FALSE)
-missing_config <- setdiff(c('account', 'password'), names(cdm_config))
-stopifnot(length(missing_config) == 0)
-cdm <- dbConnect(Oracle(), cdm_config$account, cdm_config$password, cdm_config$access)
-cat("Simple test")
-dbGetQuery(cdm, "select * from pcornet_cdm.diagnosis where rownum < 10")
-```
-
 Here are the special functions needed for this program and brief
 tests of their functionality.
 
 ```{r create_special_functions}
+align_icd9_codes <- function(dx_old) {
+  # This program strips out the dots and pads short
+  # icd9 codes with zeros. It prints out anything
+  # that is too short or too long.
+  dx_new <- gsub(".","",dx_old,fixed=TRUE)
+  dx_new <- ifelse(nchar(dx_new)==3,paste(dx_new,"0",sep=""),dx_new)
+  dx_new <- ifelse(nchar(dx_new)==4,paste(dx_new,"0",sep=""),dx_new)
+  cat("\n\nThe following diagnosis codes are invalid:\n")
+  print(sort(unique(dx_new[nchar(dx_new)!=5])))
+  cat(".\n")
+  return(dx_new)
+}
+cat("\nSimple test.\n")
+align_icd9_codes(c("0014","V28.9","XX"))
+
 list_random_rows <- function(df,n=5) {
   # select and return first five rows, last five rows, and
   # a few random rows from a data frame.
@@ -81,43 +82,67 @@ list_random_rows <- function(df,n=5) {
 cat("\nSimple test.\n")
 list_random_rows(1:100)
 list_random_rows(c(LETTERS,letters))
+
 strip_specials <- function(x0) {
   # This function strips special characters from a character vector,
-  # replacing some of them with an underscore.
+  # replacing most of them with an underscore.
   x0 <- gsub(" ","_",x0,fixed=TRUE)
-  x0 <- gsub('"',"", x0,fixed=TRUE)
-  x0 <- gsub('/',"", x0,fixed=TRUE)
-  x0 <- gsub('+',"", x0,fixed=TRUE)
+  x0 <- gsub("-","_",x0,fixed=TRUE)
+  x0 <- gsub('"',"_", x0,fixed=TRUE)
+  x0 <- gsub('/',"_", x0,fixed=TRUE)
+  x0 <- gsub('+',"_", x0,fixed=TRUE)
+  x0 <- gsub('&',"_", x0,fixed=TRUE)
+  return(x0)
 }
+cat("\nSimple test.\n")
+strip_specials(c("test one","test-two","test&three"))
 ```
+
+Set up storage for temporary data frames and matrices (d)
+and notes for my own reference.
+
+```{r setup_temp}
+d <- NULL
+notes <- NULL
+```
+
+This program also relies on data found in the PCORnet 
+Common Data Model. Here is the code needed to access
+that information and a simple test.
+
+```{r read_config, echo=TRUE, error=FALSE}
+# This code borrowed from cdm_fun.Rmd.
+cdm_config <- read.csv('../cdm_config.csv', stringsAsFactors=FALSE)
+missing_config <- setdiff(c('account', 'password'), names(cdm_config))
+stopifnot(length(missing_config) == 0)
+cdm <- dbConnect(Oracle(), cdm_config$account, cdm_config$password, cdm_config$access)
+cat("Simple test")
+dbGetQuery(cdm, "select * from pcornet_cdm.diagnosis where rownum < 10")
+```
+
 
 This section reads in the i2b2 files.
 
-The file, use-this-database.txt should have one entry for each file.
-The first file is presumed to be the cases and each of the 
-remaining files is presumed to be a different control group.
-This file also has information about which site the data 
+The file, use-this-database.txt, should have one entry for each file.
+It also has information about which site the data 
 comes from and which disease group the patients come from.
 
 ```{r setup_sql_queries, echo=TRUE}
 setwd("/d1/home/ssimon/bc_qa/bc_case_control")
-file_info <- read.csv(file="use_this_database.txt", 
-                      header=TRUE, 
-                      stringsAsFactors=FALSE)
-print(file_info)
+d$fi <-
+  read.csv(file="use_this_database.txt", header=TRUE, stringsAsFactors=FALSE)
+notes$fi <- "File information"
+print(d$fi)
+i.case <- d$fi$disease_group[d$fi$case==1]
+i.control <- d$fi$disease_group[d$fi$case==0]
 ```
 
 Now design the appropriate sql queries.
 
 ```{r design-sql-queries}
-sql_query <-NULL
-# count the overall number of patients in each disease group.
-sql_query[["disease_group_counts"]] <-
-  "select count(distinct patient_num) AS n
-   from observation_fact"
-
+sql <- NULL
 # get distinct patient numbers in each disease group.
-sql_query[["distinct_patients"]] <-
+sql[["distinct_patients"]] <-
   "select distinct patient_num
    from observation_fact"
 ```
@@ -127,11 +152,9 @@ should match the counts in nd.
 
 ```{r get_overall_patient_counts}
 # dp: distinct patient numbers in each disease group
-# nd: number of patients in each disease group
-nd <- NULL
 dp <- NULL
-file_names <- file_info$file_location
-group_names <- file_info$disease_group
+file_names <- d$fi$file_location
+group_names <- d$fi$disease_group
 if (any(group_names!=sort(group_names))) {
   cat("\\n\nWarning: Data should be sorted by disease group")
 }
@@ -140,69 +163,115 @@ for (i in 1:length(file_names)) {
   group_name <- group_names[i]
   cat("\nRunning queries for ", group_name, " (", file_name,  ").\n", sep="")
   conn_site <- dbConnect(SQLite(), dbname=file_name)
-  nd[[group_name]] <- dbGetQuery(conn_site, sql_query["disease_group_counts"])
-  dp[[group_name]] <- dbGetQuery(conn_site, sql_query["distinct_patients"])
-  cat("\n\nThis is the number of patients in",group_name,".\n\n")
-  print(dim(dp[[group_name]][1]))
+  dp[[group_name]] <- dbGetQuery(conn_site, sql["distinct_patients"])
 }
 sapply(dp,dim)
-print(nd)
 ```
 
 Stack all the files and note which is in which group.
 
 ```{r stack_patient_numbers}
-dbListTables(cdm)
-dp_stack <- data.frame(gp=names(dp[1]), dp[[1]], stringsAsFactors=FALSE)
+d$st <- data.frame(gp=names(dp[1]), dp[[1]], stringsAsFactors=FALSE)
+notes$st <- "Stack the individual patient numbers in a single data frame"
 for (k in 2:length(dp)) {
-  dp_stack <- rbind(dp_stack, data.frame(gp=names(dp[k]), dp[[k]]))
+  d$st <- rbind(d$st, data.frame(gp=names(dp[k]), dp[[k]]))
 }
-table(dp_stack$gp)
+list_random_rows(d$st)
 ```
 
 Next, you need to write the patient numbers to the same
 location as the PCORnet CDM database.
 
 ```{r write_distinct_patient_numbers}
-dbListTables(cdm)
-names(dp_stack) <- toupper(names(dp_stack))
-dbWriteTable(cdm, "DP", dp_stack, overwrite=TRUE)
+names(d$st) <- toupper(names(d$st))
+dbWriteTable(cdm, "DP", d$st, overwrite=TRUE)
 dbListTables(cdm)
 ```
 
 Now pull out all the diagnosis codes associated with our patient list.
 
-```{r pull_out_diagnoses}
-sql_query[["patient_diagnoses"]] <-
-  "select distinct j.PATIENT_NUM, P.DX, j.GP
-   from pcornet_cdm.diagnosis P
-    RIGHT join DP j
-   on p.PATID = j.PATIENT_NUM"
-di <- dbGetQuery(cdm, sql_query[["patient_diagnoses"]])
-dim(di)
-list_random_rows(di)
-# Some patients in i2b2 have no matches in CDM.
-di$DX[is.na(di$DX)] <- "UNMATCHED"
-num <- table(di$GP[di$DX=="UNMATCHED" & !duplicated(di$PATIENT_NUM)])
-den <- table(di$GP[!duplicated(di$PATIENT_NUM)])
-pct <- round(100*num/den)
-cat(paste(names(num),": ",num,"/",den," (",pct,"%)\n",sep=""),sep="")
+Note: there are patients who are in the various
+disease groups, but who do not have any ICD9 codes.
+I need to investigate why.
 
-leading_digit_counts <- table(substr(di$DX,1,1))
-cat(paste(names(leading_digit_counts),leading_digit_counts,"\n"),sep="")
+```{r pull_out_diagnoses}
+sql[["matching_count"]] <- 
+  "select distinct j.PATIENT_NUM, j.GP, p.PATID
+   from pcornet_cdm.diagnosis P
+   JOIN DP j
+   on p.PATID = j.PATIENT_NUM
+   where p.DX_TYPE = '09'"
+mc <- dbGetQuery(cdm, sql[["matching_count"]])
+n1 <- table(mc$GP) 
+n2 <- table(d$st$GP)
+print(n1)
+print(n2)
+sql[["patient_diagnoses"]] <-
+  "select distinct j.PATIENT_NUM, j.GP, p.DX
+   from pcornet_cdm.diagnosis P
+   join DP j
+   on p.PATID = j.PATIENT_NUM
+   where p.DX_TYPE='09'"
+d$di <- dbGetQuery(cdm, sql[["patient_diagnoses"]])
+notes$di <- "SQL query from pcornet.cdm"
+dim(d$di)
+list_random_rows(d$di)
 ```
 
-Now, let's look for any diagnosis codes that occur reasonably
-often among the breast cancer patients.
+Now, let's allow ourselves the ability to screen out
+any diagnosis codes that occur infrequently among the
+cases.
 
 ```{r find_common_dx}
-# dj is the subset of icd9 codes where there are a reasonable number
-# of icd9 codes among the breast cancer cohort.
-tb <- table(di$DX[di$GP=="breastcancer"])
-common_diagnoses <- names(tb)[tb>100]
-dj <- merge(di,data.frame(DX=common_diagnoses),all=FALSE)
+# Add a dx_count column that notes how often the DX appears
+# among the case groups. This will allow you to select only
+# the "popular" DX codes.
+d$tb <- table(d$di$DX[d$di$GP==i.case])
+notes$tb <- "Frequency counts for DX codes among the cases."
+# Note: as.numeric is needed here because you need to strip out
+# the names before merging.
+# Also note that this merge statement will remove any diagnosis
+# codes which occur only among the controls.
+d$co <- data.frame(DX=names(d$tb), dx_count=as.numeric(d$tb))
+notes$co <- "Convert table into data frame"
+list_random_rows(d$co)
+d$cd <- merge(d$di, d$co)
+notes$cd <- "Merge frequency counts in with original diagnoses."
+list_random_rows(d$cd)
+length(unique(d$di$DX))
+length(unique(d$cd$DX))
 ```
+
+While you can get the nice labels for icd9 codes from i2b2, it is easier
+just to pull them from another source. I chose labels from the
+[https://www.cms.gov/medicare/coding/ICD9providerdiagnosticcodes/codes.html CMS]
+site. 
+
+```{r get-nice-names, echo=TRUE}
+# il = icd9_labels
+icd9_file <- "icd9_labels.csv"
+d$il <- read.csv(icd9_file, header=TRUE, as.is=TRUE, row.names=NULL)
+notes$il <- "icd9 codes and labels"
+# Double check to make sure nothing was converted to factors.
+d$il$nice_label <- paste(strip_specials(d$il$short_label),d$il$DX,sep="_")
+list_random_rows(d$il$nice_label)
+# Here are diagnosis codes in cd, not found in il.
+list_random_rows(sort(setdiff(d$cd$DX,d$il$DX)))
+d$il$dx_new <- align_icd9_codes(d$il$diagnosis_code)
+d$cd$dx_new <- align_icd9_codes(d$cd$DX)
+# Here are diagnosis codes in cd, not found in il.
+sort(setdiff(d$cd$dx_new,d$il$dx_new))
+d$il$dx_label <- paste(strip_specials(d$il$short_label), d$il$dx_new, sep="_")
+d$lb <- merge(d$cd, d$il[, c("dx_new","dx_label")], all.x=TRUE, all.y=FALSE)
+notes$lb <- "DX codes and nice labels"
+list_random_rows(d$lb)
+```
+
+Now save everything for later use.
 
 ```{r save-everything, echo=TRUE}
 save.image(file="extract_case_control.RData")
+lb <- d$lb
+st <- d$st
+save(lb, st, i.case, i.control, list_random_rows, file="case_control_data.RData")
 ```
