@@ -1,0 +1,140 @@
+```{r create_basic_documentation, echo=TRUE}
+doc <- NULL
+doc$run.date <- date()
+doc$version <- system(' git rev-parse HEAD', intern=TRUE)
+doc$author <- "Steve Simon (KUMC)"
+doc$maintainer <- "Steve Simon (KUMC)"
+doc$assistants <- "Dan Connolly"
+```
+
+
+Case-control
+============
+For context, see [485].
+
+[485]: https://informatics.gpcnetwork.org/trac/Project/ticket/485
+[bc_qa]: https://bitbucket.org/gpcnetwork/bc_qa
+
+This program takes output from the lasso and/or elastic net models
+and produces some simple tables and graphs.
+
+A companion program, analyze_lasso, produces the lasso or elastic net
+models used by this program and analyze_lasso, in turn, relies on 
+extract_case_control which produces the data sets needed.
+
+This program was run on `r doc$date` using version `r doc$version`.
+The original author is `r doc$author`. `r doc$maintainer`
+is currently maintaining and enhancing this program
+with the assistance of `r doc$assistants`.
+
+
+```{r load_required_libraries, echo=TRUE}
+save.image("backup.RData")
+rm(list=ls())
+cat("\n\nQuality check: Are we in the correct directory?")
+getwd()
+# Don't wrap so much
+options(width=90)
+# load the required libraries
+library("reshape2")
+library("glmnet")
+library("Matrix")
+# Load the case-control data sets
+load("analyze_lasso.RData")
+start_time <- Sys.time()
+print(start_time)
+display_elapsed_time <- function() {
+  cat("\n\nThis code chunk required ")
+  print(round(Sys.time()-start_time))
+  return(Sys.time())
+}
+```
+
+A summary of how the data were originally collected appears in 
+extract_case_control.Rmd.
+
+
+```{r find_optimal_lambda, echo=TRUE}
+optima <- NULL
+for (ic in i.control) {
+  cv <- all_cv[[ic]]
+  optima[[ic]]$lambda <- cv$lambda.1se
+  optima[[ic]]$step <- which(cv$lambda==cv$lambda.1se)
+}
+start_time <- display_elapsed_time()
+```
+
+```{r extract_coefficients_at_optimum}
+coefficients <- NULL
+for (ic in i.control) {
+  op <- optima[[ic]]
+  en <- all_models[[ic]]
+  direction <- (1+sign(en$beta[,op$step]))/2
+  # Note the following statement will fail if a coefficent starts out in
+  # a certain direction and then returns to zero. This is rare, but it
+  # could happen. Maybe use min(which(x!=0)) instead.
+  entry_step <- apply(en$beta,1,function(x) sum(abs(x)==0))
+  entry_lambda <- en$lambda[entry_step]
+  beta <- en$beta[,op$step]
+  odds_ratio <- round(exp(beta),2-direction)
+  coefficients[[ic]] <- 
+    data.frame(odds_ratio, beta, direction, entry_step, entry_lambda)
+}
+start_time <- display_elapsed_time()
+```
+
+```{r show_lasso_coefficient, echo=TRUE}
+for (ic in i.control) {
+  cat("\n\nComparison of", i.case, "to", ic)
+  en <- all_models[[ic]]
+  op <- optima[[ic]]
+  co <- coefficients[[ic]]
+  for (d in 1:0) {
+    direction_label <- c("Negative", "Positive")[d+1]
+    cat("\n",direction_label, "coefficients\n")
+    # find all coefficients going in one direction.
+    i.direction <- which(co$direction == d)
+    # order them by entry_step
+    o <- order(co$odds_ratio[i.direction])
+    if (d==1) {o <- rev(o)}
+    print(co[i.direction[o], c("odds_ratio", "entry_step") ])
+  }
+}
+start_time <- display_elapsed_time()
+```
+
+```{r draw_lasso_graphs, echo=TRUE, fig.width=10, fig.height=12}
+for (ic in i.control) {
+  cat("\n\nComparison of", i.case, "to", ic)
+  en <- all_models[[ic]]
+  op <- optima[[ic]]
+  co <- coefficients[[ic]]
+  for (d in 1:0) {
+    direction_label <- c("Negative", "Positive")[d+1]
+    yl <- c(0, 1)
+    if (d==0) {yl <- c(-1, 0)}
+    plot(0, 0,
+      ylim=yl*max(abs(co$beta)), 
+      xlim=c(log(max(en$lambda)),log(op$lambda)*1.5),
+      type="n",
+      ylab="Beta",
+      xlab="log(lambda)")
+    title1 <- paste("Lasso/elastic net model comparing",i.case,"to",ic)
+    title2 <- paste(direction_label,"coefficients only.")
+    title(paste(title1,title2,sep="\n"))
+    # find all coefficients going in one direction.
+    i.direction <- which(co$direction == d)
+    for (id in i.direction) {
+      lines(log(en$lambda[1:op$step]), en$beta[id,1:op$step])
+      text(log(op$lambda), co$beta[id], dimnames(co)[[1]][id], adj=0)
+    }
+  }
+}
+start_time <- display_elapsed_time()
+```
+
+
+```{r save-everything, echo=TRUE}
+save.image(file="display_lasso.RData")
+start_time <- display_elapsed_time()
+```

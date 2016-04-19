@@ -18,6 +18,9 @@ For context, see [485].
 This program analyzes a case-control data set. It produces some simple
 tables and graphs based on the lasso and/or elastic net models.
 
+A summary of how the data were originally collected appears in 
+extract_case_control.Rmd.
+
 A companion program, extract_case_control, produces the data set
 used by this program.
 
@@ -34,6 +37,10 @@ cat("\n\nQuality check: Are we in the correct directory?")
 getwd()
 # Don't wrap so much
 options(width=90)
+# load the required libraries
+library("reshape2")
+library("glmnet")
+library("Matrix")
 # Load the case-control data sets
 load("case_control_data.RData")
 start_time <- Sys.time()
@@ -86,7 +93,6 @@ the codes that occur less than `r cutoff` times among the cases,
 there are `r n2` unique ICD9 codes left.
 
 ```{r experiment_with_sparse_matrices, echo=TRUE}
-library("Matrix")
 start_time <- display_elapsed_time()
 i <- i.control[1]
 cc1 <- lb$GP %in% c("breastcancer", i)
@@ -105,8 +111,6 @@ start_time <- display_elapsed_time()
 ```
 
 ```{r store_lasso_models, echo=TRUE}
-library("reshape2")
-library("glmnet")
 all_models <- NULL
 all_cv <- NULL
 for (i in i.control) {
@@ -125,62 +129,6 @@ for (i in i.control) {
     type.measure="class")
   all_cv[[i]] <- cv
 }
-start_time <- display_elapsed_time()
-```
-
-```{r display_lasso_models, echo=TRUE, fig.width=10, fig.height=12}
-best_variables <- NULL
-for (ic in i.control) {
-  cv <- all_cv[[ic]]
-  plot(cv)
-
-  en <- all_models[[ic]]
-  n_lambda <- dim(en$beta)[2]
-  n_variables <- dim(en$beta)[1]
-  lambda_range <- log(range(en$lambda))
-  entry_point <- apply(en$beta,1,function(x) sum(abs(x)==0))
-  x_position <- log(en$lambda)[entry_point]
-  coefficient_direction <- (1+sign(en$beta[,n_lambda]))/2
-  step <- which(cv$lambda==cv$lambda.1se)
-  title(paste("CV suggests using step", step), cex=0.5)
-  best_variables[[ic]] <- names(entry_point)[entry_point <= step]
-
-  for (d in 1:0) {
-    direction_label <- c("negative","positive")[d+1]
-    plot(0, 0,
-      xlim=c(-1,1)*max(abs(en$beta)), 
-      ylim=c(log(cv$lambda.1se),log(max(en$lambda))),
-      type="n",
-      xlab="Beta",
-      ylab="log(lambda)")
-    title1 <- paste("Lasso/elastic net model comparing",i.case,"to",ic)
-    title2 <- paste(direction_label,"coefficients only.")
-    title(paste(title1,title2,sep="\n"))
-    for (i in 1:n_variables) {
-      if (coefficient_direction[i]==1-d) next
-      lines(en$beta[i,1:step],log(en$lambda))
-    }
-    cat("\n\nVariables influencing", i.case, "vs", ic)
-    cat(" in a", direction_label,"direction.")
-    cat("\nRanked from most important to least important.\n")
-    for (i in 1:step) {
-      variable_subset <- entry_point==i & coefficient_direction==d
-      variable_list <- names(entry_point)[variable_subset]
-      variable_label <- paste(variable_list, collapse="\n")
-      if (sum(variable_subset) > 0) {
-        cat("\nStep", i, "\n")
-        cat(paste("  ", variable_list, "\n", sep=""), sep="")
-      }
-      text(0.1-0.2*d, log(en$lambda[i]), variable_label, adj=d)
-    }
-  }
-}
-consensus_variables <- best_variables[[1]]
-for (i in 2:length(best_variables)) {
-  consensus_variables <- intersect(consensus_variables, best_variables[[i]])
-}
-cat("\n\nHere is a list of variables found in all three models")
-print(consensus_variables)
 start_time <- display_elapsed_time()
 ```
 

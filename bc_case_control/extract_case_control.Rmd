@@ -20,9 +20,33 @@ with patient numbers from i2b2 to get a case-control
 data set. It stores the data and some intermediate files in
 an RData file.
 
-The companion program, analyze_case_control,
-takes the resulting data set and conducts simple
-graphs and analyses. 
+Here's a summary of how the data was selected. We
+identified four disease groups in Heron (KUMC's i2b2).
+
+Breast cancer (as identified in the SEER Site Summary),
+
+All other cancers (again from SEER),
+
+Diabetes (ICD9 250 or ICD10 E08-E13), and
+
+Ischemic heart disease (ICD9 410-414.99 or ICD10 I20-I25).
+
+All males were excluded.
+
+The first group represents cases and the other three
+represent different control groups. Patients who qualified
+for two or more of the above groups were excluded from the
+analysis.
+
+There were no date restrictions. In future versions, we may want
+to consider some date restrictions and try matching subjects on
+age.
+
+We then merged that data with the PCORNET CDM to get 
+any ICD9 codes associated with each patient.
+
+Two companion programs, analyze_lasso.Rmd and analyze_sensitivity.Rmd,
+take the resulting data set and produces simple graphs and analyses. 
 
 This program was run on `r doc$date` using version `r doc$version`.
 The original author is `r doc$author`. `r doc$maintainer`
