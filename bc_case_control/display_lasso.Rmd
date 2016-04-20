@@ -31,8 +31,11 @@ with the assistance of `r doc$assistants`.
 ```{r load_required_libraries, echo=TRUE}
 save.image("backup.RData")
 rm(list=ls())
-cat("\n\nQuality check: Are we in the correct directory?")
-getwd()
+verbose=TRUE # if TRUE, print various intermediate values and quality checks.
+if (verbose) {
+  cat("\n\nQuality check: Are we in the correct directory?")
+  print(getwd())
+}
 # Don't wrap so much
 options(width=90)
 # load the required libraries
@@ -42,7 +45,9 @@ library("Matrix")
 # Load the case-control data sets
 load("analyze_lasso.RData")
 start_time <- Sys.time()
-print(start_time)
+if (verbose) {
+  print(start_time)
+}
 display_elapsed_time <- function() {
   cat("\n\nThis code chunk required ")
   print(round(Sys.time()-start_time))
@@ -53,6 +58,9 @@ display_elapsed_time <- function() {
 A summary of how the data were originally collected appears in 
 extract_case_control.Rmd.
 
+The lasso and elastic net models have a tuning parameter, lambda,
+that controls the complexity of the model. You can pick the
+optimal value of lambda through cross validation.
 
 ```{r find_optimal_lambda, echo=TRUE}
 optima <- NULL
@@ -60,9 +68,27 @@ for (ic in i.control) {
   cv <- all_cv[[ic]]
   optima[[ic]]$lambda <- cv$lambda.1se
   optima[[ic]]$step <- which(cv$lambda==cv$lambda.1se)
+  cat("\nComparison of", i.case, "to", ic)
+  cat(".\n  Best value of lambda is", optima[[ic]]$lambda)
+  cat(", which is step", optima[[ic]]$step,"\n")
 }
-start_time <- display_elapsed_time()
+if (verbose) start_time <- display_elapsed_time()
 ```
+
+Now that you have the optimum, pull out the coefficients for that
+particular value of lambda. You should distinguish between coefficients
+that are positive (direction=1), negative (direction=0), or zero
+(direction=0.5). Positive coefficients are ones that increase the 
+estimated probability of being a case and negative coefficients 
+are ones that increase the estimated probability of being a 
+control. One of the attractions of the lasso/elastic net is
+that it zeros out the coefficients of many variables, and thus
+it serves as a feature selection method.
+
+The other big advantage of the lasso is that it shrinks all 
+non-zero coefficients towards zero. Some are shrunk more than others
+but the process of shrinkage helps avoid overfitting.
+towards zero, which helps 
 
 ```{r extract_coefficients_at_optimum}
 coefficients <- NULL
@@ -79,33 +105,30 @@ for (ic in i.control) {
   odds_ratio <- round(exp(beta),2-direction)
   coefficients[[ic]] <- 
     data.frame(odds_ratio, beta, direction, entry_step, entry_lambda)
-}
-start_time <- display_elapsed_time()
-```
-
-```{r show_lasso_coefficient, echo=TRUE}
-for (ic in i.control) {
-  cat("\n\nComparison of", i.case, "to", ic)
-  en <- all_models[[ic]]
-  op <- optima[[ic]]
-  co <- coefficients[[ic]]
-  for (d in 1:0) {
-    direction_label <- c("Negative", "Positive")[d+1]
-    cat("\n",direction_label, "coefficients\n")
-    # find all coefficients going in one direction.
-    i.direction <- which(co$direction == d)
-    # order them by entry_step
-    o <- order(co$odds_ratio[i.direction])
-    if (d==1) {o <- rev(o)}
-    print(co[i.direction[o], c("odds_ratio", "entry_step") ])
+  if (verbose) {
+    cat("\nComparison of", i.case, "to", ic,"\n\n")
+    print(list_random_rows(coefficients[[ic]]))
   }
 }
-start_time <- display_elapsed_time()
+if (verbose) start_time <- display_elapsed_time()
 ```
+
+The following graphs show the development of the lasso/elastic
+net models from the simplest models to model indicated by
+the optimal lambda. The graphs are split out by positive versus
+negative coefficients in part to simplify the presentation. But
+also, the terms associated with positive coefficients appear
+to have better consistency across multiple control groups than
+terms associated with negative coefficients.
+
+Notice that variables that enter the model early are often,
+but not always, ones with large coefficients (large meaning
+far away from the null value of 1.0) in the optimal
+model. Also notice that the positive terms enter earlier and
+end up at more extreme odds ratios than the negative terms.
 
 ```{r draw_lasso_graphs, echo=TRUE, fig.width=10, fig.height=12}
 for (ic in i.control) {
-  cat("\n\nComparison of", i.case, "to", ic)
   en <- all_models[[ic]]
   op <- optima[[ic]]
   co <- coefficients[[ic]]
@@ -116,12 +139,16 @@ for (ic in i.control) {
     plot(0, 0,
       ylim=yl*max(abs(co$beta)), 
       xlim=c(log(max(en$lambda)),log(op$lambda)*1.5),
-      type="n",
-      ylab="Beta",
+      type="n",axes=FALSE,
+      ylab="Odds ratio",
       xlab="log(lambda)")
     title1 <- paste("Lasso/elastic net model comparing",i.case,"to",ic)
     title2 <- paste(direction_label,"coefficients only.")
     title(paste(title1,title2,sep="\n"))
+    axis(side=1)
+    or_labels <- c(1,2,5,10,20,50,100)
+    if (d==0) {or_labels <- 1/or_labels}
+    axis(side=2, at=log(or_labels), labels=or_labels)
     # find all coefficients going in one direction.
     i.direction <- which(co$direction == d)
     for (id in i.direction) {
@@ -130,11 +157,40 @@ for (ic in i.control) {
     }
   }
 }
-start_time <- display_elapsed_time()
+if (verbose) start_time <- display_elapsed_time()
+```
+
+The consensus across the models will involve selecting
+coefficients that are consistent in direction across
+multiple control groups.
+
+```{r develop_consensus, echo=TRUE}
+average_beta <- rep(0,dim(coefficients[[1]])[1])
+cumulative_direction <- rep(0,dim(coefficients[[1]])[1])
+for (ic in i.control) {
+  average_beta <- average_beta + coefficients[[ic]]$beta
+  cumulative_direction <- cumulative_direction + coefficients[[ic]]$direction
+}
+average_beta <- average_beta / length(i.control)
+o <- rev(order(average_beta))
+or_consensus <- data.frame(dimnames(coefficients[[1]])[1])
+names(or_consensus) <- "lab"
+for (i in 1:length(i.control)) {
+  or_consensus <- data.frame(or_consensus, coefficients[[i.control[i]]]$odds_ratio)
+  names(or_consensus)[i+1] <- i.control[i]
+}
+or_consensus <- or_consensus[o, ]
+cat("\n\nOdds ratios for consensus positive coefficients")
+or_consensus[cumulative_direction[o]==3, ]
+cat("\n\nOdds ratios for consensus negative coefficients")
+or_consensus[cumulative_direction[o]==0, ]
+# cat("\n\nClose, but no cigar")
+# or_consensus[cumulative_direction[o] %in% c(0.5, 2.5), ]
+if (verbose) start_time <- display_elapsed_time()
 ```
 
 
 ```{r save-everything, echo=TRUE}
 save.image(file="display_lasso.RData")
-start_time <- display_elapsed_time()
+if (verbose) start_time <- display_elapsed_time()
 ```
