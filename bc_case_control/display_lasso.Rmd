@@ -127,7 +127,8 @@ far away from the null value of 1.0) in the optimal
 model. Also notice that the positive terms enter earlier and
 end up at more extreme odds ratios than the negative terms.
 
-```{r draw_lasso_graphs, echo=TRUE, fig.width=10, fig.height=12}
+```{r draw_lasso_graphs, echo=TRUE}
+bmp(file="dl%02d.bmp", width=800, height=800)
 for (ic in i.control) {
   en <- all_models[[ic]]
   op <- optima[[ic]]
@@ -157,6 +158,7 @@ for (ic in i.control) {
     }
   }
 }
+dev.off()
 if (verbose) start_time <- display_elapsed_time()
 ```
 

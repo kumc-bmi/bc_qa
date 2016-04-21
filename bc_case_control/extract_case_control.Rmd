@@ -173,14 +173,14 @@ if (verbose) {
 }
 ```
 
-
-This section reads in the i2b2 files.
+This section reads in the patient ids from the i2b2 files
+for the various disease groups.
 
 The file, disease_group_databases.txt, should have one entry for each file.
 It also has information about which site the data 
 comes from and which disease group the patients come from.
 
-```{r setup_sql_queries, echo=TRUE}
+```{r get_disease_group_databses_names, echo=TRUE}
 setwd("/d1/home/ssimon/bc_qa/bc_case_control")
 d$fi <-
   read.csv(file="disease_group_databases.txt", header=TRUE, stringsAsFactors=FALSE)
@@ -188,7 +188,13 @@ notes$fi <- "File information"
 if (verbose) print(d$fi)
 i.case <- d$fi$disease_group[d$fi$case==1]
 i.control <- d$fi$disease_group[d$fi$case==0]
-if (verbose) start_time <- display_elapsed_time()
+
+d$vi <-
+  read.csv(file="i2b2_variables_databases.txt", header=TRUE, stringsAsFactors=FALSE)
+if (verbose) {
+  print(d$vi)
+  start_time <- display_elapsed_time()
+}
 ```
 
 Now design the appropriate sql queries.
@@ -216,16 +222,12 @@ sql[["patient_diagnoses"]] <-
    where p.DX_TYPE='09'"
 
 sql[["observation_fact"]] <-
-  "select *
-   from observation_fact"
-
-# Add distinct patient_num, concept_cd
-#   and where concept_cd LIKE 'ICD9:%'
-# once I am comfortable with this.
-
-sql[["concept_dimension"]] <-
-  "select *
-   from concept_dimension"
+  "select o.patient_num, o.concept_cd c.name_char 
+   from observation_fact o
+   inner join (concept_dimension c
+     where concept_path LIKE '\\i2b2\\Procorders%' OR
+       concept_path LIKE '\\i2b2\\Procedures%')
+   ON o.concept_cd=c.concept_cd"
 
 if (verbose) start_time <- display_elapsed_time()
 ```
@@ -271,15 +273,20 @@ if (verbose) {
 ```
 
 Next, you need to write the patient numbers to the same
-location as the PCORnet CDM database.
+location as the PCORnet CDM database and to the other 
+i2b2 variables databases.
 
 ```{r write_distinct_patient_numbers}
 names(d$st) <- toupper(names(d$st))
 dbWriteTable(cdm, "DP", d$st, overwrite=TRUE)
-if (verbose) {
-  dbListTables(cdm)
-  start_time <- display_elapsed_time()
+if (verbose) dbListTables(cdm)
+
+for (f in d$vi$file_location) {
+  variables_conn <- dbConnect(SQLite(), dbname=f)
+  dbWriteTable(variables_conn, "DP", d$st, overwrite=TRUE)
+  if (verbose) dbListTables(variables_conn)
 }
+if (verbose) start_time <- display_elapsed_time()
 ```
 
 Now pull out all the diagnosis codes associated with our patient list.
@@ -300,40 +307,44 @@ if (verbose) {
   print_random_rows(d$di)
   start_time <- display_elapsed_time()
 }
+
 ```
 
 In addition to CDM data, you can get lots of fun stuff
 from i2b2 queries.
 
-You should create procedures.db using pretty much the same
-methods that created the patient lists, except that you add
-in information from the procedures table. I'll elaborate 
-more here when I get a chance.
-
+Two that I have so far are imaging variables, and procedure codes.
 
 ```{r now get all procedure codes, echo=TRUE}
 
-# eventually, I want to use multiple file names here
-# for procedures, orders, icd9, icd10, etc. This
-# would mean putting the file names in a csv file.
+of <- NULL
+cd <- NULL
 
-procedures_db <- "../../heron/procedures.db"
-procedures_conn <- dbConnect(SQLite(), dbname=procedures_db)
+sql[["observation_fact"]] <-
+  "select distinct patient_num, GP, concept_cd, name_char 
+   from observation_fact
+   inner join (
+     select concept_cd AS ccd, name_char
+     from concept_dimension
+     where
+       concept_path LIKE '\\i2b2\\Procorders%' OR
+       concept_path LIKE '\\i2b2\\Procedures%'
+   )
+   ON concept_cd=ccd
+   inner join (
+     select PATIENT_NUM AS pn, GP
+     from DP
+   )
+   on patient_num = pn"
 
-d$pt <- dbListTables(procedures_conn)
-notes$pt <- "List of table names from procedures_db"
-if (verbose) print(d$pt)
-
-d$of <- dbGetQuery(procedures_conn, sql[["observation_fact"]])
-notes$of <- "Data from observation_fact table"
-
-d$cd <- dbGetQuery(procedures_conn, sql[["concept_dimension"]])
-notes$of <- "Data from concept_dimension table"
-
-if (verbose) {
-  print_random_rows(d$of)
-  print_random_rows(d$cd)
-  start_time <- display_elapsed_time()
+for (f in d$vi$file_location) {
+  variables_conn <- dbConnect(SQLite(), dbname=f)
+  of[[f]] <- dbGetQuery(variables_conn, sql[["observation_fact"]])
+  if (verbose) {
+    print(f)
+    print_random_rows(of[[f]])
+    start_time <- display_elapsed_time()
+  }
 }
 ```
 
