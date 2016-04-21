@@ -176,14 +176,14 @@ if (verbose) {
 
 This section reads in the i2b2 files.
 
-The file, use-this-database.txt, should have one entry for each file.
+The file, disease_group_databases.txt, should have one entry for each file.
 It also has information about which site the data 
 comes from and which disease group the patients come from.
 
 ```{r setup_sql_queries, echo=TRUE}
 setwd("/d1/home/ssimon/bc_qa/bc_case_control")
 d$fi <-
-  read.csv(file="use_this_database.txt", header=TRUE, stringsAsFactors=FALSE)
+  read.csv(file="disease_group_databases.txt", header=TRUE, stringsAsFactors=FALSE)
 notes$fi <- "File information"
 if (verbose) print(d$fi)
 i.case <- d$fi$disease_group[d$fi$case==1]
@@ -215,6 +215,18 @@ sql[["patient_diagnoses"]] <-
    on p.PATID = j.PATIENT_NUM
    where p.DX_TYPE='09'"
 
+sql[["observation_fact"]] <-
+  "select *
+   from observation_fact"
+
+# Add distinct patient_num, concept_cd
+#   and where concept_cd LIKE 'ICD9:%'
+# once I am comfortable with this.
+
+sql[["concept_dimension"]] <-
+  "select *
+   from concept_dimension"
+
 if (verbose) start_time <- display_elapsed_time()
 ```
 
@@ -227,7 +239,7 @@ dp <- NULL
 file_names <- d$fi$file_location
 group_names <- d$fi$disease_group
 if (any(group_names!=sort(group_names))) {
-  cat("\\n\nWarning: Data should be sorted by disease group")
+  cat("\n\nWarning: Data should be sorted by disease group")
 }
 for (i in 1:length(file_names)) {
   file_name <- file_names[i]
@@ -286,6 +298,41 @@ notes$di <- "SQL query from pcornet.cdm"
 if (verbose) {
   print(dim(d$di))
   print_random_rows(d$di)
+  start_time <- display_elapsed_time()
+}
+```
+
+In addition to CDM data, you can get lots of fun stuff
+from i2b2 queries.
+
+You should create procedures.db using pretty much the same
+methods that created the patient lists, except that you add
+in information from the procedures table. I'll elaborate 
+more here when I get a chance.
+
+
+```{r now get all procedure codes, echo=TRUE}
+
+# eventually, I want to use multiple file names here
+# for procedures, orders, icd9, icd10, etc. This
+# would mean putting the file names in a csv file.
+
+procedures_db <- "../../heron/procedures.db"
+procedures_conn <- dbConnect(SQLite(), dbname=procedures_db)
+
+d$pt <- dbListTables(procedures_conn)
+notes$pt <- "List of table names from procedures_db"
+if (verbose) print(d$pt)
+
+d$of <- dbGetQuery(procedures_conn, sql[["observation_fact"]])
+notes$of <- "Data from observation_fact table"
+
+d$cd <- dbGetQuery(procedures_conn, sql[["concept_dimension"]])
+notes$of <- "Data from concept_dimension table"
+
+if (verbose) {
+  print_random_rows(d$of)
+  print_random_rows(d$cd)
   start_time <- display_elapsed_time()
 }
 ```
@@ -353,11 +400,11 @@ lb <- d$lb
 st <- d$st
 save(
   lb, st, i.case, i.control,
-  list_random_rows, print_random_rows
+  list_random_rows, print_random_rows,
   file="case_control_data.RData")
 if (verbose) {
   start_time <- display_elapsed_time()
   cat("\n\nProgram ended at")
   print(Sys.time())
-
+}
 ```
