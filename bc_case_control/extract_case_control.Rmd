@@ -55,14 +55,31 @@ with the assistance of `r doc$assistants`.
 
 
 ```{r load_required_libraries, echo=TRUE}
-library("ggplot2")
-library("reshape")
 library("ROracle")
 library("RSQLite")
 save.image("backup.RData")
 rm(list=ls())
-cat("\n\nQuality check: Are we in the correct directory?")
-getwd()
+verbose=TRUE # if TRUE, print various intermediate values and quality checks.
+if (verbose) {
+  cat("\n\nQuality check: Are we in the correct directory?")
+  print(getwd())
+}
+# Don't wrap so much
+options(width=90)
+start_time <- Sys.time()
+if (verbose) {
+  cat("\n\nProgram started at ")
+  print(start_time)
+}
+display_elapsed_time <- function() {
+  cat("\n\nThis code chunk required ")
+  print(round(Sys.time()-start_time))
+  return(Sys.time())
+}
+if (verbose) {
+  cat("\n\nQuality check: Are we in the correct directory?")
+  print(getwd())
+}
 # Don't wrap so much
 options(width=90)
 ```
@@ -83,9 +100,10 @@ align_icd9_codes <- function(dx_old) {
   cat(".\n")
   return(dx_new)
 }
-cat("\nSimple test.\n")
-align_icd9_codes(c("0014","V28.9","XX"))
-
+if (verbose) {
+  cat("\nSimple test.\n")
+  align_icd9_codes(c("0014","V28.9","XX"))
+}
 list_random_rows <- function(df,n=5) {
   # select and return first five rows, last five rows, and
   # a few random rows from a data frame.
@@ -103,10 +121,14 @@ list_random_rows <- function(df,n=5) {
   new_list[[bot_name]] <- tail(df,n)
   return(new_list)
 }
-cat("\nSimple test.\n")
-list_random_rows(1:100)
-list_random_rows(c(LETTERS,letters))
-
+print_random_rows <- function(df, n=5) {
+  print(list_random_rows(df, n))
+}
+if (verbose) {
+  cat("\nSimple test.\n")
+  print_random_rows(1:100)
+  print_random_rows(c(LETTERS,letters))
+}
 strip_specials <- function(x0) {
   # This function strips special characters from a character vector,
   # replacing most of them with an underscore.
@@ -118,8 +140,11 @@ strip_specials <- function(x0) {
   x0 <- gsub('&',"_", x0,fixed=TRUE)
   return(x0)
 }
-cat("\nSimple test.\n")
-strip_specials(c("test one","test-two","test&three"))
+if (verbose) {
+  cat("\nSimple test.\n")
+  strip_specials(c("test one","test-two","test&three"))
+  start_time <- display_elapsed_time()
+}
 ```
 
 Set up storage for temporary data frames and matrices (d)
@@ -128,6 +153,7 @@ and notes for my own reference.
 ```{r setup_temp}
 d <- NULL
 notes <- NULL
+if (verbose) start_time <- display_elapsed_time()
 ```
 
 This program also relies on data found in the PCORnet 
@@ -140,8 +166,11 @@ cdm_config <- read.csv('../cdm_config.csv', stringsAsFactors=FALSE)
 missing_config <- setdiff(c('account', 'password'), names(cdm_config))
 stopifnot(length(missing_config) == 0)
 cdm <- dbConnect(Oracle(), cdm_config$account, cdm_config$password, cdm_config$access)
-cat("Simple test")
-dbGetQuery(cdm, "select * from pcornet_cdm.diagnosis where rownum < 10")
+if (verbose) {
+  cat("Simple test")
+  dbGetQuery(cdm, "select * from pcornet_cdm.diagnosis where rownum < 10")
+  start_time <- display_elapsed_time()
+}
 ```
 
 
@@ -156,19 +185,37 @@ setwd("/d1/home/ssimon/bc_qa/bc_case_control")
 d$fi <-
   read.csv(file="use_this_database.txt", header=TRUE, stringsAsFactors=FALSE)
 notes$fi <- "File information"
-print(d$fi)
+if (verbose) print(d$fi)
 i.case <- d$fi$disease_group[d$fi$case==1]
 i.control <- d$fi$disease_group[d$fi$case==0]
+if (verbose) start_time <- display_elapsed_time()
 ```
 
 Now design the appropriate sql queries.
 
 ```{r design-sql-queries}
 sql <- NULL
+
 # get distinct patient numbers in each disease group.
 sql[["distinct_patients"]] <-
   "select distinct patient_num
    from observation_fact"
+
+sql[["matching_count"]] <- 
+  "select distinct j.PATIENT_NUM, j.GP, p.PATID
+   from pcornet_cdm.diagnosis P
+   JOIN DP j
+   on p.PATID = j.PATIENT_NUM
+   where p.DX_TYPE = '09'"
+
+sql[["patient_diagnoses"]] <-
+  "select distinct j.PATIENT_NUM, j.GP, p.DX
+   from pcornet_cdm.diagnosis P
+   join DP j
+   on p.PATID = j.PATIENT_NUM
+   where p.DX_TYPE='09'"
+
+if (verbose) start_time <- display_elapsed_time()
 ```
 
 Apply these queries to each group. The dimensions in dp
@@ -185,11 +232,16 @@ if (any(group_names!=sort(group_names))) {
 for (i in 1:length(file_names)) {
   file_name <- file_names[i]
   group_name <- group_names[i]
-  cat("\nRunning queries for ", group_name, " (", file_name,  ").\n", sep="")
+  if (verbose) {
+    cat("\nRunning queries for ", group_name, " (", file_name,  ").\n", sep="")
+  }
   conn_site <- dbConnect(SQLite(), dbname=file_name)
   dp[[group_name]] <- dbGetQuery(conn_site, sql["distinct_patients"])
 }
-sapply(dp,dim)
+if (verbose) {
+  sapply(dp,dim)
+  start_time <- display_elapsed_time()
+}
 ```
 
 Stack all the files and note which is in which group.
@@ -200,7 +252,10 @@ notes$st <- "Stack the individual patient numbers in a single data frame"
 for (k in 2:length(dp)) {
   d$st <- rbind(d$st, data.frame(gp=names(dp[k]), dp[[k]]))
 }
-list_random_rows(d$st)
+if (verbose) {
+  print_random_rows(d$st)
+  start_time <- display_elapsed_time()
+}
 ```
 
 Next, you need to write the patient numbers to the same
@@ -209,7 +264,10 @@ location as the PCORnet CDM database.
 ```{r write_distinct_patient_numbers}
 names(d$st) <- toupper(names(d$st))
 dbWriteTable(cdm, "DP", d$st, overwrite=TRUE)
-dbListTables(cdm)
+if (verbose) {
+  dbListTables(cdm)
+  start_time <- display_elapsed_time()
+}
 ```
 
 Now pull out all the diagnosis codes associated with our patient list.
@@ -219,27 +277,17 @@ disease groups, but who do not have any ICD9 codes.
 I need to investigate why.
 
 ```{r pull_out_diagnoses}
-sql[["matching_count"]] <- 
-  "select distinct j.PATIENT_NUM, j.GP, p.PATID
-   from pcornet_cdm.diagnosis P
-   JOIN DP j
-   on p.PATID = j.PATIENT_NUM
-   where p.DX_TYPE = '09'"
 mc <- dbGetQuery(cdm, sql[["matching_count"]])
 n1 <- table(mc$GP) 
 n2 <- table(d$st$GP)
-print(n1)
-print(n2)
-sql[["patient_diagnoses"]] <-
-  "select distinct j.PATIENT_NUM, j.GP, p.DX
-   from pcornet_cdm.diagnosis P
-   join DP j
-   on p.PATID = j.PATIENT_NUM
-   where p.DX_TYPE='09'"
+if (verbose) print(c(n1,n2))
 d$di <- dbGetQuery(cdm, sql[["patient_diagnoses"]])
 notes$di <- "SQL query from pcornet.cdm"
-dim(d$di)
-list_random_rows(d$di)
+if (verbose) {
+  print(dim(d$di))
+  print_random_rows(d$di)
+  start_time <- display_elapsed_time()
+}
 ```
 
 Now, let's allow ourselves the ability to screen out
@@ -258,12 +306,15 @@ notes$tb <- "Frequency counts for DX codes among the cases."
 # codes which occur only among the controls.
 d$co <- data.frame(DX=names(d$tb), dx_count=as.numeric(d$tb))
 notes$co <- "Convert table into data frame"
-list_random_rows(d$co)
 d$cd <- merge(d$di, d$co)
 notes$cd <- "Merge frequency counts in with original diagnoses."
-list_random_rows(d$cd)
-length(unique(d$di$DX))
-length(unique(d$cd$DX))
+if (verbose) {
+  print_random_rows(d$co)
+  print_random_rows(d$cd)
+  print(length(unique(d$di$DX)))
+  print(length(unique(d$cd$DX)))
+  start_time <- display_elapsed_time()
+}
 ```
 
 While you can get the nice labels for icd9 codes from i2b2, it is easier
@@ -278,17 +329,20 @@ d$il <- read.csv(icd9_file, header=TRUE, as.is=TRUE, row.names=NULL)
 notes$il <- "icd9 codes and labels"
 # Double check to make sure nothing was converted to factors.
 d$il$nice_label <- paste(strip_specials(d$il$short_label),d$il$DX,sep="_")
-list_random_rows(d$il$nice_label)
+if (verbose) print_random_rows(d$il$nice_label)
 # Here are diagnosis codes in cd, not found in il.
-list_random_rows(sort(setdiff(d$cd$DX,d$il$DX)))
+if (verbose) print_random_rows(sort(setdiff(d$cd$DX,d$il$DX)))
 d$il$dx_new <- align_icd9_codes(d$il$diagnosis_code)
 d$cd$dx_new <- align_icd9_codes(d$cd$DX)
 # Here are diagnosis codes in cd, not found in il.
-sort(setdiff(d$cd$dx_new,d$il$dx_new))
+if (verbose) print(sort(setdiff(d$cd$dx_new,d$il$dx_new)))
 d$il$dx_label <- paste(strip_specials(d$il$short_label), d$il$dx_new, sep="_")
 d$lb <- merge(d$cd, d$il[, c("dx_new","dx_label")], all.x=TRUE, all.y=FALSE)
 notes$lb <- "DX codes and nice labels"
-list_random_rows(d$lb)
+if (verbose) {
+  print_random_rows(d$lb)
+  start_time <- display_elapsed_time()
+}
 ```
 
 Now save everything for later use.
@@ -297,5 +351,13 @@ Now save everything for later use.
 save.image(file="extract_case_control.RData")
 lb <- d$lb
 st <- d$st
-save(lb, st, i.case, i.control, list_random_rows, file="case_control_data.RData")
+save(
+  lb, st, i.case, i.control,
+  list_random_rows, print_random_rows
+  file="case_control_data.RData")
+if (verbose) {
+  start_time <- display_elapsed_time()
+  cat("\n\nProgram ended at")
+  print(Sys.time())
+
 ```
