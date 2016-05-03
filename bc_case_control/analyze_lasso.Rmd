@@ -1,4 +1,7 @@
 ```{r create_basic_documentation, echo=TRUE}
+# Before anything else, set global options
+opts_chunk$set(echo=TRUE, cache=TRUE, error=TRUE)
+
 doc <- NULL
 doc$run.date <- date()
 doc$version <- system(' git rev-parse HEAD', intern=TRUE)
@@ -22,7 +25,8 @@ A summary of how the data were originally collected appears in
 extract_case_control.Rmd.
 
 A companion program, extract_case_control, produces the data set
-used by this program.
+used by this program. The data files from this program are used
+by display_lasso.Rmd.
 
 This program was run on `r doc$date` using version `r doc$version`.
 The original author is `r doc$author`. `r doc$maintainer`
@@ -33,106 +37,130 @@ with the assistance of `r doc$assistants`.
 ```{r load_required_libraries, echo=TRUE}
 save.image("backup.RData")
 rm(list=ls())
+
 cat("\n\nQuality check: Are we in the correct directory?")
 getwd()
+
 # Don't wrap so much
 options(width=90)
+
 # load the required libraries
 library("reshape2")
 library("glmnet")
+library("knitr")
 library("Matrix")
+
 # Load the case-control data sets
 load("case_control_data.RData")
+
+# Document when this program started.
+
+verbose <- TRUE
 start_time <- Sys.time()
-print(start_time)
-display_elapsed_time <- function() {
-  cat("\n\nThis code chunk required ")
-  print(round(Sys.time()-start_time))
-  return(Sys.time())
+if (verbose) {
+  cat("\n\nProgram started at ")
+  print(start_time)
 }
+
+# Set up timer
+
+knit_hooks$set(timer = function(before, options, envir) {
+    if (before) {
+      current_time <<- Sys.time()
+      m <- paste("Chunk", options$label, "started at", as.character(current_time), ".  \n")
+      return(m)
+    } else {
+      elapsed_time <- Sys.time() - current_time
+      elapsed_message <- paste(round(elapsed_time, 1), attr(elapsed_time, "units"))
+      m <- paste("Chunk", options$label, "used", elapsed_message)
+      message(m)
+      if (exists("timing_log")) {
+        timing_log <<- c(timing_log, m)
+      } else {
+          timing_log <<- m
+      }
+    write.table(timing_log, file="timing_log.txt", row.names=FALSE, col.names=FALSE)  
+    return(m)
+    }
+  }
+) 
+
+
 ```
-
-Here's a summary of how the data was selected. We
-identified four disease groups in Heron (KUMC's i2b2).
-
-Breast cancer (as identified in the SEER Site Summary),
-
-All other cancers (again from SEER),
-
-Diabetes (ICD9 250 or ICD10 E08-E13), and
-
-Ischemic heart disease (ICD9 410-414.99 or ICD10 I20-I25).
-
-All males were excluded.
-
-The first group represents cases and the other three
-represent different control groups. Patients who qualified
-for two or more of the above groups were excluded from the
-analysis.
-
-There were no date restrictions. In future versions, we may want
-to consider some date restrictions and try matching subjects on
-age.
-
-We then merged that data with the PCORNET CDM to get 
-any ICD9 codes associated with each patient.
 
 Below, we include only those codes that appear reasonably often
 among the cases.
 
-```{r include only the popular icd9 codes, echo=TRUE}
+```{r include only the popular icd9 codes, timer=TRUE}
 cutoff <- 100
-n1 <- length(unique(lb$DX))
+n1 <- length(unique(lb$dx_label))
 lb <- lb[lb$dx_count >= cutoff, ]
-n2 <- length(unique(lb$DX))
-start_time <- display_elapsed_time()
+n2 <- length(unique(lb$dx_label))
 ```
 
 The initial data set has `r n1` unique ICD9 codes. After eliminating
 the codes that occur less than `r cutoff` times among the cases,
 there are `r n2` unique ICD9 codes left.
 
-```{r experiment_with_sparse_matrices, echo=TRUE}
-start_time <- display_elapsed_time()
+```{r experiment_with_sparse_matrices, eval=FALSE}
+# This is a work in progress. If the number of variables gets
+# very large, you may need to switch from the standard
+# matrix storage to sparse matrices.
 i <- i.control[1]
-cc1 <- lb$GP %in% c("breastcancer", i)
+cc1 <- lb$gp %in% c("breastcancer", i)
 tst <- lb[cc1, ]
-i <- factor(tst$PATIENT_NUM)
+i <- factor(tst$patient_num)
 j <- factor(tst$dx_label)
 sm <- sparseMatrix(i=as.numeric(i), j=as.numeric(j), x=1)
 sm[1:90,1:2]
 dim(sm)
-start_time <- display_elapsed_time()
-cc1 <- lb$GP %in% c("breastcancer", i)
-pc1 <- dcast(lb[cc1, ],PATIENT_NUM + GP ~ dx_label,length)
+cc1 <- lb$gp %in% c("breastcancer", i)
+pc1 <- dcast(lb[cc1, ],patient_num + gp ~ dx_label,length)
 pc1[1:90,3:4]
 dim(pc1)
-start_time <- display_elapsed_time()
 ```
 
-```{r store_lasso_models, echo=TRUE}
+Now, run a lasso/elastic net model for each control group.
+
+```{r store_lasso_models, timer=TRUE}
 all_models <- NULL
 all_cv <- NULL
-for (i in i.control) {
-  cc1 <- lb$GP %in% c("breastcancer", i)
-  pc1 <- dcast(lb[cc1, ],PATIENT_NUM + GP ~ dx_label,length)
+for (ic in i.control) {
+  cc1 <- lb$gp %in% c("breastcancer", ic)
+  pc1 <- dcast(lb[cc1, ],patient_num + gp ~ dx_label,length)
   en <- glmnet(
     x=as.matrix(pc1[,-(1:2)]), alpha=0.5, 
-    y=as.numeric(pc1$GP=="breastcancer"),
+    standardize=FALSE, lower.limits=0, 
+    y=as.numeric(pc1$gp=="breastcancer"),
     family="binomial")
-  all_models[[i]] <- en
+  all_models[[ic]] <- en
   cv <- cv.glmnet(
-    x=as.matrix(pc1[,-(1:2)]), alpha=0.5, 
-    y=as.numeric(pc1$GP=="breastcancer"),
+    x=as.matrix(pc1[,-(1:2)]), alpha=0.5,
+    standardize=FALSE, lower.limits=0, 
+    y=as.numeric(pc1$gp=="breastcancer"),
     lambda=en$lambda,
     family="binomial",
     type.measure="class")
-  all_cv[[i]] <- cv
+  all_cv[[ic]] <- cv
 }
-start_time <- display_elapsed_time()
 ```
 
-```{r save-everything, echo=TRUE}
+Store everything for later use.
+
+```{r save-everything, timer=TRUE}
 save.image(file="analyze_lasso.RData")
-start_time <- display_elapsed_time()
+```
+
+Well done. Here is how long everything took.
+
+```{r display_timing_log}
+if (verbose) {
+  cat("Program began at ")
+  cat(as.character(start_time))
+  cat("\nProgram ended at ")
+  cat(as.character(Sys.time()))
+  cat("\n\n")
+  tm <- read.table("timing_log.txt")$V1
+  cat(paste(tm, collapse="\n"))
+}
 ```

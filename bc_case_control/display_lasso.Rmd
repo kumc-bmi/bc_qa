@@ -1,4 +1,7 @@
 ```{r create_basic_documentation, echo=TRUE}
+# Before anything else, set global options
+opts_chunk$set(echo=TRUE, cache=TRUE, error=TRUE)
+
 doc <- NULL
 doc$run.date <- date()
 doc$version <- system(' git rev-parse HEAD', intern=TRUE)
@@ -29,30 +32,56 @@ with the assistance of `r doc$assistants`.
 
 
 ```{r load_required_libraries, echo=TRUE}
+
 save.image("backup.RData")
 rm(list=ls())
+
 verbose=TRUE # if TRUE, print various intermediate values and quality checks.
+
 if (verbose) {
-  cat("\n\nQuality check: Are we in the correct directory?")
+  cat("\n\nQuality check: Are we in the correct directory? ")
   print(getwd())
 }
+
 # Don't wrap so much
 options(width=90)
+
 # load the required libraries
 library("reshape2")
 library("glmnet")
 library("Matrix")
+
 # Load the case-control data sets
 load("analyze_lasso.RData")
+
+rm(timing_log)
 start_time <- Sys.time()
 if (verbose) {
   print(start_time)
 }
-display_elapsed_time <- function() {
-  cat("\n\nThis code chunk required ")
-  print(round(Sys.time()-start_time))
-  return(Sys.time())
-}
+
+# Set up timer
+
+knit_hooks$set(timer = function(before, options, envir) {
+    if (before) {
+      current_time <<- Sys.time()
+      m <- paste("Chunk", options$label, "started at", as.character(current_time), ".  \n")
+      return(m)
+    } else {
+      elapsed_time <- Sys.time() - current_time
+      elapsed_message <- paste(round(elapsed_time, 1), attr(elapsed_time, "units"))
+      m <- paste("Chunk", options$label, "used", elapsed_message)
+      message(m)
+      if (exists("timing_log")) {
+        timing_log <<- c(timing_log, m)
+      } else {
+          timing_log <<- m
+      }
+    write.table(timing_log, file="timing_log.txt", row.names=FALSE, col.names=FALSE)  
+    return(m)
+    }
+  }
+) 
 ```
 
 A summary of how the data were originally collected appears in 
@@ -62,7 +91,7 @@ The lasso and elastic net models have a tuning parameter, lambda,
 that controls the complexity of the model. You can pick the
 optimal value of lambda through cross validation.
 
-```{r find_optimal_lambda, echo=TRUE}
+```{r find_optimal_lambda, timer=TRUE}
 optima <- NULL
 for (ic in i.control) {
   cv <- all_cv[[ic]]
@@ -72,7 +101,6 @@ for (ic in i.control) {
   cat(".\n  Best value of lambda is", optima[[ic]]$lambda)
   cat(", which is step", optima[[ic]]$step,"\n")
 }
-if (verbose) start_time <- display_elapsed_time()
 ```
 
 Now that you have the optimum, pull out the coefficients for that
@@ -90,7 +118,7 @@ non-zero coefficients towards zero. Some are shrunk more than others
 but the process of shrinkage helps avoid overfitting.
 towards zero, which helps 
 
-```{r extract_coefficients_at_optimum}
+```{r extract_coefficients_at_optimum, timer=TRUE}
 coefficients <- NULL
 for (ic in i.control) {
   op <- optima[[ic]]
@@ -110,7 +138,6 @@ for (ic in i.control) {
     print(list_random_rows(coefficients[[ic]]))
   }
 }
-if (verbose) start_time <- display_elapsed_time()
 ```
 
 The following graphs show the development of the lasso/elastic
@@ -127,13 +154,16 @@ far away from the null value of 1.0) in the optimal
 model. Also notice that the positive terms enter earlier and
 end up at more extreme odds ratios than the negative terms.
 
-```{r draw_lasso_graphs, echo=TRUE}
+```{r draw_lasso_graphs, timer=TRUE}
+getwd()
+positive_only <- 1
+positive_and_negative <- 1:0
 bmp(file="dl%02d.bmp", width=800, height=800)
 for (ic in i.control) {
   en <- all_models[[ic]]
   op <- optima[[ic]]
   co <- coefficients[[ic]]
-  for (d in 1:0) {
+  for (d in positive_only) {
     direction_label <- c("Negative", "Positive")[d+1]
     yl <- c(0, 1)
     if (d==0) {yl <- c(-1, 0)}
@@ -159,40 +189,59 @@ for (ic in i.control) {
   }
 }
 dev.off()
-if (verbose) start_time <- display_elapsed_time()
 ```
 
 The consensus across the models will involve selecting
 coefficients that are consistent in direction across
 multiple control groups.
 
-```{r develop_consensus, echo=TRUE}
+```{r develop_consensus, timer=TRUE}
 average_beta <- rep(0,dim(coefficients[[1]])[1])
 cumulative_direction <- rep(0,dim(coefficients[[1]])[1])
 for (ic in i.control) {
   average_beta <- average_beta + coefficients[[ic]]$beta
-  cumulative_direction <- cumulative_direction + coefficients[[ic]]$direction
+  cumulative_direction <- cumulative_direction + 2*coefficients[[ic]]$direction - 1
 }
 average_beta <- average_beta / length(i.control)
-o <- rev(order(average_beta))
-or_consensus <- data.frame(dimnames(coefficients[[1]])[1])
-names(or_consensus) <- "lab"
+or_consensus <- data.frame(
+  lb=dimnames(coefficients[[1]])[[1]],
+  gm=round(exp(average_beta),1),
+  co=round(average_beta,2),
+  di=cumulative_direction)
 for (i in 1:length(i.control)) {
   or_consensus <- data.frame(or_consensus, coefficients[[i.control[i]]]$odds_ratio)
-  names(or_consensus)[i+1] <- i.control[i]
+  names(or_consensus)[i+4] <- i.control[i]
 }
+o <- rev(order(average_beta))
 or_consensus <- or_consensus[o, ]
-cat("\n\nOdds ratios for consensus positive coefficients")
-or_consensus[cumulative_direction[o]==3, ]
-cat("\n\nOdds ratios for consensus negative coefficients")
-or_consensus[cumulative_direction[o]==0, ]
-# cat("\n\nClose, but no cigar")
-# or_consensus[cumulative_direction[o] %in% c(0.5, 2.5), ]
-if (verbose) start_time <- display_elapsed_time()
+# Odds ratios for consensus positive coefficients.
+or_consensus[or_consensus$di==3, c("lb", "gm", "co")]
+# Individual odds ratios for consensus.
+or_consensus[or_consensus$di==3, i.control]
+# These variables did not make the cut. The column
+# for di indicates how many models (0, 1, or 2)
+# included this variable. It looks like a fair
+# number of promising variables did not make
+# the cut.
+or_consensus[or_consensus$di < 3, c("di", "lb")]
 ```
 
 
-```{r save-everything, echo=TRUE}
+```{r save-everything, timer=TRUE}
 save.image(file="display_lasso.RData")
-if (verbose) start_time <- display_elapsed_time()
 ```
+
+Well done. Here is how long everything took.
+
+```{r display_timing_log}
+if (verbose) {
+  cat("Program began at ")
+  cat(as.character(start_time))
+  cat("\nProgram ended at ")
+  cat(as.character(Sys.time()))
+  cat("\n\n")
+  tm <- read.table("timing_log.txt")$V1
+  cat(paste(tm, collapse="\n"))
+}
+```
+

@@ -1,4 +1,7 @@
 ```{r create_basic_documentation, echo=TRUE}
+# Before anything else, set global options
+opts_chunk$set(echo=TRUE, cache=TRUE, error=TRUE)
+
 doc <- NULL
 doc$run.date <- date()
 doc$version <- system(' git rev-parse HEAD', intern=TRUE)
@@ -23,13 +26,13 @@ an RData file.
 Here's a summary of how the data was selected. We
 identified four disease groups in Heron (KUMC's i2b2).
 
-Breast cancer (as identified in the SEER Site Summary),
+* Breast cancer (as identified in the SEER Site Summary),
 
-All other cancers (again from SEER),
+* All other cancers (again from SEER),
 
-Diabetes (ICD9 250 or ICD10 E08-E13), and
+* Diabetes (ICD9 250 or ICD10 E08-E13), and
 
-Ischemic heart disease (ICD9 410-414.99 or ICD10 I20-I25).
+* Ischemic heart disease (ICD9 410-414.99 or ICD10 I20-I25).
 
 All males were excluded.
 
@@ -54,12 +57,7 @@ is currently maintaining and enhancing this program
 with the assistance of `r doc$assistants`.
 
 
-```{r run_preliminaries, echo=TRUE}
-
-# load required libraries.
-
-library("ROracle")
-library("RSQLite")
+```{r run_preliminaries}
 
 # Backup image (just in case) and then start with a blank slate.
 
@@ -68,7 +66,21 @@ rm(list=ls())
 
 # Set verbose option, if TRUE, print various intermediate values and quality checks.
 
-verbose=TRUE
+verbose <- TRUE
+
+# Document when this program started.
+
+start_time <- Sys.time()
+if (verbose) {
+  cat("\n\nProgram started at ")
+  print(start_time)
+}
+
+# load required libraries.
+
+library("ROracle")
+library("RSQLite")
+library("knitr")
 
 # Check to see if you are in the proper subdirectory.
 
@@ -81,19 +93,7 @@ if (verbose) {
 
 options(width=90)
 
-# Document when the program started
-
-start_time <- Sys.time()
-if (verbose) {
-  cat("\n\nProgram started at ")
-  print(start_time)
-}
-```
-
-Here are the special functions needed for this program and brief
-tests of their functionality.
-
-```{r create_special_functions}
+# Here are some functions needed in this program.
 
 align_icd9_codes <- function(dx_old) {
   # This program strips out the dots and pads short
@@ -110,18 +110,30 @@ align_icd9_codes <- function(dx_old) {
 
 if (verbose) {
   cat("\nSimple test.\n")
-  align_icd9_codes(c("0014","V28.9","XX"))
+  tst <- align_icd9_codes(c("0014","V28.9","XX"))
+  cat("\nOutput:", tst)
 }
 
-display_elapsed_time <- function() {
-  # This program displays the elapsed time
-  # and returns the current time 
-  # so you can optionally reset the timer.
-  # There has to be a better way to do this.
-  cat("\n\nThis code chunk required ")
-  print(round(Sys.time()-start_time))
-  return(Sys.time())
-}
+knit_hooks$set(timer = function(before, options, envir) {
+    if (before) {
+      current_time <<- Sys.time()
+      m <- paste("Chunk", options$label, "started at", as.character(current_time), ".  \n")
+      return(m)
+    } else {
+      elapsed_time <- Sys.time() - current_time
+      elapsed_message <- paste(round(elapsed_time, 1), attr(elapsed_time, "units"))
+      m <- paste("Chunk", options$label, "used", elapsed_message)
+      message(m)
+      if (exists("timing_log")) {
+        timing_log <<- c(timing_log, m)
+      } else {
+          timing_log <<- m
+      }
+    write.table(timing_log, file="timing_log.txt", row.names=FALSE, col.names=FALSE)  
+    return(m)
+    }
+  }
+) 
 
 list_random_rows <- function(df,n=5) {
   # select and return first five rows, last five rows, and
@@ -134,10 +146,12 @@ list_random_rows <- function(df,n=5) {
   top_name <- paste("First",n,"rows",sep="_")
   mid_name <- paste("Random",n,"rows",sep="_")
   bot_name <- paste("Last",n,"rows",sep="_")
-  new_list[[top_name]] <- head(df,n)
-  selected_rows <- sample((n+1):(nrows-n),n)
+  selected_rows <- 1:n
+  new_list[[top_name]] <- df[selected_rows, ]
+  selected_rows <- sort(sample((n+1):(nrows-n),n))
   new_list[[mid_name]] <- df[selected_rows, ]
-  new_list[[bot_name]] <- tail(df,n)
+  selected_rows <- (nrows+1-n):nrows
+  new_list[[bot_name]] <- df[selected_rows, ]
   return(new_list)
 }
 
@@ -149,7 +163,7 @@ print_random_rows <- function(df, n=5) {
 if (verbose) {
   cat("\nSimple test.\n")
   print_random_rows(1:100)
-  print_random_rows(c(LETTERS,letters))
+  print_random_rows(data.frame(LETTERS, letters, stringsAsFactors=FALSE))
 }
 
 strip_specials <- function(x0) {
@@ -169,14 +183,12 @@ if (verbose) {
   strip_specials(c("test one","test-two","test&three"))
 }
 
-if (verbose) start_time <- display_elapsed_time()
-
 ```
 
 Set up storage for temporary data frames and matrices (d)
 and notes for my own reference.
 
-```{r setup_archive_storage}
+```{r setup_archive_storage, timer=TRUE}
 
 # This program uses many different data frames. Data frames associated
 # with different databases will typically start with the same letter.
@@ -191,12 +203,12 @@ and notes for my own reference.
 archive <- NULL
 notes <- NULL    # temporary--remove when transitioned to archive
 archive$header <- "This is a list of various intermediate files."
-if (verbose) start_time <- display_elapsed_time()
+
 ```
 
 Design the appropriate sql queries.
 
-```{r design_sql_queries}
+```{r design_sql_queries, timer=TRUE}
 
 # I need to put all my SQL queries in one spot so
 # I can model one SQL query after the previous one.
@@ -239,8 +251,6 @@ if (verbose) {
   }
 }
 
-if (verbose) start_time <- display_elapsed_time()
-
 ```
 
 This section reads in the patient ids for the various disease groups.
@@ -249,7 +259,7 @@ The file, disease_group_databases.txt, should have one entry for each file.
 It also has information about which site the data 
 comes from and which disease group the patients come from.
 
-```{r get_patient_database_names, echo=TRUE}
+```{r get_patient_database_names, timer=TRUE}
 
 di <- "/d1/home/ssimon/bc_qa/bc_case_control"
 setwd(di)
@@ -262,13 +272,11 @@ if (verbose) print(pa)
 i.case <- pa$disease_group[pa$case==1]
 i.control <- pa$disease_group[pa$case==0]
 
-if (verbose) start_time <- display_elapsed_time()
-
 ```
 
 Now loop across file names to get patient numbers for each group.
 
-```{r get_patient_numbers}
+```{r get_patient_numbers, timer=TRUE}
 
 # pb: distinct patient numbers in each disease group
 pb <- NULL
@@ -297,14 +305,12 @@ archive$pc_stacked_patient_numbers <- pc
 
 if (verbose) print_random_rows(pc)
 
-if (verbose) start_time <- display_elapsed_time()
-
 ```
 
 Next, you need to write the patient numbers to the same
 location as the PCORnet CDM database.
 
-```{r write_patient_numbers_to_cdm}
+```{r write_patient_numbers_to_cdm, timer=TRUE}
 
 # This code borrowed from cdm_fun.Rmd.
 
@@ -324,13 +330,11 @@ dbWriteTable(c_connect, "PC", pc, overwrite=TRUE)
 
 if (verbose) dbListTables(c_connect)
 
-if (verbose) start_time <- display_elapsed_time()
-
 ```
 
 Now pull out all the diagnosis codes associated with our patient list.
 
-```{r extract_cdm_data}
+```{r extract_cdm_data, timer=TRUE}
 
 # Note: there are patients who are in the various
 # disease groups, but who do not have any ICD9 codes.
@@ -343,14 +347,12 @@ if (verbose) {
 } 
 
 ca <- dbGetQuery(c_connect, sql[["patient_diagnoses"]])
-archive$SQL_query_from_pcornet_cdm <- ca
+archive$ca_SQL_query_from_pcornet_cdm <- ca
 
 if (verbose) {
   print(dim(ca))
   print_random_rows(ca)
 }
-
-if (verbose) start_time <- display_elapsed_time()
 
 ```
 
@@ -359,7 +361,7 @@ Now, let's allow ourselves the ability to screen out
 any diagnosis codes that occur infrequently among the
 cases.
 
-```{r find_common_dx}
+```{r find_common_dx, timer=TRUE}
 
 # Add a dx_count column that notes how often the DX appears
 # among the case groups. This will allow you to select only
@@ -386,8 +388,6 @@ if (verbose) {
   print(length(unique(cd$DX)))
 }
 
-if (verbose) start_time <- display_elapsed_time()
-
 ```
 
 While you can get the nice labels for icd9 codes from i2b2, it is easier
@@ -395,7 +395,7 @@ just to pull them from another source. I chose labels from the
 [https://www.cms.gov/medicare/coding/ICD9providerdiagnosticcodes/codes.html CMS]
 site. 
 
-```{r get-nice-names, echo=TRUE}
+```{r get_nice_names, timer=TRUE}
 
 fn <- "icd9_labels.csv"
 ce <- read.csv(fn, header=TRUE, as.is=TRUE, row.names=NULL)
@@ -404,22 +404,22 @@ archive$ce_icd9_codes_and_labels <- ce
 ce$nice_label <- paste(strip_specials(ce$short_label),ce$DX,sep="_")
 if (verbose) print_random_rows(ce$nice_label)
 
-# Here are diagnosis codes in cd, not found in il.
-
-if (verbose) print_random_rows(sort(setdiff(cd$DX,ce$DX)))
 
 cd$dx_new <- align_icd9_codes(cd$DX)
 ce$dx_new <- align_icd9_codes(ce$diagnosis_code)
 
-# Here are diagnosis codes in cd, not found in il.
-if (verbose) print(sort(setdiff(cd$dx_new,ce$dx_new)))
-ce$dx_label <- paste(strip_specials(ce$short_label), ce$dx_new, sep="_")
-d$lb <- merge(cd, ce[, c("dx_new","dx_label")], all.x=TRUE, all.y=FALSE)
-notes$lb <- "DX codes and nice labels"
+# Here are diagnosis codes in cd, not found in ce.
 if (verbose) {
-  print_random_rows(d$lb)
-  start_time <- display_elapsed_time()
+  print_random_rows(sort(setdiff(cd$DX,ce$DX)))
+  print_random_rows(sort(setdiff(cd$dx_new,ce$dx_new)))
 }
+
+ce$dx_label <- paste(strip_specials(ce$short_label), ce$dx_new, sep="_")
+cf <- merge(cd, ce[, c("dx_new","dx_label")], all.x=TRUE, all.y=FALSE)
+archive$cf_dx_codes_and_nice_labels <- cf
+
+if (verbose) print_random_rows(cf)
+
 ```
 
 In addition to CDM data, you can get lots of fun stuff
@@ -427,15 +427,17 @@ from i2b2 queries.
 
 Two that I have so far are imaging variables, and procedure codes.
 
-```{r now get i2b2 codes, echo=TRUE}
+```{r now_get_i2b2_codes, timer=TRUE}
 
+fn <- "i2b2_variables_databases.txt"
+ia <- read.csv(file=fn, header=TRUE, stringsAsFactors=FALSE)
+archive$ia_i2b2_file_information <- ia
+if (verbose) print(ia)
 
-d$ia <-
-  read.csv(file="i2b2_variables_databases.txt", header=TRUE, stringsAsFactors=FALSE)
-notes$ia <- "i2b2 file information"
-if (verbose) {
-  print(d$ia)
-  start_time <- display_elapsed_time()
+for (f in ia$file_location) {
+  variables_conn <- dbConnect(SQLite(), dbname=f)
+  dbWriteTable(variables_conn, "PC", pc, overwrite=TRUE)
+  if (verbose) dbListTables(variables_conn)
 }
 
 of <- NULL
@@ -457,68 +459,84 @@ sql[["observation_fact"]] <-
    )
    on patient_num = pn"
 
-for (f in d$ia$file_location) {
+for (f in ia$file_location) {
   variables_conn <- dbConnect(SQLite(), dbname=f)
   of[[f]] <- dbGetQuery(variables_conn, sql[["observation_fact"]])
-  if (verbose) {
-    print(f)
-    print_random_rows(of[[f]])
-  }
 }
+
 # Since we are importing multiple i2b2 files, we need to stack these
 # into a single data frame.
-d$ib <- of[[1]]
-notes$ib <- "Stacked data from i2b2"
+
+ib <- of[[1]]
 for (i in 2:length(of)) {
-  d$ib <- rbind(d$ib, of[[i]])
+  ib <- rbind(ib, of[[i]])
 }
+
+archive$ib_stacked_data <- ib
 if (verbose) {
-  print(dim(d$ib))
-  print_random_rows(d$ib)
+  print(dim(ib))
+  print_random_rows(ib)
 }
+
 # Add a concept_count column that notes how often concept_cd appears
 # among the case groups. This will allow you to select only
 # the "popular" concept_cd codes.
-d$it <- table(d$ib$concept_cd[d$ib$GP==i.case])
-notes$tb <- "Frequency counts for concept_cd among the cases."
+
+ic <- table(ib$concept_cd[ib$GP==i.case])
+archive$ic_frequency_counts_among_the_cases <- ic
+
 # Note: as.numeric is needed here because you need to strip out
 # the names before merging.
+
 # Also note that this merge statement will remove any diagnosis
 # codes which occur only among the controls.
-d$id <- data.frame(concept_cd=names(d$it), dx_count=as.numeric(d$it))
-notes$id <- "Convert table into data frame"
-d$im <- merge(d$ib, d$id)
-notes$im <- "Merge frequency counts in with original diagnoses."
-if (verbose) {
-  print_random_rows(d$id)
-  print_random_rows(d$im)
-  print(length(unique(d$id$concept_cd)))
-  print(length(unique(d$im$concept_cd)))
-  start_time <- display_elapsed_time()
-}
 
-for (f in d$ia$file_location) {
-  variables_conn <- dbConnect(SQLite(), dbname=f)
-  dbWriteTable(variables_conn, "PC", pc, overwrite=TRUE)
-  if (verbose) dbListTables(variables_conn)
-}
-if (verbose) start_time <- display_elapsed_time()
+id <- data.frame(concept_cd=names(ic), dx_count=as.numeric(ic))
+archive$id_convert_table_to_data_frame <- id
+if (verbose) print_random_rows(id)
+
+ie <- merge(ib, id)
+ie$name_char <- strip_specials(ie$name_char)
+ie$dx_label <- paste(ie$name_char, ie$concept_cd, sep="_")
+archive$ie_merge_frequency_counts <- ie
+if (verbose) print_random_rows(ie)
+
+i_names <- c("patient_num", "GP", "dx_count", "dx_label")
+c_names <- c("PATIENT_NUM", "GP", "dx_count", "dx_label")
+iz <- ie[, i_names]
+cz <- cf[, c_names]
+
+names(iz) <- tolower(names(iz))
+names(cz) <- tolower(names(cz))
+                
 
 ```
 
 Now save everything for later use.
 
-```{r save-everything, echo=TRUE}
-save.image(file="extract_case_control.RData")
-lb <- d$lb
+```{r save-everything, timer=TRUE}
+# extact_case_control.RData stores everything, including intermediate files.
+# case_control_data.RData stores only the important stuff.
+
+lb <- rbind(cz, iz)
 st <- pc
+save.image(file="extract_case_control.RData")
 save(
   lb, st, i.case, i.control,
   list_random_rows, print_random_rows,
   file="case_control_data.RData")
+```
+
+Well done. Here is how long everything took.
+
+```{r display_timing_log}
 if (verbose) {
-  start_time <- display_elapsed_time()
-  cat("\n\nProgram ended at")
-  print(Sys.time())
+  cat("Program began at ")
+  cat(as.character(start_time))
+  cat("\nProgram ended at ")
+  cat(as.character(Sys.time()))
+  cat("\n\n")
+  tm <- read.table("timing_log.txt")$V1
+  cat(paste(tm, collapse="\n"))
 }
 ```
