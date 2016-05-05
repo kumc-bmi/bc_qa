@@ -109,10 +109,15 @@ there are `r n2` unique ICD9 codes left.
 i <- i.control[1]
 cc1 <- lb$gp %in% c("breastcancer", i)
 tst <- lb[cc1, ]
-i <- factor(tst$patient_num)
-j <- factor(tst$dx_label)
-sm <- sparseMatrix(i=as.numeric(i), j=as.numeric(j), x=1)
-sm[1:90,1:2]
+irow <- factor(tst$patient_num)
+jcol <- factor(tst$dx_label)
+df <- data.frame(row=as.numeric(irow), PATIENT_NUM=as.character(irow))
+df <- df[!duplicated(df$row), ]
+gd <- merge(df, st, all=FALSE)
+sm <- sparseMatrix(i=as.numeric(irow), j=as.numeric(jcol), x=1)
+sm[1:15,1:5]
+sn <- cBind(as.numeric(gd$GP=="breastcancer"),sm)
+sn[1:15,1:5]
 dim(sm)
 cc1 <- lb$gp %in% c("breastcancer", i)
 pc1 <- dcast(lb[cc1, ],patient_num + gp ~ dx_label,length)
