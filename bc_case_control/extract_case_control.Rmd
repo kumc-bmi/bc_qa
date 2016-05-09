@@ -114,6 +114,23 @@ if (verbose) {
   cat("\nOutput:", tst)
 }
 
+count_unique_patients <- function(df1, df2) {
+  # Calculate the number of unique patient_num (PATIENT_NUM)
+  # values in each gp (GP) in df1 and computes the proportion
+  # relative to those found in df2.
+  # This function will fail without proper warning if the data
+  # frames do not have the expected variables in them.
+ tmp1 <- df1
+ names(tmp1) <- tolower(names(tmp1))
+ tb1 <- table(tmp1$gp[!duplicated(tmp1$patient_num)])
+ tmp2 <- df2
+ names(tmp2) <- tolower(names(tmp2))
+ tb2 <- table(tmp2$gp[!duplicated(tmp2$patient_num)])
+ pct <- round(100*tb1/tb2)
+ counts <- paste(names(tb1), ": ", tb1, "/", tb2, " (", pct, "%)\n", sep="")
+ cat(counts, sep="")
+}
+
 knit_hooks$set(timer = function(before, options, envir) {
     if (before) {
       current_time <<- Sys.time()
@@ -303,8 +320,9 @@ for (k in 2:length(pb)) {
 }
 archive$pc_stacked_patient_numbers <- pc
 
-if (verbose) print_random_rows(pc)
-
+if (verbose) {
+  print_random_rows(pc)
+}
 ```
 
 Next, you need to write the patient numbers to the same
@@ -342,18 +360,13 @@ Now pull out all the diagnosis codes associated with our patient list.
 
 if (verbose) {
   mc <- dbGetQuery(c_connect, sql[["matching_count"]])
+  count_unique_patients(mc, pc)
   print(table(mc$GP))
   print(table(pc$GP))
 } 
 
 ca <- dbGetQuery(c_connect, sql[["patient_diagnoses"]])
 archive$ca_SQL_query_from_pcornet_cdm <- ca
-
-if (verbose) {
-  print(dim(ca))
-  print_random_rows(ca)
-}
-
 ```
 
 
@@ -453,7 +466,7 @@ sql[["observation_fact"]] <-
        concept_path LIKE '\\i2b2\\Procedures%'
    )
    on concept_cd=ccd
-   inner join (
+   outer join (
      select PATIENT_NUM AS pn, GP
      from PC
    )
@@ -476,6 +489,7 @@ archive$ib_stacked_data <- ib
 if (verbose) {
   print(dim(ib))
   print_random_rows(ib)
+  count_unique_patients(ib, pc)
 }
 
 # Add a concept_count column that notes how often concept_cd appears
@@ -509,6 +523,17 @@ cz <- cf[, c_names]
 names(iz) <- tolower(names(iz))
 names(cz) <- tolower(names(cz))
                 
+lb <- rbind(cz, iz)
+st <- pc
+
+if (verbose) {
+  cat("How many patients in lb come from cz?\n")
+  count_unique_patients(cz, lb)
+  cat("How many patients in lb come from iz?\n")
+  count_unique_patients(iz, lb)
+  cat("How many patients are in lb versus pc?\n")
+  count_unique_patients(lb, pc)
+}
 
 ```
 
@@ -518,8 +543,6 @@ Now save everything for later use.
 # extact_case_control.RData stores everything, including intermediate files.
 # case_control_data.RData stores only the important stuff.
 
-lb <- rbind(cz, iz)
-st <- pc
 save.image(file="extract_case_control.RData")
 save(
   lb, st, i.case, i.control,
