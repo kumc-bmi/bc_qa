@@ -38,9 +38,6 @@ with the assistance of `r doc$assistants`.
 save.image("backup.RData")
 rm(list=ls())
 
-cat("\n\nQuality check: Are we in the correct directory?")
-getwd()
-
 # Don't wrap so much
 options(width=90)
 
@@ -60,11 +57,14 @@ start_time <- Sys.time()
 if (verbose) {
   cat("\n\nProgram started at ")
   print(start_time)
+  cat("\n\nQuality check: Are we in the correct directory? ")
+  print(getwd())
 }
 
 # Set up timer
 
-knit_hooks$set(timer = function(before, options, envir) {
+knit_hooks$set(timer = 
+  function(before, options, envir) {
     if (before) {
       current_time <<- Sys.time()
       m <- paste("Chunk", options$label, "started at", as.character(current_time), ".  \n")
@@ -91,38 +91,53 @@ knit_hooks$set(timer = function(before, options, envir) {
 Below, we include only those codes that appear reasonably often
 among the cases.
 
-```{r include only the popular icd9 codes, timer=TRUE}
+```{r include_only_popular_icd9_codes, timer=TRUE}
 cutoff <- 100
 n1 <- length(unique(lb$dx_label))
-lb <- lb[lb$dx_count >= cutoff, ]
-n2 <- length(unique(lb$dx_label))
+lc <- lb[lb$dx_count >= cutoff, ]
+n2 <- length(unique(lc$dx_label))
 ```
 
 The initial data set has `r n1` unique ICD9 codes. After eliminating
 the codes that occur less than `r cutoff` times among the cases,
 there are `r n2` unique ICD9 codes left.
 
-```{r experiment_with_sparse_matrices, eval=FALSE}
+```{r experiment_with_sparse_matrices, timer=TRUE}
 # This is a work in progress. If the number of variables gets
 # very large, you may need to switch from the standard
 # matrix storage to sparse matrices.
-i <- i.control[1]
-cc1 <- lb$gp %in% c("breastcancer", i)
-tst <- lb[cc1, ]
-irow <- factor(tst$patient_num)
-jcol <- factor(tst$dx_label)
-df <- data.frame(row=as.numeric(irow), PATIENT_NUM=as.character(irow))
-df <- df[!duplicated(df$row), ]
-gd <- merge(df, st, all=FALSE)
-sm <- sparseMatrix(i=as.numeric(irow), j=as.numeric(jcol), x=1)
-sm[1:15,1:5]
-sn <- cBind(as.numeric(gd$GP=="breastcancer"),sm)
-sn[1:15,1:5]
-dim(sm)
-cc1 <- lb$gp %in% c("breastcancer", i)
-pc1 <- dcast(lb[cc1, ],patient_num + gp ~ dx_label,length)
-pc1[1:90,3:4]
-dim(pc1)
+create_sparse_matrix <- function(tst) {
+  irow <- factor(tst$patient_num)
+  jcol <- factor(tst$dx_label)
+  o <- order(tst$patient_num)
+  pg <- tst[o, c("patient_num", "gp")]
+  pg <- pg[!duplicated(pg$patient_num), ]
+  row_names <- sort(as.character(unique(irow)))
+  column_names <- sort(as.character(unique(jcol)))
+  sm <- sparseMatrix(i=as.numeric(irow), j=as.numeric(jcol), x=1)
+  dimnames(sm) <- list(row_names, column_names)
+  return(list(pg=pg, sm=sm))
+}
+
+create_traditional_matrix <- function(tst) {
+  return(dcast(tst ,patient_num + gp ~ dx_label,length))
+}
+
+if (verbose) {
+  print(Sys.time())
+  tst1 <- create_sparse_matrix(lc)
+  print(Sys.time())
+  tst2 <- create_traditional_matrix(lc)
+  print(Sys.time())
+  print(object.size(tst1))
+  print(object.size(tst2))
+  sample_list <- sample(dimnames(tst1$sm)[[2]],5)
+  for (v in sample_list) {
+    print(v)
+    print(table(tst1$pg$gp,tst1$sm[, v]))
+    print(table(tst2$gp, tst2[, v]))
+  }
+}
 ```
 
 Now, run a lasso/elastic net model for each control group.
@@ -130,19 +145,21 @@ Now, run a lasso/elastic net model for each control group.
 ```{r store_lasso_models, timer=TRUE}
 all_models <- NULL
 all_cv <- NULL
-for (ic in i.control) {
-  cc1 <- lb$gp %in% c("breastcancer", ic)
-  pc1 <- dcast(lb[cc1, ],patient_num + gp ~ dx_label,length)
+for (ic in i_control) {
+  pc1 <- create_sparse_matrix(lc[lc$gp %in% c(i_case, ic), ])
+  pc2 <- create_traditional_matrix(lc[lc$gp %in% c(i_case, ic), ])
+  iv_matrix <- as.matrix(pc2[,-(1:2)])
+  dv_vector <- as.numeric(pc2$gp==i_case)
   en <- glmnet(
-    x=as.matrix(pc1[,-(1:2)]), alpha=0.5, 
+    x=iv_matrix, alpha=0.5, 
     standardize=FALSE, lower.limits=0, 
-    y=as.numeric(pc1$gp=="breastcancer"),
+    y=dv_vector,
     family="binomial")
   all_models[[ic]] <- en
   cv <- cv.glmnet(
-    x=as.matrix(pc1[,-(1:2)]), alpha=0.5,
+    x=iv_matrix, alpha=0.5,
     standardize=FALSE, lower.limits=0, 
-    y=as.numeric(pc1$gp=="breastcancer"),
+    y=dv_vector,
     lambda=en$lambda,
     family="binomial",
     type.measure="class")

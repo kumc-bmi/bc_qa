@@ -286,8 +286,8 @@ archive$pa_patient_identifiers_file_information <- pa
 
 if (verbose) print(pa)
 
-i.case <- pa$disease_group[pa$case==1]
-i.control <- pa$disease_group[pa$case==0]
+i_case <- pa$disease_group[pa$case==1]
+i_control <- pa$disease_group[pa$case==0]
 
 ```
 
@@ -380,7 +380,7 @@ cases.
 # among the case groups. This will allow you to select only
 # the "popular" DX codes.
 
-cb <- table(ca$DX[ca$GP==i.case])
+cb <- table(ca$DX[ca$GP==i_case])
 archive$cb_cdm_diagnosis_counts_table <- cb
 
 # Note: as.numeric is needed here because you need to strip out
@@ -466,7 +466,7 @@ sql[["observation_fact"]] <-
        concept_path LIKE '\\i2b2\\Procedures%'
    )
    on concept_cd=ccd
-   outer join (
+   inner join (
      select PATIENT_NUM AS pn, GP
      from PC
    )
@@ -496,7 +496,7 @@ if (verbose) {
 # among the case groups. This will allow you to select only
 # the "popular" concept_cd codes.
 
-ic <- table(ib$concept_cd[ib$GP==i.case])
+ic <- table(ib$concept_cd[ib$GP==i_case])
 archive$ic_frequency_counts_among_the_cases <- ic
 
 # Note: as.numeric is needed here because you need to strip out
@@ -545,8 +545,9 @@ Now save everything for later use.
 
 save.image(file="extract_case_control.RData")
 save(
-  lb, st, i.case, i.control,
+  lb, st, i_case, i_control,
   list_random_rows, print_random_rows,
+  count_unique_patients,
   file="case_control_data.RData")
 ```
 
