@@ -49,6 +49,9 @@ library("Matrix")
 
 # Load the case-control data sets
 load("case_control_data.RData")
+# The next two lines are a temporary transition.
+i_control <- i.control
+i_case <- i.case
 
 # Document when this program started.
 
@@ -68,12 +71,13 @@ knit_hooks$set(timer =
     if (before) {
       current_time <<- Sys.time()
       m <- paste("Chunk", options$label, "started at", as.character(current_time), ".  \n")
+      print(m)
       return(m)
     } else {
       elapsed_time <- Sys.time() - current_time
       elapsed_message <- paste(round(elapsed_time, 1), attr(elapsed_time, "units"))
       m <- paste("Chunk", options$label, "used", elapsed_message)
-      message(m)
+      print(m)
       if (exists("timing_log")) {
         timing_log <<- c(timing_log, m)
       } else {
@@ -92,7 +96,7 @@ Below, we include only those codes that appear reasonably often
 among the cases.
 
 ```{r include_only_popular_icd9_codes, timer=TRUE}
-cutoff <- 100
+cutoff <- 5
 n1 <- length(unique(lb$dx_label))
 lc <- lb[lb$dx_count >= cutoff, ]
 n2 <- length(unique(lc$dx_label))
@@ -107,8 +111,8 @@ there are `r n2` unique ICD9 codes left.
 # very large, you may need to switch from the standard
 # matrix storage to sparse matrices.
 create_sparse_matrix <- function(tst) {
-  irow <- factor(tst$patient_num)
-  jcol <- factor(tst$dx_label)
+  irow <- factor(tst$patient_num)[!is.na(tst$dx_label)]
+  jcol <- factor(tst$dx_label)[!is.na(tst$dx_label)]
   o <- order(tst$patient_num)
   pg <- tst[o, c("patient_num", "gp")]
   pg <- pg[!duplicated(pg$patient_num), ]
@@ -120,17 +124,24 @@ create_sparse_matrix <- function(tst) {
 }
 
 create_traditional_matrix <- function(tst) {
-  return(dcast(tst ,patient_num + gp ~ dx_label,length))
+  tm <- dcast(tst ,patient_num + gp ~ dx_label,length)
+  pg <- tm[, 1:2]
+  return(list(pg=pg, tm=tm[, -(1:2)]))
 }
 
-if (verbose) {
+quality_check <- FALSE
+
+# The time to run a quality check is prohibitive when the number of
+# columns in the matrix is in the thousands.
+
+if (quality_check) {
   print(Sys.time())
   tst1 <- create_sparse_matrix(lc)
   print(Sys.time())
   tst2 <- create_traditional_matrix(lc)
   print(Sys.time())
-  print(object.size(tst1))
-  print(object.size(tst2))
+  print(format(object.size(tst1), "auto"))
+  print(format(object.size(tst2), "auto"))
   sample_list <- sample(dimnames(tst1$sm)[[2]],5)
   for (v in sample_list) {
     print(v)
@@ -147,9 +158,8 @@ all_models <- NULL
 all_cv <- NULL
 for (ic in i_control) {
   pc1 <- create_sparse_matrix(lc[lc$gp %in% c(i_case, ic), ])
-  pc2 <- create_traditional_matrix(lc[lc$gp %in% c(i_case, ic), ])
-  iv_matrix <- as.matrix(pc2[,-(1:2)])
-  dv_vector <- as.numeric(pc2$gp==i_case)
+  iv_matrix <- pc1$sm
+  dv_vector <- as.numeric(pc1$pg[,"gp"]==i_case)
   en <- glmnet(
     x=iv_matrix, alpha=0.5, 
     standardize=FALSE, lower.limits=0, 
