@@ -60,28 +60,10 @@ if (verbose) {
   print(start_time)
 }
 
-# Set up timer
+# Here are some functions needed in this program.
 
-knit_hooks$set(timer = function(before, options, envir) {
-    if (before) {
-      current_time <<- Sys.time()
-      m <- paste("Chunk", options$label, "started at", as.character(current_time), ".  \n")
-      return(m)
-    } else {
-      elapsed_time <- Sys.time() - current_time
-      elapsed_message <- paste(round(elapsed_time, 1), attr(elapsed_time, "units"))
-      m <- paste("Chunk", options$label, "used", elapsed_message)
-      message(m)
-      if (exists("timing_log")) {
-        timing_log <<- c(timing_log, m)
-      } else {
-          timing_log <<- m
-      }
-    write.table(timing_log, file="timing_log.txt", row.names=FALSE, col.names=FALSE)  
-    return(m)
-    }
-  }
-) 
+source("create_utility_functions.R")
+
 ```
 
 A summary of how the data were originally collected appears in 

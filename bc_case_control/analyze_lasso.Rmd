@@ -64,31 +64,9 @@ if (verbose) {
   print(getwd())
 }
 
-# Set up timer
+# Here are some utility functions.
 
-knit_hooks$set(timer = 
-  function(before, options, envir) {
-    if (before) {
-      current_time <<- Sys.time()
-      m <- paste("Chunk", options$label, "started at", as.character(current_time), ".  \n")
-      print(m)
-      return(m)
-    } else {
-      elapsed_time <- Sys.time() - current_time
-      elapsed_message <- paste(round(elapsed_time, 1), attr(elapsed_time, "units"))
-      m <- paste("Chunk", options$label, "used", elapsed_message)
-      print(m)
-      if (exists("timing_log")) {
-        timing_log <<- c(timing_log, m)
-      } else {
-          timing_log <<- m
-      }
-    write.table(timing_log, file="timing_log.txt", row.names=FALSE, col.names=FALSE)  
-    return(m)
-    }
-  }
-) 
-
+source("create_utility_functions")
 
 ```
 
