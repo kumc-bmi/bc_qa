@@ -1,29 +1,29 @@
 simple_testing <- TRUE
 
-archive <- function(df, note="No notes") {
+archive <- function(df, note="No notes", remove=FALSE) {
   # get the name of the data frame
   df_name <- deparse(substitute(df))
   if (!exists("arc")) {
-    arc <<- NULL
-    notes <<- NULL
+    arc <<-list(documentation=NULL)
   }
   arc[[df_name]] <<- df
-  notes <<- c(notes, paste(df_name, note, sep=": "))
+  arc$documentation <<- rbind(arc$documentation, data.frame(name=df_name, note=note))
   items_in_archive <- length(names(arc))
   size_of_archive <- format(object.size(arc), units="auto")
-  m <- paste(df_name, "added. Archive has",items_in_archive)
-  return(names(arc))
+  m <- paste(df_name, "added. Archive has",items_in_archive,"items and uses",size_of_archive)
+  cat(m)
+  if (remove) rm(list=df_name, pos=1)
+  print(objects(pos=1))
+  return()
 }
 
 if (simple_testing) {
   cat("\nSimple test.\n")
   abc <- data.frame(x=LETTERS[1:3], y=letters[1:3])
-  archive(abc, "First three letters")
+  archive(abc, "First three letters", remove=TRUE)
   def <- data.frame(x=LETTERS[4:6], y=letters[4:6])
-  archive(def, "Next three letters")
-  print(notes)
+  archive(def, "Next three letters", remove=TRUE)
   print(arc)
-  rm(notes)
   rm(arc)
 }
 

@@ -18,38 +18,24 @@ For context, see [485].
 [485]: https://informatics.gpcnetwork.org/trac/Project/ticket/485
 [bc_qa]: https://bitbucket.org/gpcnetwork/bc_qa
 
-This program reads data from PCRONET CDM and matches it
-with patient numbers from i2b2 to get a case-control
-data set. It stores the data and some intermediate files in
-an RData file.
+This program takes a model and evaluates it on patients.It stores the data and some
+intermediate files in an RData file.
 
-Here's a summary of how the data was selected. We
-identified four disease groups in Heron (KUMC's i2b2).
 
-* Breast cancer (as identified in the SEER Site Summary),
+Currently, this program takes the model developed by display_lasso.Rmd,
+but it can be adapted for models from other programs without too much
+difficulty.
 
-* All other cancers (again from SEER),
+Here's a rough outline of how the program works.
 
-* Diabetes (ICD9 250 or ICD10 E08-E13), and
+1. Get a list of all the variables included in the model. 
+2. Get a list of patients.
+3. Find any records for these patients that have variables in the model.
+4. Calculate a prediction based on those variables.
+5. Assess the quality of that prediction.
 
-* Ischemic heart disease (ICD9 410-414.99 or ICD10 I20-I25).
-
-All males were excluded.
-
-The first group represents cases and the other three
-represent different control groups. Patients who qualified
-for two or more of the above groups were excluded from the
-analysis.
-
-There were no date restrictions. In future versions, we may want
-to consider some date restrictions and try matching subjects on
-age.
-
-We then merged that data with the PCORNET CDM to get 
-any ICD9 codes associated with each patient.
-
-Two companion programs, analyze_lasso.Rmd and analyze_sensitivity.Rmd,
-take the resulting data set and produces simple graphs and analyses. 
+This program repeats a lot of work done in extract_case_control, but it 
+saves some time by only extracting records needed for the model.
 
 This program was run on `r doc$date` using version `r doc$version`.
 The original author is `r doc$author`. `r doc$maintainer`
@@ -76,10 +62,6 @@ if (verbose) {
   print(start_time)
 }
 
-# clean out the old archive
-
-rm(arc)
-
 # load required libraries.
 
 library("ROracle")
@@ -103,8 +85,37 @@ source("create_utility_functions.R")
 
 ```
 
-Set up storage for temporary data frames and matrices (d)
-and notes for my own reference.
+Set up an archive for intermediate data files.
+
+```{r setup_archive_storage, timer=TRUE}
+
+# This program uses many different data frames. Data frames associated
+# with different databases will typically start with the same letter.
+#   p: individual patient ids for each disease group
+#   i: data from additional i2b2 queries
+#   c: data from the CDM
+#
+# Most of these are intermediate data frames.
+# As a quality check and to test new code, I will store the intermediate
+# data frames in a list called archive
+
+archive <- NULL
+notes <- NULL    # temporary--remove when transitioned to archive
+archive$header <- "This is a list of various intermediate files."
+
+```
+
+Read the model. Get code_key to link to original names.
+
+```{r read_model}
+ma <- read.csv("code_key.csv", as.is=TRUE)
+load(file="display_lasso.RData")
+mb <- or_consensus[or_consensus$di==3, c("lb", "co")]
+mc <- merge(x=ma, y=mb, by.x="dx_label", by.y="lb", all=FALSE)
+if (verbose) {
+  print_random_rows(mc)
+}
+```
 
 Design the appropriate sql queries.
 
@@ -117,31 +128,24 @@ Design the appropriate sql queries.
 
 sql <- NULL
 
-sql[["distinct_patients"]] <-
-  "select distinct patient_num
-   from observation_fact"
-
-sql[["matching_count"]] <- 
-  "select distinct j.PATIENT_NUM, j.GP, p.PATID
-   from pcornet_cdm.diagnosis P
-   JOIN PC j
-   on p.PATID = j.PATIENT_NUM
-   where p.DX_TYPE = '09'"
-
-sql[["patient_diagnoses"]] <-
+sql[["pcornet_subset"]] <-
   "select distinct j.PATIENT_NUM, j.GP, p.DX
    from pcornet_cdm.diagnosis P
    join PC j
    on p.PATID = j.PATIENT_NUM
-   where p.DX_TYPE='09'"
+   where p.DX_TYPE='09'
+   join MC m
+   on p.DX=m.original_code"
 
-sql[["observation_fact"]] <-
-  "select o.patient_num, o.concept_cd c.name_char 
+sql[["heron_subset"]] <-
+  "select o.patient_num, o.concept_cd, c.name_char, o.start_time 
    from observation_fact o
    inner join (concept_dimension c
      where concept_path LIKE '\\i2b2\\Procorders%' OR
        concept_path LIKE '\\i2b2\\Procedures%')
-   ON o.concept_cd=c.concept_cd"
+   ON o.concept_cd=c.concept_cd
+   join MC m
+   on o.concept_cd=m.original_code"
 
 if (verbose) {
   for (i in 1:length(sql)) {
@@ -165,15 +169,16 @@ di <- "/d1/home/ssimon/bc_qa/bc_case_control"
 setwd(di)
 fn <- "disease_group_databases.txt"
 pa <- read.csv(file=fn, header=TRUE, stringsAsFactors=FALSE)
+archive$pa_patient_identifiers_file_information <- pa
+
+if (verbose) print(pa)
 
 i_case <- pa$disease_group[pa$case==1]
 i_control <- pa$disease_group[pa$case==0]
 
-if (verbose) print_random_rows(pa)
-archive(pa,"patient file information")
 ```
 
-Now loop across file names to get patient numbers for each group.
+Now get patient_numbers for the cases.
 
 ```{r get_patient_numbers, timer=TRUE}
 
@@ -182,11 +187,14 @@ Now loop across file names to get patient numbers for each group.
 # Eventually, I will need to pull dates from this file. 
 # Look for start_date in the observation_fact table.
 pb <- NULL
-for (i in 1:length(pa$file_location)) {
+i.list <- which(pa$case==1)
+for (i in i.list) {
   p_connect <- dbConnect(SQLite(), dbname=pa$file_location[i])
   group_name <- pa$disease_group[i] 
   pb[[group_name]] <- dbGetQuery(p_connect, sql["distinct_patients"])
   dbDisconnect(p_connect)
+  archive_name <- paste("pb", group_name, "patient numbers", sep="_")
+  archive[[archive_name]] <- pb[[group_name]]
 }
 
 if (verbose) {
@@ -198,18 +206,15 @@ if (verbose) {
 }
 
 pc <- data.frame(gp=names(pb[1]), pb[[1]], stringsAsFactors=FALSE)
-for (k in 2:length(pb)) {
-  pc <- rbind(pc, data.frame(gp=names(pb[k]), pb[[k]], stringsAsFactors=FALSE))
-}
-archive(pc,"stacked patient numbers")
+archive$pc_stacked_patient_numbers <- pc
 
 if (verbose) {
   print_random_rows(pc)
 }
 ```
 
-Next, you need to write the patient numbers to the same
-location as the PCORnet CDM database.
+Next, you need to write the patient numbers and variable names
+to the same location as the PCORnet CDM database.
 
 ```{r write_patient_numbers_to_cdm, timer=TRUE}
 
@@ -249,7 +254,7 @@ if (verbose) {
 } 
 
 ca <- dbGetQuery(c_connect, sql[["patient_diagnoses"]])
-archive(ca, "Query from pcornet_cdm")
+archive$ca_SQL_query_from_pcornet_cdm <- ca
 ```
 
 
@@ -264,7 +269,7 @@ cases.
 # the "popular" DX codes.
 
 cb <- table(ca$DX[ca$GP==i_case])
-archive(cb, "CDM diagnosis counts")
+archive$cb_cdm_diagnosis_counts_table <- cb
 
 # Note: as.numeric is needed here because you need to strip out
 # the names before merging.
@@ -272,11 +277,10 @@ archive(cb, "CDM diagnosis counts")
 # codes which occur only among the controls.
 
 cc <- data.frame(DX=names(cb), dx_count=as.numeric(cb))
-archive(cc, "CDM counts data.frame")
+archive$cc_cdm_diagnosis_counts_data_frame <- cc
 
 cd <- merge(ca, cc)
-cd$dx_new <- align_icd9_codes(cd$DX)
-archive(cd, "Diagnoses merged with counts")
+archive$cd_cdm_diagnoses_merged_with_counts <- cd
 
 if (verbose) {
   print_random_rows(cc)
@@ -296,13 +300,14 @@ site.
 
 fn <- "icd9_labels.csv"
 ce <- read.csv(fn, header=TRUE, as.is=TRUE, row.names=NULL)
+archive$ce_icd9_codes_and_labels <- ce
 
-ce$dx_new <- align_icd9_codes(ce$diagnosis_code)
 ce$nice_label <- paste(strip_specials(ce$short_label),ce$DX,sep="_")
-ce$dx_label <- paste(strip_specials(ce$short_label), ce$dx_new, sep="_")
-archive(ce, "ICD9 codes and labels")
-
 if (verbose) print_random_rows(ce$nice_label)
+
+
+cd$dx_new <- align_icd9_codes(cd$DX)
+ce$dx_new <- align_icd9_codes(ce$diagnosis_code)
 
 # Here are diagnosis codes in cd, not found in ce.
 if (verbose) {
@@ -310,23 +315,18 @@ if (verbose) {
   print_random_rows(sort(setdiff(cd$dx_new,ce$dx_new)))
 }
 
+ce$dx_label <- paste(strip_specials(ce$short_label), ce$dx_new, sep="_")
 cf <- merge(cd, ce[, c("dx_new","dx_label")], all.x=TRUE, all.y=FALSE)
-archive(cf, "CDM with nice labels")
+archive$cf_dx_codes_and_nice_labels <- cf
 
 if (verbose) print_random_rows(cf)
 
-# Before we leave this section, save the DX and dx_label
-# values to allow later re-merges.
-
-cg <- cf[!duplicated(cf$DX), c("DX", "dx_label")]
-                               ```
-archive(cg, "CDM code key")
-if (verbose) print_random_rows(cg)
 ```
 
 In addition to CDM data, you can get lots of fun stuff
-from i2b2 queries. The individual i2b2 queries appear
-in i2b2_variables_databases.txt.
+from i2b2 queries.
+
+Two that I have so far are imaging variables, and procedure codes.
 
 ```{r now_get_i2b2_codes, timer=TRUE}
 
@@ -335,8 +335,7 @@ in i2b2_variables_databases.txt.
 
 fn <- "i2b2_variables_databases.txt"
 ia <- read.csv(file=fn, header=TRUE, stringsAsFactors=FALSE)
-
-archive(ia, "i2b2 file information")
+archive$ia_i2b2_file_information <- ia
 if (verbose) print(ia)
 
 for (f in ia$file_location) {
@@ -364,7 +363,6 @@ sql[["observation_fact"]] <-
    )
    on patient_num = pn"
 
-
 for (f in ia$file_location) {
   variables_conn <- dbConnect(SQLite(), dbname=f)
   of[[f]] <- dbGetQuery(variables_conn, sql[["observation_fact"]])
@@ -378,7 +376,7 @@ for (i in 2:length(of)) {
   ib <- rbind(ib, of[[i]])
 }
 
-archive(ib, "Stacked i2b2 data")
+archive$ib_stacked_data <- ib
 if (verbose) {
   print(dim(ib))
   print_random_rows(ib)
@@ -390,9 +388,7 @@ if (verbose) {
 # the "popular" concept_cd codes.
 
 ic <- table(ib$concept_cd[ib$GP==i_case])
-
-archive(ic, "Counts among cases")
-if (verbose) print_random_rows(ic)
+archive$ic_frequency_counts_among_the_cases <- ic
 
 # Note: as.numeric is needed here because you need to strip out
 # the names before merging.
@@ -401,15 +397,13 @@ if (verbose) print_random_rows(ic)
 # codes which occur only among the controls.
 
 id <- data.frame(concept_cd=names(ic), dx_count=as.numeric(ic))
-
-archive(id, "Convert to data.frame")
+archive$id_convert_table_to_data_frame <- id
 if (verbose) print_random_rows(id)
 
 ie <- merge(ib, id)
 ie$name_char <- strip_specials(ie$name_char)
 ie$dx_label <- paste(ie$name_char, ie$concept_cd, sep="_")
-
-archive(ie, "Merge counts back in")
+archive$ie_merge_frequency_counts <- ie
 if (verbose) print_random_rows(ie)
 
 i_names <- c("patient_num", "GP", "dx_count", "dx_label")
@@ -431,19 +425,6 @@ if (verbose) {
   cat("How many patients are in lb versus pc?\n")
   count_unique_patients(lb, pc)
 }
-
-# Before we go, save the concept_cd and dx_label values
-# so that we can re-merge some files later.
-
-ig <- ie[!duplicated(ie$concept_cd), c("concept_cd", "dx_label")]
-archive(ig, "I2B2 code key")
-if (verbose) print_random_rows(ig)
-names(cg) <- c("original_code", "dx_label")
-names(ig) <- c("original_code", "dx_label")
-zg <- rbind(cg, ig)
-archive(zg, "Combined code key")
-write.csv(zg, file="code_key.csv", row.names=FALSE)
-if (verbose) print_random_rows(zg)
 
 ```
 

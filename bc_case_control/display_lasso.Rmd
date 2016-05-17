@@ -77,7 +77,7 @@ optimal value of lambda through cross validation.
 optima <- NULL
 for (ic in i.control) {
   cv <- all_cv[[ic]]
-  optima[[ic]]$lambda <- cv$lambda.1se
+  optima[[ic]]$lambda <- cv$lambda.1se # maybe try lambda.min
   optima[[ic]]$step <- which(cv$lambda==cv$lambda.1se)
   cat("\nComparison of", i.case, "to", ic)
   cat(".\n  Best value of lambda is", optima[[ic]]$lambda)
