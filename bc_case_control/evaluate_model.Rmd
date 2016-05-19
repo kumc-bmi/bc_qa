@@ -120,6 +120,8 @@ mb$duplicates <- pmin(mb$same_patient, mb$same_dx_label)
 head(mb[,c(1,2,7:9)],20)
 keep_list <- c("dx_label","patient_num","gp","dx_count","observation_date","co")
 mc <- mb[!mb$duplicates, keep_list]
+o <- order(mc$patient_num, mc$observation_date)
+mc <- mc[o, ]
 head(mc,200)
 md <- aggregate(mc$co, mc[, c("patient_num", "gp")], sum)
 print_random_rows(md)
@@ -130,6 +132,20 @@ updated_odds <- baseline_odds * exp(md$co)
 md$updated_probability <- updated_odds / (1+updated_odds)
 plot(factor(md$gp), md$updated_probability)
 tapply(md$updated_probability,md$gp,function(x) {sum(x>0.9)})
+```
+
+Now let's peek at random cases.
+
+```{r peek_at_random}
+library("chron")
+random_patients <- sample(md$patient_num, 20)
+for (p in random_patients) {
+  print(p)
+  sb <- mc[mc$patient_num==p, ]
+  print(sb)
+  cumulative_co <- cumsum(sb$co)
+  plot(sb$observation_date, cumulative_co,type="s")
+}
 ```
 
 ```{r save_everything}
