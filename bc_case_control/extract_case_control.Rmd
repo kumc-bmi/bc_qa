@@ -1,6 +1,6 @@
 ```{r create_basic_documentation, echo=TRUE}
 # Before anything else, set global options
-opts_chunk$set(echo=TRUE, cache=TRUE, error=TRUE)
+opts_chunk$set(echo=TRUE, cache=FALSE, error=TRUE)
 
 doc <- NULL
 doc$run.date <- date()
@@ -64,14 +64,18 @@ with the assistance of `r doc$assistants`.
 save.image("backup.RData")
 rm(list=ls())
 
-# Set verbose option, if TRUE, print various intermediate values and quality checks.
+# Set qc option, if TRUE, print various intermediate values and quality checks.
+# If drop_intermediate_objects is TRUE, then intermediate values are removed
+# once they are no longer needed. You might keep the intermediate values
+# around if you are debugging.
 
-verbose <- TRUE
+qc <- TRUE
+drop_intermediate_objects <- TRUE
 
 # Document when this program started.
 
 start_time <- Sys.time()
-if (verbose) {
+if (qc) {
   cat("\n\nProgram started at ")
   print(start_time)
 }
@@ -88,7 +92,7 @@ library("knitr")
 
 # Check to see if you are in the proper subdirectory.
 
-if (verbose) {
+if (qc) {
   cat("\n\nQuality check: Are we in the correct directory?\n")
   print(getwd())
 }
@@ -117,24 +121,6 @@ Design the appropriate sql queries.
 
 sql <- NULL
 
-sql[["distinct_patients"]] <-
-  "select distinct patient_num
-   from observation_fact"
-
-sql[["matching_count"]] <- 
-  "select distinct j.PATIENT_NUM, j.GP, p.PATID
-   from pcornet_cdm.diagnosis P
-   JOIN PC j
-   on p.PATID = j.PATIENT_NUM
-   where p.DX_TYPE = '09'"
-
-sql[["patient_diagnoses"]] <-
-  "select distinct j.PATIENT_NUM, j.GP, p.DX
-   from pcornet_cdm.diagnosis P
-   join PC j
-   on p.PATID = j.PATIENT_NUM
-   where p.DX_TYPE='09'"
-
 sql[["observation_fact"]] <-
   "select o.patient_num, o.concept_cd c.name_char 
    from observation_fact o
@@ -143,7 +129,7 @@ sql[["observation_fact"]] <-
        concept_path LIKE '\\i2b2\\Procedures%')
    ON o.concept_cd=c.concept_cd"
 
-if (verbose) {
+if (qc) {
   for (i in 1:length(sql)) {
     print(names(sql)[i])
     cat(sql[[i]])
@@ -169,7 +155,7 @@ pa <- read.csv(file=fn, header=TRUE, stringsAsFactors=FALSE)
 i_case <- pa$disease_group[pa$case==1]
 i_control <- pa$disease_group[pa$case==0]
 
-if (verbose) print_random_rows(pa)
+if (qc) print_random_rows(pa)
 archive(pa,"patient file information")
 ```
 
@@ -181,6 +167,11 @@ Now loop across file names to get patient numbers for each group.
 
 # Eventually, I will need to pull dates from this file. 
 # Look for start_date in the observation_fact table.
+
+sql[["distinct_patients"]] <-
+  "select distinct patient_num
+   from observation_fact"
+
 pb <- NULL
 for (i in 1:length(pa$file_location)) {
   p_connect <- dbConnect(SQLite(), dbname=pa$file_location[i])
@@ -189,7 +180,7 @@ for (i in 1:length(pa$file_location)) {
   dbDisconnect(p_connect)
 }
 
-if (verbose) {
+if (qc) {
   for (i in 1:length(pb)) {
     print(names(pb)[i])
     print(dim(pb[[i]]))
@@ -201,9 +192,10 @@ pc <- data.frame(gp=names(pb[1]), pb[[1]], stringsAsFactors=FALSE)
 for (k in 2:length(pb)) {
   pc <- rbind(pc, data.frame(gp=names(pb[k]), pb[[k]], stringsAsFactors=FALSE))
 }
-archive(pc,"stacked patient numbers")
-
-if (verbose) {
+archive(pc, "stacked patient numbers")
+if (drop_intermediate_objects) rm(pa)
+if (drop_intermediate_objects) rm(pb)
+if (qc) {
   print_random_rows(pc)
 }
 ```
@@ -221,7 +213,7 @@ stopifnot(length(missing_config) == 0)
 c_connect <-
   dbConnect(Oracle(), cdm_config$account, cdm_config$password, cdm_config$access)
 
-if (verbose) {
+if (qc) {
   cat("Simple test")
   dbGetQuery(c_connect, "select * from pcornet_cdm.diagnosis where rownum < 10")
 }
@@ -229,7 +221,7 @@ if (verbose) {
 names(pc) <- toupper(names(pc))
 dbWriteTable(c_connect, "PC", pc, overwrite=TRUE)
 
-if (verbose) dbListTables(c_connect)
+if (qc) dbListTables(c_connect)
 
 ```
 
@@ -237,16 +229,28 @@ Now pull out all the diagnosis codes associated with our patient list.
 
 ```{r extract_cdm_data, timer=TRUE}
 
-# Note: there are patients who are in the various
-# disease groups, but who do not have any ICD9 codes.
-# I need to investigate why.
+# Note: some patients have no ICD9 codes. That may be okay.
 
-if (verbose) {
+sql[["matching_count"]] <- 
+  "select distinct j.PATIENT_NUM, j.GP, p.PATID
+   from pcornet_cdm.diagnosis P
+   JOIN PC j
+   on p.PATID = j.PATIENT_NUM
+   where p.DX_TYPE = '09'"
+
+if (qc) {
   mc <- dbGetQuery(c_connect, sql[["matching_count"]])
   count_unique_patients(mc, pc)
   print(table(mc$GP))
   print(table(pc$GP))
 } 
+
+sql[["patient_diagnoses"]] <-
+  "select PATIENT_NUM, GP, DX, ADMIT_DATE as observation_date
+   from pcornet_cdm.diagnosis
+   join PC
+   on PATID = PATIENT_NUM
+   where DX_TYPE='09'"
 
 ca <- dbGetQuery(c_connect, sql[["patient_diagnoses"]])
 archive(ca, "Query from pcornet_cdm")
@@ -276,14 +280,17 @@ archive(cc, "CDM counts data.frame")
 
 cd <- merge(ca, cc)
 cd$dx_new <- align_icd9_codes(cd$DX)
-archive(cd, "Diagnoses merged with counts")
 
-if (verbose) {
+if (qc) {
   print_random_rows(cc)
   print_random_rows(cd)
   print(length(unique(ca$DX)))
   print(length(unique(cd$DX)))
 }
+archive(cd, "Diagnoses merged with counts")
+if (drop_intermediate_objects) rm(ca)
+if (drop_intermediate_objects) rm(cb)
+if (drop_intermediate_objects) rm(cc)
 
 ```
 
@@ -302,26 +309,29 @@ ce$nice_label <- paste(strip_specials(ce$short_label),ce$DX,sep="_")
 ce$dx_label <- paste(strip_specials(ce$short_label), ce$dx_new, sep="_")
 archive(ce, "ICD9 codes and labels")
 
-if (verbose) print_random_rows(ce$nice_label)
+if (qc) print_random_rows(ce$nice_label)
 
 # Here are diagnosis codes in cd, not found in ce.
-if (verbose) {
+if (qc) {
   print_random_rows(sort(setdiff(cd$DX,ce$DX)))
   print_random_rows(sort(setdiff(cd$dx_new,ce$dx_new)))
 }
 
 cf <- merge(cd, ce[, c("dx_new","dx_label")], all.x=TRUE, all.y=FALSE)
 archive(cf, "CDM with nice labels")
+if (drop_intermediate_objects) rm(cd)
+if (drop_intermediate_objects) rm(ce)
 
-if (verbose) print_random_rows(cf)
+if (qc) print_random_rows(cf)
 
 # Before we leave this section, save the DX and dx_label
 # values to allow later re-merges.
 
 cg <- cf[!duplicated(cf$DX), c("DX", "dx_label")]
                                ```
+if (qc) print_random_rows(cg)
 archive(cg, "CDM code key")
-if (verbose) print_random_rows(cg)
+if (drop_intermediate_objects) rm(cf)
 ```
 
 In addition to CDM data, you can get lots of fun stuff
@@ -337,18 +347,26 @@ fn <- "i2b2_variables_databases.txt"
 ia <- read.csv(file=fn, header=TRUE, stringsAsFactors=FALSE)
 
 archive(ia, "i2b2 file information")
-if (verbose) print(ia)
+if (qc) print(ia)
 
 for (f in ia$file_location) {
   variables_conn <- dbConnect(SQLite(), dbname=f)
   dbWriteTable(variables_conn, "PC", pc, overwrite=TRUE)
-  if (verbose) dbListTables(variables_conn)
+  if (qc) dbListTables(variables_conn)
 }
 
 of <- NULL
 
+# Note where clause in the middle of this SQL code.
+# I2B2 carriers along a lot of extra stuff when you
+# export and this is an attempt to strip down to
+# only the things you really need. 
+#
+# Unfortunately, it is specific to the particular
+# i2b2 sources that you are using.
+
 sql[["observation_fact"]] <-
-  "select distinct patient_num, GP, concept_cd, name_char 
+  "select patient_num, GP, concept_cd, name_char, start_date AS observation_date 
    from observation_fact
    inner join (
      select concept_cd AS ccd, name_char
@@ -378,12 +396,13 @@ for (i in 2:length(of)) {
   ib <- rbind(ib, of[[i]])
 }
 
-archive(ib, "Stacked i2b2 data")
-if (verbose) {
+if (qc) {
   print(dim(ib))
   print_random_rows(ib)
   count_unique_patients(ib, pc)
 }
+archive(ib, "Stacked i2b2 data")
+if (drop_intermediate_objects) rm(ia)
 
 # Add a concept_count column that notes how often concept_cd appears
 # among the case groups. This will allow you to select only
@@ -391,8 +410,8 @@ if (verbose) {
 
 ic <- table(ib$concept_cd[ib$GP==i_case])
 
+if (qc) print_random_rows(ic)
 archive(ic, "Counts among cases")
-if (verbose) print_random_rows(ic)
 
 # Note: as.numeric is needed here because you need to strip out
 # the names before merging.
@@ -402,20 +421,24 @@ if (verbose) print_random_rows(ic)
 
 id <- data.frame(concept_cd=names(ic), dx_count=as.numeric(ic))
 
+if (qc) print_random_rows(id)
 archive(id, "Convert to data.frame")
-if (verbose) print_random_rows(id)
+if (drop_intermediate_objects) rm(ic)
 
 ie <- merge(ib, id)
 ie$name_char <- strip_specials(ie$name_char)
 ie$dx_label <- paste(ie$name_char, ie$concept_cd, sep="_")
 
+if (qc) print_random_rows(ie)
 archive(ie, "Merge counts back in")
-if (verbose) print_random_rows(ie)
+if (drop_intermediate_objects) rm(ib)
+if (drop_intermediate_objects) rm(id)
 
-i_names <- c("patient_num", "GP", "dx_count", "dx_label")
-c_names <- c("PATIENT_NUM", "GP", "dx_count", "dx_label")
+i_names <- c("patient_num", "GP", "dx_count", "dx_label", "observation_date")
+c_names <- c("PATIENT_NUM", "GP", "dx_count", "dx_label", "OBSERVATION_DATE")
 iz <- ie[, i_names]
 cz <- cf[, c_names]
+if (drop_intermediate_objects) rm(cf)
 
 names(iz) <- tolower(names(iz))
 names(cz) <- tolower(names(cz))
@@ -423,7 +446,7 @@ names(cz) <- tolower(names(cz))
 lb <- rbind(cz, iz)
 st <- pc
 
-if (verbose) {
+if (qc) {
   cat("How many patients in lb come from cz?\n")
   count_unique_patients(cz, lb)
   cat("How many patients in lb come from iz?\n")
@@ -437,13 +460,14 @@ if (verbose) {
 
 ig <- ie[!duplicated(ie$concept_cd), c("concept_cd", "dx_label")]
 archive(ig, "I2B2 code key")
-if (verbose) print_random_rows(ig)
+if (drop_intermediate_objects) rm(ie)
+if (qc) print_random_rows(ig)
 names(cg) <- c("original_code", "dx_label")
 names(ig) <- c("original_code", "dx_label")
 zg <- rbind(cg, ig)
 archive(zg, "Combined code key")
 write.csv(zg, file="code_key.csv", row.names=FALSE)
-if (verbose) print_random_rows(zg)
+if (qc) print_random_rows(zg)
 
 ```
 
@@ -462,7 +486,7 @@ save(
 Well done. Here is how long everything took.
 
 ```{r display_timing_log}
-if (verbose) {
+if (qc) {
   cat("Program began at ")
   cat(as.character(start_time))
   cat("\nProgram ended at ")

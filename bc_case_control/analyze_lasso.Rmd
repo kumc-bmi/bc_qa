@@ -11,8 +11,8 @@ doc$assistants <- "Dan Connolly"
 ```
 
 
-Case-control
-============
+analyze_lasso.Rmd
+=================
 For context, see [485].
 
 [485]: https://informatics.gpcnetwork.org/trac/Project/ticket/485
@@ -49,15 +49,12 @@ library("Matrix")
 
 # Load the case-control data sets
 load("case_control_data.RData")
-# The next two lines are a temporary transition.
-i_control <- i.control
-i_case <- i.case
 
 # Document when this program started.
 
-verbose <- TRUE
+qc <- TRUE
 start_time <- Sys.time()
-if (verbose) {
+if (qc) {
   cat("\n\nProgram started at ")
   print(start_time)
   cat("\n\nQuality check: Are we in the correct directory? ")
@@ -66,7 +63,7 @@ if (verbose) {
 
 # Here are some utility functions.
 
-source("create_utility_functions")
+source("create_utility_functions.R")
 
 ```
 
@@ -164,7 +161,7 @@ save.image(file="analyze_lasso.RData")
 Well done. Here is how long everything took.
 
 ```{r display_timing_log}
-if (verbose) {
+if (qc) {
   cat("Program began at ")
   cat(as.character(start_time))
   cat("\nProgram ended at ")

@@ -36,9 +36,9 @@ with the assistance of `r doc$assistants`.
 save.image("backup.RData")
 rm(list=ls())
 
-verbose=TRUE # if TRUE, print various intermediate values and quality checks.
+qc=TRUE # if TRUE, print various intermediate values and quality checks.
 
-if (verbose) {
+if (qc) {
   cat("\n\nQuality check: Are we in the correct directory? ")
   print(getwd())
 }
@@ -56,7 +56,7 @@ load("analyze_lasso.RData")
 
 rm(timing_log)
 start_time <- Sys.time()
-if (verbose) {
+if (qc) {
   print(start_time)
 }
 
@@ -115,7 +115,7 @@ for (ic in i.control) {
   odds_ratio <- round(exp(beta),2-direction)
   coefficients[[ic]] <- 
     data.frame(odds_ratio, beta, direction, entry_step, entry_lambda)
-  if (verbose) {
+  if (qc) {
     cat("\nComparison of", i.case, "to", ic,"\n\n")
     print(list_random_rows(coefficients[[ic]]))
   }
@@ -206,6 +206,7 @@ or_consensus[or_consensus$di==3, i.control]
 # number of promising variables did not make
 # the cut.
 or_consensus[or_consensus$di < 3, c("di", "lb")]
+lasso_model <- or_consensus[or_consensus$di==3, c("lb", "co")]
 ```
 
 
@@ -216,7 +217,7 @@ save.image(file="display_lasso.RData")
 Well done. Here is how long everything took.
 
 ```{r display_timing_log}
-if (verbose) {
+if (qc) {
   cat("Program began at ")
   cat(as.character(start_time))
   cat("\nProgram ended at ")

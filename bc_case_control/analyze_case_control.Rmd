@@ -31,8 +31,10 @@ with the assistance of `r doc$assistants`.
 library("ggplot2")
 save.image("backup.RData")
 rm(list=ls())
-cat("\n\nQuality check: Are we in the correct directory?")
-getwd()
+if (qc) {
+  cat("\n\nQuality check: Are we in the correct directory? ")
+  print(getwd())
+}
 # Don't wrap so much
 options(width=90)
 # Load the case-control data sets

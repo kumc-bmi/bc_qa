@@ -1,4 +1,4 @@
-simple_testing <- TRUE
+test_functions <- TRUE
 
 archive <- function(df, note="No notes", remove=FALSE) {
   # get the name of the data frame
@@ -13,11 +13,10 @@ archive <- function(df, note="No notes", remove=FALSE) {
   m <- paste(df_name, "added. Archive has",items_in_archive,"items and uses",size_of_archive)
   cat(m)
   if (remove) rm(list=df_name, pos=1)
-  print(objects(pos=1))
-  return()
+  return(invisible(names(arc))) # invisible prevents the names from printing.
 }
 
-if (simple_testing) {
+if (test_functions) {
   cat("\nSimple test.\n")
   abc <- data.frame(x=LETTERS[1:3], y=letters[1:3])
   archive(abc, "First three letters", remove=TRUE)
@@ -40,7 +39,7 @@ align_icd9_codes <- function(dx_old) {
   return(dx_new)
 }
 
-if (simple_testing) {
+if (test_functions) {
   cat("\nSimple test.\n")
   tst <- align_icd9_codes(c("0014","V28.9","XX"))
   cat("\nOutput:", tst)
@@ -110,7 +109,7 @@ print_random_rows <- function(df, n=5) {
   print(list_random_rows(df, n))
 }
 
-if (simple_testing) {
+if (test_functions) {
   cat("\nSimple test.\n")
   print_random_rows(1:100)
   print_random_rows(data.frame(LETTERS, letters, stringsAsFactors=FALSE))
@@ -128,7 +127,7 @@ strip_specials <- function(x0) {
   return(x0)
 }
 
-if (simple_testing) {
+if (test_functions) {
   cat("\nSimple test.\n")
   print(strip_specials(c("test one","test-two","test&three")))
 }
