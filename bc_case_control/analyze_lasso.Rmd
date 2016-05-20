@@ -1,6 +1,6 @@
 ```{r create_basic_documentation, echo=TRUE}
 # Before anything else, set global options
-opts_chunk$set(echo=TRUE, cache=TRUE, error=TRUE)
+opts_chunk$set(echo=TRUE, cache=FALSE, error=TRUE)
 
 doc <- NULL
 doc$run.date <- date()
@@ -71,9 +71,10 @@ Below, we include only those codes that appear reasonably often
 among the cases.
 
 ```{r include_only_popular_icd9_codes, timer=TRUE}
-cutoff <- 5
+cutoff <- 100
 n1 <- length(unique(lb$dx_label))
 lc <- lb[lb$dx_count >= cutoff, ]
+rm(lb)
 n2 <- length(unique(lc$dx_label))
 ```
 
@@ -93,7 +94,7 @@ create_sparse_matrix <- function(tst) {
   pg <- pg[!duplicated(pg$patient_num), ]
   row_names <- sort(as.character(unique(irow)))
   column_names <- sort(as.character(unique(jcol)))
-  sm <- sparseMatrix(i=as.numeric(irow), j=as.numeric(jcol), x=1)
+  sm <- sparseMatrix(i=as.numeric(irow), j=as.numeric(jcol), x=1, use.last.ij=TRUE)
   dimnames(sm) <- list(row_names, column_names)
   return(list(pg=pg, sm=sm))
 }
@@ -152,9 +153,10 @@ for (ic in i_control) {
 }
 ```
 
-Store everything for later use.
+Store (almost) everything for later use.
 
 ```{r save-everything, timer=TRUE}
+rm(lc)
 save.image(file="analyze_lasso.RData")
 ```
 

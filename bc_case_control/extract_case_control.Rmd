@@ -444,6 +444,22 @@ names(iz) <- tolower(names(iz))
 names(cz) <- tolower(names(cz))
                 
 lb <- rbind(cz, iz)
+# make the labels look a bit nicer.
+lb$dx_label <- tolower(lb$dx_label)
+remove_list <-
+  c("_icd9", "_kuh", "|proc_id", 
+    "_at_", "_and_", "_for_",
+    "_from_", 
+    "_in_", "_into_", "_of_",
+    "_or_", "_on_", "_to_", 
+    "_use_", "_using_", "_with_") 
+for (i in remove_list) {
+  lb$dx_label <- sub(i, "_", lb$dx_label, fixed=TRUE)
+}
+lb$dx_label <- gsub(":", "_", lb$dx_label, fixed=TRUE)
+lb$dx_label <- gsub("__", "_", lb$dx_label, fixed=TRUE)
+lb$dx_label <- gsub("__", "_", lb$dx_label, fixed=TRUE)
+
 st <- pc
 
 if (qc) {

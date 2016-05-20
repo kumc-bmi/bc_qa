@@ -1,6 +1,6 @@
 ```{r create_basic_documentation, echo=TRUE}
 # Before anything else, set global options
-opts_chunk$set(echo=TRUE, cache=TRUE, error=TRUE)
+opts_chunk$set(echo=TRUE, cache=FALSE, error=TRUE)
 
 doc <- NULL
 doc$run.date <- date()
@@ -75,11 +75,11 @@ optimal value of lambda through cross validation.
 
 ```{r find_optimal_lambda, timer=TRUE}
 optima <- NULL
-for (ic in i.control) {
+for (ic in i_control) {
   cv <- all_cv[[ic]]
   optima[[ic]]$lambda <- cv$lambda.1se # maybe try lambda.min
   optima[[ic]]$step <- which(cv$lambda==cv$lambda.1se)
-  cat("\nComparison of", i.case, "to", ic)
+  cat("\nComparison of", i_case, "to", ic)
   cat(".\n  Best value of lambda is", optima[[ic]]$lambda)
   cat(", which is step", optima[[ic]]$step,"\n")
 }
@@ -102,7 +102,7 @@ towards zero, which helps
 
 ```{r extract_coefficients_at_optimum, timer=TRUE}
 coefficients <- NULL
-for (ic in i.control) {
+for (ic in i_control) {
   op <- optima[[ic]]
   en <- all_models[[ic]]
   direction <- (1+sign(en$beta[,op$step]))/2
@@ -116,7 +116,7 @@ for (ic in i.control) {
   coefficients[[ic]] <- 
     data.frame(odds_ratio, beta, direction, entry_step, entry_lambda)
   if (qc) {
-    cat("\nComparison of", i.case, "to", ic,"\n\n")
+    cat("\nComparison of", i_case, "to", ic,"\n\n")
     print(list_random_rows(coefficients[[ic]]))
   }
 }
@@ -141,7 +141,7 @@ getwd()
 positive_only <- 1
 positive_and_negative <- 1:0
 bmp(file="dl%02d.bmp", width=800, height=800)
-for (ic in i.control) {
+for (ic in i_control) {
   en <- all_models[[ic]]
   op <- optima[[ic]]
   co <- coefficients[[ic]]
@@ -155,7 +155,7 @@ for (ic in i.control) {
       type="n",axes=FALSE,
       ylab="Odds ratio",
       xlab="log(lambda)")
-    title1 <- paste("Lasso/elastic net model comparing",i.case,"to",ic)
+    title1 <- paste("Lasso/elastic net model comparing",i_case,"to",ic)
     title2 <- paste(direction_label,"coefficients only.")
     title(paste(title1,title2,sep="\n"))
     axis(side=1)
@@ -180,33 +180,32 @@ multiple control groups.
 ```{r develop_consensus, timer=TRUE}
 average_beta <- rep(0,dim(coefficients[[1]])[1])
 cumulative_direction <- rep(0,dim(coefficients[[1]])[1])
-for (ic in i.control) {
+for (ic in i_control) {
   average_beta <- average_beta + coefficients[[ic]]$beta
   cumulative_direction <- cumulative_direction + 2*coefficients[[ic]]$direction - 1
 }
-average_beta <- average_beta / length(i.control)
+average_beta <- average_beta / length(i_control)
 or_consensus <- data.frame(
-  lb=dimnames(coefficients[[1]])[[1]],
+  dx=dimnames(coefficients[[1]])[[1]],
   gm=round(exp(average_beta),1),
   co=round(average_beta,2),
   di=cumulative_direction)
-for (i in 1:length(i.control)) {
-  or_consensus <- data.frame(or_consensus, coefficients[[i.control[i]]]$odds_ratio)
-  names(or_consensus)[i+4] <- i.control[i]
+for (i in 1:length(i_control)) {
+  or_consensus <- data.frame(or_consensus, coefficients[[i_control[i]]]$odds_ratio)
+  names(or_consensus)[i+4] <- i_control[i]
 }
 o <- rev(order(average_beta))
 or_consensus <- or_consensus[o, ]
 # Odds ratios for consensus positive coefficients.
-or_consensus[or_consensus$di==3, c("lb", "gm", "co")]
-# Individual odds ratios for consensus.
-or_consensus[or_consensus$di==3, i.control]
+or_consensus[or_consensus$di==3, c("dx", "gm", "co")]
 # These variables did not make the cut. The column
 # for di indicates how many models (0, 1, or 2)
 # included this variable. It looks like a fair
 # number of promising variables did not make
 # the cut.
-or_consensus[or_consensus$di < 3, c("di", "lb")]
-lasso_model <- or_consensus[or_consensus$di==3, c("lb", "co")]
+#
+# or_consensus[or_consensus$di < 3, c("di", "dx")]
+lasso_model <- or_consensus[or_consensus$di==3, c("dx", "co")]
 ```
 
 

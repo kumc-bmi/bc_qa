@@ -1,6 +1,6 @@
 ```{r create_basic_documentation, echo=TRUE}
 # Before anything else, set global options
-opts_chunk$set(echo=TRUE, cache=TRUE, error=TRUE)
+opts_chunk$set(echo=TRUE, cache=FALSE, error=TRUE)
 
 doc <- NULL
 doc$run.date <- date()
@@ -105,7 +105,8 @@ Read the model. Get code_key to link to original names.
 ```{r read_model, timer=TRUE}
 load(file="display_lasso.RData")
 load(file="case_control_data.RData")
-ma <- merge(x=lb, y=lasso_model, all=FALSE, by.x="dx_label", by.y="lb")
+ma <- merge(x=lb, y=lasso_model, all=FALSE, by.x="dx_label", by.y="dx")
+rm(lb)
 save.image("evaluate_model.RData")
 if (qc) {
   print_random_rows(ma)
@@ -117,14 +118,12 @@ n <- dim(mb)[1]
 mb$same_patient <- c(0,as.numeric(mb$patient_num[-1]==mb$patient_num[-n]))
 mb$same_dx_label <- c(0,as.numeric(mb$dx_label[-1]==mb$dx_label[-n]))
 mb$duplicates <- pmin(mb$same_patient, mb$same_dx_label)
-head(mb[,c(1,2,7:9)],20)
 keep_list <- c("dx_label","patient_num","gp","dx_count","observation_date","co")
 mc <- mb[!mb$duplicates, keep_list]
 o <- order(mc$patient_num, mc$observation_date)
 mc <- mc[o, ]
-head(mc,200)
 md <- aggregate(mc$co, mc[, c("patient_num", "gp")], sum)
-print_random_rows(md)
+if (qc) print_random_rows(md)
 names(md)[3] <- c("co")
 baseline_probability <- 0.1
 baseline_odds <- baseline_probability / (1-baseline_probability)
@@ -136,15 +135,32 @@ tapply(md$updated_probability,md$gp,function(x) {sum(x>0.9)})
 
 Now let's peek at random cases.
 
-```{r peek_at_random}
+```{r peek_at_random, fig.width=8, fig.height=5}
 library("chron")
-random_patients <- sample(md$patient_num, 20)
+random_patients <- sample(md$patient_num, 200)
 for (p in random_patients) {
-  print(p)
   sb <- mc[mc$patient_num==p, ]
-  print(sb)
+  baseline_probability=0.1
+  baseline_odds <- baseline_probability / (1-baseline_probability)
   cumulative_co <- cumsum(sb$co)
-  plot(sb$observation_date, cumulative_co,type="s")
+  cumulative_odds <- exp(cumulative_co)*baseline_odds
+  sb$cumulative_probability <- round(cumulative_odds / (1+cumulative_odds), 2)
+  sb$days <- round(as.numeric(sb$observation_date - sb$observation_date[1]) / (24*60*60), 1)
+  n <- dim(sb)[1]
+  par(mfrow=c(1,2))
+  par(mar=c(2.6, 2.6, 2.6, 0.6))
+  plot(sb$cumulative_probability, sb$days, type="S", xlim=c(0,1), ylim=c(sb$days[n]+30, -30))
+  segments(0.1, -30, 0.1, 0)
+  segments(0.1, 0, sb$cumulative_probability[1], 0)
+  segments(sb$cumulative_probability[n], sb$days[n], sb$cumulative_probability[n], sb$days[n]+30)
+  title(paste(sb$patient_num[1], ", ", sb$gp[1], sep=""))
+  par(mar=c(2.6,0,2.6,0))
+  plot(sb$cumulative_probability, sb$days, type="n", xlim=c(0,1), ylim=c(sb$days[n]+30, -30), axes=FALSE)
+  title(paste("First event on ", sb$observation_date[1], sep=""))
+  text(0, sb$days, sb$dx_label, cex=1, adj=0)
+  cat(paste(sb[1, c("patient_num", "gp")], collapse=", "))
+  cat("\n")
+  print(sb[, c("days", "co", "cumulative_probability", "dx_label")])
 }
 ```
 
