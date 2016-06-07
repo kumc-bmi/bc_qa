@@ -127,13 +127,25 @@ if (quality_check) {
 }
 ```
 
+Optionally, create training and test data sets.
+
+```{r create_training_and_test_data_sets}
+proportion_training <- 0.7
+unique_patients <- sort(unique(lc[, "patient_num"]))
+select <- sample(c("Train","Test"), length(unique_patients), replace=TRUE,
+                 prob=c(proportion_training, 1-proportion_training))
+if (qc) {print_random_rows(select)}
+ld <- merge(lc, data.frame(patient_num=unique_patients, select=select))
+le <- ld[ld$select=="Train", ]
+```
+
 Now, run a lasso/elastic net model for each control group.
 
 ```{r store_lasso_models, timer=TRUE}
 all_models <- NULL
 all_cv <- NULL
 for (ic in i_control) {
-  pc1 <- create_sparse_matrix(lc[lc$gp %in% c(i_case, ic), ])
+  pc1 <- create_sparse_matrix(le[le$gp %in% c(i_case, ic), ])
   iv_matrix <- pc1$sm
   dv_vector <- as.numeric(pc1$pg[,"gp"]==i_case)
   en <- glmnet(
@@ -153,10 +165,9 @@ for (ic in i_control) {
 }
 ```
 
-Store (almost) everything for later use.
+Store everything for later use.
 
 ```{r save-everything, timer=TRUE}
-rm(lc)
 save.image(file="analyze_lasso.RData")
 ```
 

@@ -67,6 +67,7 @@ knit_hooks$set(timer = function(before, options, envir) {
   if (before) {
     current_time <<- Sys.time()
     m <- paste("Chunk", options$label, "started at", as.character(current_time), ".  \n")
+    cat(m)
     return(m)
   } else {
     elapsed_time <- Sys.time() - current_time
