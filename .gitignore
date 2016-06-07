@@ -2,9 +2,13 @@
 .Rhistory
 .RData
 *.html
-# *.md
+*.md
 figure/
 *.RData
 *.pyc
+*.bmp
+*.png
+tst*.*
+tmp*.*
 bcread_api_key.R
 dataset.R

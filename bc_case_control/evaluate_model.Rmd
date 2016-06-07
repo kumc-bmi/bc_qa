@@ -96,7 +96,7 @@ Set up an archive for intermediate data files.
 # As a quality check and to test new code, I will store the intermediate
 # data frames in a list called archive
 
-if (exists(arc)) rm(arc)
+if (exists("arc")) rm(arc)
 
 ```
 
