@@ -82,7 +82,7 @@ if (qc) {
 
 # clean out the old archive
 
-if (exists("arc") {rm(arc)}
+if (exists("arc")) {rm(arc)}
 
 # load required libraries.
 

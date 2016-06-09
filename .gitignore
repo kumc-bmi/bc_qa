@@ -14,3 +14,4 @@ bcread_api_key.R
 dataset.R
 bc_case_control/*.txt
 bc_case_control/*.csv
+bc_case_control/cache/
