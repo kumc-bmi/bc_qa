@@ -118,24 +118,10 @@ Design the appropriate sql queries.
 # I can model one SQL query after the previous one.
 # As I get better with SQL, I will move the queries
 # closer to the program location where they get used.
+#
+#  Done!
 
 sql <- NULL
-
-sql[["observation_fact"]] <-
-  "select o.patient_num, o.concept_cd c.name_char 
-   from observation_fact o
-   inner join (concept_dimension c
-     where concept_path LIKE '\\i2b2\\Procorders%' OR
-       concept_path LIKE '\\i2b2\\Procedures%')
-   ON o.concept_cd=c.concept_cd"
-
-if (qc) {
-  for (i in 1:length(sql)) {
-    print(names(sql)[i])
-    cat(sql[[i]])
-    cat("\n\n")
-  }
-}
 
 ```
 
@@ -172,6 +158,11 @@ sql[["distinct_patients"]] <-
   "select distinct patient_num
    from observation_fact"
 
+sql[["start_date"]] <-
+  "select *
+   from observation_fact
+   where concept_cd='SEER_SITE:26000'"
+
 pb <- NULL
 for (i in 1:length(pa$file_location)) {
   p_connect <- dbConnect(SQLite(), dbname=pa$file_location[i])
@@ -179,6 +170,18 @@ for (i in 1:length(pa$file_location)) {
   pb[[group_name]] <- dbGetQuery(p_connect, sql["distinct_patients"])
   dbDisconnect(p_connect)
 }
+
+i_case_code <- which(pa$disease_group==i_case)[1]
+p_connect <- dbConnect(SQLite(), dbname=pa$file_location[i_case_code])
+px <- dbGetQuery(p_connect, sql["start_date"])
+dbDisconnect(p_connect)
+o <- order(px$patient_num,px$start_date)
+dim(px)
+head(px[o, ])
+dim(pb[[i_case]])
+
+# There are a few duplicates, so I need to group by and select the minimum date.
+
 
 if (qc) {
   for (i in 1:length(pb)) {
@@ -193,7 +196,6 @@ for (k in 2:length(pb)) {
   pc <- rbind(pc, data.frame(gp=names(pb[k]), pb[[k]], stringsAsFactors=FALSE))
 }
 archive(pc, "stacked patient numbers")
-if (drop_intermediate_objects) rm(pa)
 if (drop_intermediate_objects) rm(pb)
 if (qc) {
   print_random_rows(pc)
