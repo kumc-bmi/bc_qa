@@ -10,7 +10,9 @@ archive <- function(df, note="No notes", remove=FALSE) {
   arc$documentation <<- rbind(arc$documentation, data.frame(name=df_name, note=note))
   items_in_archive <- length(names(arc))
   size_of_archive <- format(object.size(arc), units="auto")
-  m <- paste(df_name, "added. Archive has",items_in_archive,"items and uses",size_of_archive)
+  m <- paste(df_name, " added. Archive has",
+             items_in_archive, "items and uses",
+             size_of_archive, ".\n", sep="")
   cat(m)
   print(arc$documentation)
   if (remove) rm(list=df_name, pos=1)

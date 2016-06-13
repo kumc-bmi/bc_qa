@@ -57,7 +57,7 @@ is currently maintaining and enhancing this program
 with the assistance of `r doc$assistants`.
 
 
-```{r run_preliminaries}
+```{r run_preliminaries, cache=FALSE}
 
 # Backup image (just in case) and then start with a blank slate.
 
@@ -164,24 +164,49 @@ sql[["start_date"]] <-
    where concept_cd='SEER_SITE:26000'"
 
 pb <- NULL
-for (i in 1:length(pa$file_location)) {
+i_control_codes <- which(pa$case==0)
+for (i in i_control_codes) {
   p_connect <- dbConnect(SQLite(), dbname=pa$file_location[i])
   group_name <- pa$disease_group[i] 
   pb[[group_name]] <- dbGetQuery(p_connect, sql["distinct_patients"])
   dbDisconnect(p_connect)
 }
+archive(pb, "patient numbers for control groups")
 
-i_case_code <- which(pa$disease_group==i_case)[1]
+i_case_code <- which(pa$disease_group==i_case)[1] # [1] protects against duplicates.
 p_connect <- dbConnect(SQLite(), dbname=pa$file_location[i_case_code])
 px <- dbGetQuery(p_connect, sql["start_date"])
 dbDisconnect(p_connect)
+
+# Let's look carefully at the cases.
+
 o <- order(px$patient_num,px$start_date)
-dim(px)
 head(px[o, ])
+dim(px)
 dim(pb[[i_case]])
 
 # There are a few duplicates, so I need to group by and select the minimum date.
 
+px_count <- table(px$patient_num)
+px_duplicates <- sample(names(px_count[px_count>1]), 5)
+px[px$patient_num %in% px_duplicates, ]
+
+table(substr(px$start_date, 1, 4)) # substr(1, 4) gives just the year.
+table(substr(px$end_date, 1, 4)) 
+
+# Neither download_date nor import_date are useful for analysis.
+
+table(substr(px$download_date, 1, 4)) 
+table(substr(px$import_date, 1, 4)) 
+
+px$tumor_date <- as.Date(substr(px$start_date, 1, 10), format="%Y-%m-%d")
+cumulative_percent <- 100*(1:length(px$tumor_date)) / length(px$tumor_date)
+plot(sort(px$tumor_date), cumulative_percent,
+     axes=FALSE, type="S")
+axis(side=2)
+axis(side=1, at=as.Date(paste(10*(194:201), "01-01", sep="-")), labels=10*(194:201))
+box()
+archive(px, "patient numbers for cases")
 
 if (qc) {
   for (i in 1:length(pb)) {
@@ -189,14 +214,18 @@ if (qc) {
     print(dim(pb[[i]]))
     print_random_rows(pb[[i]])
   }
+  print(dim(px))
+  print_random_rows(px)
 }
 
-pc <- data.frame(gp=names(pb[1]), pb[[1]], stringsAsFactors=FALSE)
+pc <- data.frame(gp=names(pb[1]), pb[[1]], tumor_date=NA, stringsAsFactors=FALSE)
 for (k in 2:length(pb)) {
-  pc <- rbind(pc, data.frame(gp=names(pb[k]), pb[[k]], stringsAsFactors=FALSE))
+  pc <- rbind(pc, data.frame(gp=names(pb[k]), pb[[k]], tumor_date=NA, stringsAsFactors=FALSE))
 }
+pc <- rbind(pc, px[ , c("patient_num", "tumor_date")])
 archive(pc, "stacked patient numbers")
 if (drop_intermediate_objects) rm(pb)
+if (drop_intermediate_objects) rm(px)
 if (qc) {
   print_random_rows(pc)
 }
