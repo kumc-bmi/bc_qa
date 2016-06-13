@@ -51,6 +51,25 @@ any ICD9 codes associated with each patient.
 Two companion programs, analyze_lasso.Rmd and analyze_sensitivity.Rmd,
 take the resulting data set and produces simple graphs and analyses. 
 
+There are several short text files that this program needs.
+
+disease_group_databases.txt lists the information about databases
+that store patient numbers for the cases (breast cancer) and the 
+controls.
+
+cdm_config.csv lists information needed to connect to the
+cdm database.
+
+icd9_labels.csv lists icd9 codes and labels.
+
+i2b2_variables_databases.txt lists information on the various
+i2b2 (or for KUMC, Heron) databases.
+
+The program itself creates a small text file, timing_log.txt,
+that helps me review the speed of various program chunks. It
+is created using [knitr hooks http://yihui.name/knitr/hooks/].
+Look for the timer function within knit_hooks$set.
+
 This program was run on `r doc$date` using version `r doc$version`.
 The original author is `r doc$author`. `r doc$maintainer`
 is currently maintaining and enhancing this program
@@ -177,6 +196,7 @@ i_case_code <- which(pa$disease_group==i_case)[1] # [1] protects against duplica
 p_connect <- dbConnect(SQLite(), dbname=pa$file_location[i_case_code])
 px <- dbGetQuery(p_connect, sql["start_date"])
 dbDisconnect(p_connect)
+px$gp <- pa$disease_group[i_case_code]
 
 # Let's look carefully at the cases.
 
@@ -202,7 +222,7 @@ table(substr(px$import_date, 1, 4))
 px$tumor_date <- as.Date(substr(px$start_date, 1, 10), format="%Y-%m-%d")
 cumulative_percent <- 100*(1:length(px$tumor_date)) / length(px$tumor_date)
 plot(sort(px$tumor_date), cumulative_percent,
-     axes=FALSE, type="S")
+     axes=FALSE, type="l")
 axis(side=2)
 axis(side=1, at=as.Date(paste(10*(194:201), "01-01", sep="-")), labels=10*(194:201))
 box()
@@ -222,7 +242,7 @@ pc <- data.frame(gp=names(pb[1]), pb[[1]], tumor_date=NA, stringsAsFactors=FALSE
 for (k in 2:length(pb)) {
   pc <- rbind(pc, data.frame(gp=names(pb[k]), pb[[k]], tumor_date=NA, stringsAsFactors=FALSE))
 }
-pc <- rbind(pc, px[ , c("patient_num", "tumor_date")])
+pc <- rbind(pc, px[ , c("gp", "patient_num", "tumor_date")])
 archive(pc, "stacked patient numbers")
 if (drop_intermediate_objects) rm(pb)
 if (drop_intermediate_objects) rm(px)
@@ -337,7 +357,7 @@ ce <- read.csv(fn, header=TRUE, as.is=TRUE, row.names=NULL)
 
 ce$dx_new <- align_icd9_codes(ce$diagnosis_code)
 ce$nice_label <- paste(strip_specials(ce$short_label),ce$DX,sep="_")
-ce$dx_label <- paste(strip_specials(ce$short_label), ce$dx_new, sep="_")
+ce$dx_label <- paste(strip_specials(ce$short_label), ce$dx_new, "09" sep="_")
 archive(ce, "ICD9 codes and labels")
 
 if (qc) print_random_rows(ce$nice_label)
@@ -362,7 +382,6 @@ cg <- cf[!duplicated(cf$DX), c("DX", "dx_label")]
                                ```
 if (qc) print_random_rows(cg)
 archive(cg, "CDM code key")
-if (drop_intermediate_objects) rm(cf)
 ```
 
 In addition to CDM data, you can get lots of fun stuff
@@ -414,9 +433,12 @@ sql[["observation_fact"]] <-
    on patient_num = pn"
 
 
-for (f in ia$file_location) {
+for (i in 1:dim(ia)[1]) {
+  f <- ia$file_location[i]
+  v <- ia$variable_category[i]
   variables_conn <- dbConnect(SQLite(), dbname=f)
-  of[[f]] <- dbGetQuery(variables_conn, sql[["observation_fact"]])
+  of[[v]] <- dbGetQuery(variables_conn, sql[["observation_fact"]])
+  of[[v]] <- cbind(of[[v]], abbreviation=ia$abbreviation[i])
 }
 
 # Since we are importing multiple i2b2 files, we need to stack these
@@ -434,6 +456,11 @@ if (qc) {
 }
 archive(ib, "Stacked i2b2 data")
 if (drop_intermediate_objects) rm(ia)
+```
+
+Now let's try to add counts.
+
+```{r count_concepts}
 
 # Add a concept_count column that notes how often concept_cd appears
 # among the case groups. This will allow you to select only
@@ -458,12 +485,17 @@ if (drop_intermediate_objects) rm(ic)
 
 ie <- merge(ib, id)
 ie$name_char <- strip_specials(ie$name_char)
-ie$dx_label <- paste(ie$name_char, ie$concept_cd, sep="_")
+ie$dx_label <- paste(ie$name_char, ie$concept_cd, ie$abbreviation, sep="_")
 
 if (qc) print_random_rows(ie)
 archive(ie, "Merge counts back in")
 if (drop_intermediate_objects) rm(ib)
 if (drop_intermediate_objects) rm(id)
+```
+
+Almost done. Put the cdm and i2b2 data into a single place.
+
+```{r merge_cdm_and_i2b2, timer=TRUE}
 
 i_names <- c("patient_num", "GP", "dx_count", "dx_label", "observation_date")
 c_names <- c("PATIENT_NUM", "GP", "dx_count", "dx_label", "OBSERVATION_DATE")
@@ -492,6 +524,11 @@ lb$dx_label <- gsub("__", "_", lb$dx_label, fixed=TRUE)
 lb$dx_label <- gsub("__", "_", lb$dx_label, fixed=TRUE)
 
 st <- pc
+```
+
+Track counts.
+
+```{r counts_in_cz_iz, timer=TRUE}
 
 if (qc) {
   cat("How many patients in lb come from cz?\n")
@@ -501,10 +538,12 @@ if (qc) {
   cat("How many patients are in lb versus pc?\n")
   count_unique_patients(lb, pc)
 }
+```
 
-# Before we go, save the concept_cd and dx_label values
-# so that we can re-merge some files later.
+Before we go, save the concept_cd and dx_label values
+so that we can re-merge some files later.
 
+```{r save_for_re_merges, timer=TRUE}
 ig <- ie[!duplicated(ie$concept_cd), c("concept_cd", "dx_label")]
 archive(ig, "I2B2 code key")
 if (drop_intermediate_objects) rm(ie)
@@ -521,7 +560,7 @@ if (qc) print_random_rows(zg)
 Now save everything for later use.
 
 ```{r save-everything, timer=TRUE}
-# extact_case_control.RData stores everything, including intermediate files.
+# extract_case_control.RData stores everything, including intermediate files.
 # case_control_data.RData stores only the important stuff.
 
 save.image(file="extract_case_control.RData")
