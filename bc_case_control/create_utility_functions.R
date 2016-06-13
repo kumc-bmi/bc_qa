@@ -12,8 +12,9 @@ archive <- function(df, note="No notes", remove=FALSE) {
   size_of_archive <- format(object.size(arc), units="auto")
   m <- paste(df_name, "added. Archive has",items_in_archive,"items and uses",size_of_archive)
   cat(m)
+  print(arc$documentation)
   if (remove) rm(list=df_name, pos=1)
-  return(invisible(names(arc))) # invisible prevents the names from printing.
+  return(invisible(names(arc))) # invisible prevents the names from printing again.
 }
 
 if (test_functions) {
@@ -66,7 +67,7 @@ library("knitr")
 knit_hooks$set(timer = function(before, options, envir) {
   if (before) {
     current_time <<- Sys.time()
-    m <- paste("Chunk", options$label, "started at", as.character(current_time), ".  \n")
+    m <- paste("Chunk ", options$label, " started at ", as.character(current_time), ".\n", sep="")
     cat(m)
     return(m)
   } else {
