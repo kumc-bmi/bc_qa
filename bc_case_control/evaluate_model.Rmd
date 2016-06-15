@@ -188,8 +188,7 @@ the same as the format for TUMOR_DATE.
 
 ```{r peek_at_random, fig.width=8, fig.height=5, eval=TRUE}
 library("chron")
-random_patients <- sample(md$patient_num[md$co > 0], 20)
-for (p in random_patients) {
+plot_time_course <- function(p) {  
   sb <- mc[mc$patient_num==p, ]
   baseline_probability=0.1
   baseline_odds <- baseline_probability / (1-baseline_probability)
@@ -218,6 +217,29 @@ for (p in random_patients) {
   cat("\n")
   print(sb[, c("days", "co", "cumulative_probability", "dx_label")])
 }
+
+
+true_positive_patients <-(md$updated_probability > 0.90) & (md$GP==i_case)
+for (p in sample(md$patient_num[true_positive_patients], 20)) {
+  plot_time_course(p)
+}  
+
+false_positive_patients <- (md$updated_probability > 0.90) & (md$GP!=i_case)
+for (p in sample(md$patient_num[false_positive_patients], 20)) {
+  plot_time_course(p)
+}  
+
+false_negative_patients <- (md$co > 0) & (md$updated_probability < 0.90) & (md$GP==i_case)
+for (p in sample(md$patient_num[false_negative_patients], 20)) {
+  plot_time_course(p)
+}  
+
+true_negative_patients <- (md$co > 0) & (md$updated_probability < 0.90) & (md$GP!=i_case)
+for (p in sample(md$patient_num[true_negative_patients], 20)) {
+  plot_time_course(p)
+}  
+
+
 ```
 
 Save the important stuff
