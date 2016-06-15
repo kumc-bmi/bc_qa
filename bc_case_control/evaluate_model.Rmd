@@ -178,9 +178,13 @@ if (qc) {
 archive(md, "aggregated to a single patient")
 plot(factor(md$GP), md$updated_probability)
 tapply(md$updated_probability,md$GP,function(x) {round(sum(x>0.9)/length(x>0.9), 2)})
+tapply(md$updated_probability,md$GP,function(x) {round(sum(x==0.1)/length(x==0.1), 2)})
 ```
 
 Now let's peek at random cases.
+
+The codes a bit of a mess because the format for observation_date is not
+the same as the format for TUMOR_DATE.
 
 ```{r peek_at_random, fig.width=8, fig.height=5, eval=TRUE}
 library("chron")
@@ -194,12 +198,14 @@ for (p in random_patients) {
   sb$cumulative_probability <- round(cumulative_odds / (1+cumulative_odds), 2)
   sb$days <- round(as.numeric(sb$observation_date - sb$observation_date[1]) / (24*60*60), 1)
   sb$days[is.na(sb$days)] <- 0
-  tumor_day <- round(as.numeric(sb$TUMOR_DATE - sb$observation_date[1]) / (24*60*60), 1)
-  abline(h=tumor_day[1])
+  tumor_day <- as.numeric(sb$TUMOR_DATE - as.Date(sb$observation_date[1]))
   n <- dim(sb)[1]
   par(mfrow=c(1,2))
   par(mar=c(2.6, 2.6, 2.6, 0.6))
-  plot(sb$cumulative_probability, sb$days, type="S", xlim=c(0,1), ylim=c(sb$days[n]+30, -30))
+  y_start <- min(-30, tumor_day-30, na.rm=TRUE)
+  plot(sb$cumulative_probability, sb$days, type="S", xlim=c(0,1), ylim=c(sb$days[n]+30, y_start))
+  arrows(0.5, tumor_day[1], 0.1, tumor_day, lwd=3, length=0.1, col="red")
+  text(0.55, tumor_day[1], "Registry day", col="red", adj=0)
   segments(0.1, -30, 0.1, 0)
   segments(0.1, 0, sb$cumulative_probability[1], 0)
   segments(sb$cumulative_probability[n], sb$days[n], sb$cumulative_probability[n], sb$days[n]+30)
