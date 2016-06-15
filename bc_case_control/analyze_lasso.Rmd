@@ -10,6 +10,16 @@ doc$maintainer <- "Steve Simon (KUMC)"
 doc$assistants <- "Dan Connolly"
 ```
 
+First things first. If you run any of these programs, they 
+will near the start use a command rm(list=ls()) that cleans
+out any files left from previous programs. This helps improve
+the reproducibility of the programs. But if you are in the 
+habit of storing information in the default location,
+.RData, this program may accidentally wipe out your stuff.
+
+I've included a save.image("backup.Rdata") command but that
+only provides a fig leaf of protection. You should run these
+programs in a fresh directory or backup your .RData file.
 
 analyze_lasso.Rmd
 =================
@@ -47,9 +57,6 @@ library("glmnet")
 library("knitr")
 library("Matrix")
 
-# Load the case-control data sets
-load("case_control_data.RData")
-
 # Document when this program started.
 
 qc <- TRUE
@@ -67,25 +74,26 @@ source("create_utility_functions.R")
 
 ```
 
-Below, we include only those codes that appear reasonably often
-among the cases.
+Load the case-control data sets
 
-```{r include_only_popular_icd9_codes, timer=TRUE}
-cutoff <- 100
-n1 <- length(unique(lb$dx_label))
-lc <- lb[lb$dx_count >= cutoff, ]
-rm(lb)
-n2 <- length(unique(lc$dx_label))
+```{r load_from_previous_programs, timer=TRUE}
+load("case_control_data.RData")
+
+# clean out the old archive
+
+if (exists("arc")) {rm(arc)}
 ```
 
-The initial data set has `r n1` unique ICD9 codes. After eliminating
-the codes that occur less than `r cutoff` times among the cases,
-there are `r n2` unique ICD9 codes left.
+Here's some code for creating sparse matrices. It should probably be moved
+into the create_utility_functions.R program.
 
 ```{r experiment_with_sparse_matrices, timer=TRUE}
 # This is a work in progress. If the number of variables gets
 # very large, you may need to switch from the standard
 # matrix storage to sparse matrices.
+#
+# Done!
+
 create_sparse_matrix <- function(tst) {
   irow <- factor(tst$patient_num)[!is.na(tst$dx_label)]
   jcol <- factor(tst$dx_label)[!is.na(tst$dx_label)]
@@ -133,7 +141,7 @@ Now, run a lasso/elastic net model for each control group.
 all_models <- NULL
 all_cv <- NULL
 for (ic in i_control) {
-  pc1 <- create_sparse_matrix(lc[lc$gp %in% c(i_case, ic), ])
+  pc1 <- create_sparse_matrix(le[le$gp %in% c(i_case, ic), ])
   iv_matrix <- pc1$sm
   dv_vector <- as.numeric(pc1$pg[,"gp"]==i_case)
   en <- glmnet(
@@ -153,10 +161,15 @@ for (ic in i_control) {
 }
 ```
 
-Store (almost) everything for later use.
+Store the important stuff.
 
-```{r save-everything, timer=TRUE}
-rm(lc)
+```{r save_important, timer=TRUE}
+save(all_models, all_cv, i_case, i_control, file="lasso_models.RData")
+```
+
+Store everything for later use.
+
+```{r save_everything, timer=TRUE}
 save.image(file="analyze_lasso.RData")
 ```
 

@@ -10,9 +10,20 @@ doc$maintainer <- "Steve Simon (KUMC)"
 doc$assistants <- "Dan Connolly"
 ```
 
+First things first. If you run any of these programs, they 
+will near the start use a command rm(list=ls()) that cleans
+out any files left from previous programs. This helps improve
+the reproducibility of the programs. But if you are in the 
+habit of storing information in the default location,
+.RData, this program may accidentally wipe out your stuff.
 
-Case-control
-============
+I've included a save.image("backup.Rdata") command but that
+only provides a fig leaf of protection. You should run these
+programs in a fresh directory or backup your .RData file.
+
+display_lasso.Rmd
+=================
+
 For context, see [485].
 
 [485]: https://informatics.gpcnetwork.org/trac/Project/ticket/485
@@ -51,9 +62,6 @@ library("reshape2")
 library("glmnet")
 library("Matrix")
 
-# Load the case-control data sets
-load("analyze_lasso.RData")
-
 rm(timing_log)
 start_time <- Sys.time()
 if (qc) {
@@ -64,6 +72,17 @@ if (qc) {
 
 source("create_utility_functions.R")
 
+```
+
+Load the lasso models.
+
+
+```{r load_from_previous_programs, timer=TRUE}
+load("lasso_models.RData")
+
+# clean out the old archive
+
+if (exists("arc")) {rm(arc)}
 ```
 
 A summary of how the data were originally collected appears in 
@@ -77,8 +96,9 @@ optimal value of lambda through cross validation.
 optima <- NULL
 for (ic in i_control) {
   cv <- all_cv[[ic]]
-  optima[[ic]]$lambda <- cv$lambda.1se # maybe try lambda.min
-  optima[[ic]]$step <- which(cv$lambda==cv$lambda.1se)
+  # lamda.1se is more conservative (fewer variables) than lambda.min
+  optima[[ic]]$lambda <- cv$lambda.min
+  optima[[ic]]$step <- which(cv$lambda==optima[[ic]]$lambda)
   cat("\nComparison of", i_case, "to", ic)
   cat(".\n  Best value of lambda is", optima[[ic]]$lambda)
   cat(", which is step", optima[[ic]]$step,"\n")
@@ -87,11 +107,14 @@ for (ic in i_control) {
 
 Now that you have the optimum, pull out the coefficients for that
 particular value of lambda. You should distinguish between coefficients
-that are positive (direction=1), negative (direction=0), or zero
-(direction=0.5). Positive coefficients are ones that increase the 
-estimated probability of being a case and negative coefficients 
-are ones that increase the estimated probability of being a 
-control. One of the attractions of the lasso/elastic net is
+that are positive (direction=1), zero
+(direction=0) and negative (direction=-1).
+
+IMPORTANT: The current models do not allow for any negative coefficients.
+
+Positive coefficients are ones that increase the 
+estimated probability of being a case. One of the attractions
+of the lasso/elastic net is
 that it zeros out the coefficients of many variables, and thus
 it serves as a feature selection method.
 
@@ -117,7 +140,7 @@ for (ic in i_control) {
     data.frame(odds_ratio, beta, direction, entry_step, entry_lambda)
   if (qc) {
     cat("\nComparison of", i_case, "to", ic,"\n\n")
-    print(list_random_rows(coefficients[[ic]]))
+    print_random_rows(coefficients[[ic]])
   }
 }
 ```
@@ -199,15 +222,18 @@ or_consensus <- or_consensus[o, ]
 # Odds ratios for consensus positive coefficients.
 or_consensus[or_consensus$di==3, c("dx", "gm", "co")]
 # These variables did not make the cut. The column
-# for di indicates how many models (0, 1, or 2)
+# for di indicates how many models (1, or 2)
 # included this variable. It looks like a fair
 # number of promising variables did not make
 # the cut.
 #
-# or_consensus[or_consensus$di < 3, c("di", "dx")]
-lasso_model <- or_consensus[or_consensus$di==3, c("dx", "co")]
+or_consensus[or_consensus$di %in% 1:2, c("di", "dx")]
+lasso_coefficients <- or_consensus[or_consensus$di==3, c("dx", "co")]
 ```
 
+```{r save_important_stuff, timer=TRUE}
+save(lasso_coefficients, file="lasso_coefficients.RData")
+```
 
 ```{r save-everything, timer=TRUE}
 save.image(file="display_lasso.RData")

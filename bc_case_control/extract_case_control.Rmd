@@ -10,9 +10,21 @@ doc$maintainer <- "Steve Simon (KUMC)"
 doc$assistants <- "Dan Connolly"
 ```
 
+First things first. If you run any of these programs, they 
+will near the start use a command rm(list=ls()) that cleans
+out any files left from previous programs. This helps improve
+the reproducibility of the programs. But if you are in the 
+habit of storing information in the default location,
+.RData, this program may accidentally wipe out your stuff.
 
-Case-control
-============
+I've included a save.image("backup.Rdata") command but that
+only provides a fig leaf of protection. You should run these
+programs in a fresh directory or backup your .RData file.
+
+
+extract_case_control.Rmd
+========================
+
 For context, see [485].
 
 [485]: https://informatics.gpcnetwork.org/trac/Project/ticket/485
@@ -51,13 +63,32 @@ any ICD9 codes associated with each patient.
 Two companion programs, analyze_lasso.Rmd and analyze_sensitivity.Rmd,
 take the resulting data set and produces simple graphs and analyses. 
 
+There are several short text files that this program needs.
+
+disease_group_databases.txt lists the information about databases
+that store patient numbers for the cases (breast cancer) and the 
+controls.
+
+cdm_config.csv lists information needed to connect to the
+cdm database.
+
+icd9_labels.csv lists icd9 codes and labels.
+
+i2b2_variables_databases.txt lists information on the various
+i2b2 (or for KUMC, Heron) databases.
+
+The program itself creates a small text file, timing_log.txt,
+that helps me review the speed of various program chunks. It
+is created using [knitr hooks http://yihui.name/knitr/hooks/].
+Look for the timer function within knit_hooks$set.
+
 This program was run on `r doc$date` using version `r doc$version`.
 The original author is `r doc$author`. `r doc$maintainer`
 is currently maintaining and enhancing this program
 with the assistance of `r doc$assistants`.
 
 
-```{r run_preliminaries}
+```{r run_preliminaries, cache=FALSE}
 
 # Backup image (just in case) and then start with a blank slate.
 
@@ -82,7 +113,7 @@ if (qc) {
 
 # clean out the old archive
 
-rm(arc)
+if (exists("arc")) {rm(arc)}
 
 # load required libraries.
 
@@ -118,24 +149,10 @@ Design the appropriate sql queries.
 # I can model one SQL query after the previous one.
 # As I get better with SQL, I will move the queries
 # closer to the program location where they get used.
+#
+#  Done!
 
 sql <- NULL
-
-sql[["observation_fact"]] <-
-  "select o.patient_num, o.concept_cd c.name_char 
-   from observation_fact o
-   inner join (concept_dimension c
-     where concept_path LIKE '\\i2b2\\Procorders%' OR
-       concept_path LIKE '\\i2b2\\Procedures%')
-   ON o.concept_cd=c.concept_cd"
-
-if (qc) {
-  for (i in 1:length(sql)) {
-    print(names(sql)[i])
-    cat(sql[[i]])
-    cat("\n\n")
-  }
-}
 
 ```
 
@@ -161,7 +178,7 @@ archive(pa,"patient file information")
 
 Now loop across file names to get patient numbers for each group.
 
-```{r get_patient_numbers, timer=TRUE}
+```{r get_patient_numbers_controls, timer=TRUE}
 
 # pb: distinct patient numbers in each disease group
 
@@ -172,13 +189,60 @@ sql[["distinct_patients"]] <-
   "select distinct patient_num
    from observation_fact"
 
+sql[["start_date"]] <-
+  "select *
+   from observation_fact
+   where concept_cd='SEER_SITE:26000'"
+
 pb <- NULL
-for (i in 1:length(pa$file_location)) {
+i_control_codes <- which(pa$case==0)
+for (i in i_control_codes) {
   p_connect <- dbConnect(SQLite(), dbname=pa$file_location[i])
   group_name <- pa$disease_group[i] 
   pb[[group_name]] <- dbGetQuery(p_connect, sql["distinct_patients"])
   dbDisconnect(p_connect)
 }
+archive(pb, "patient numbers for control groups")
+```
+
+Get cases separately because we need tumor_date.
+
+```{r get_patient_numbers_cases, timer=TRUE}
+i_case_code <- which(pa$disease_group==i_case)[1] # [1] protects against duplicates.
+p_connect <- dbConnect(SQLite(), dbname=pa$file_location[i_case_code])
+px <- dbGetQuery(p_connect, sql["start_date"])
+dbDisconnect(p_connect)
+px$gp <- pa$disease_group[i_case_code]
+
+# Let's look carefully at the cases.
+
+o <- order(px$patient_num,px$start_date)
+head(px[o, ])
+dim(px)
+dim(pb[[i_case]])
+
+# There are a few duplicates, so I need to group by and select the minimum date.
+
+px_count <- table(px$patient_num)
+px_duplicates <- sample(names(px_count[px_count>1]), 5)
+px[px$patient_num %in% px_duplicates, ]
+
+table(substr(px$start_date, 1, 4)) # substr(1, 4) gives just the year.
+table(substr(px$end_date, 1, 4)) 
+
+# Neither download_date nor import_date are useful for analysis.
+
+table(substr(px$download_date, 1, 4)) 
+table(substr(px$import_date, 1, 4)) 
+
+px$tumor_date <- as.Date(substr(px$start_date, 1, 10), format="%Y-%m-%d")
+cumulative_percent <- 100*(1:length(px$tumor_date)) / length(px$tumor_date)
+plot(sort(px$tumor_date), cumulative_percent,
+     axes=FALSE, type="l")
+axis(side=2)
+axis(side=1, at=as.Date(paste(10*(194:201), "01-01", sep="-")), labels=10*(194:201))
+box()
+archive(px, "patient numbers for cases")
 
 if (qc) {
   for (i in 1:length(pb)) {
@@ -186,15 +250,21 @@ if (qc) {
     print(dim(pb[[i]]))
     print_random_rows(pb[[i]])
   }
+  print(dim(px))
+  print_random_rows(px)
 }
+```
 
-pc <- data.frame(gp=names(pb[1]), pb[[1]], stringsAsFactors=FALSE)
-for (k in 2:length(pb)) {
-  pc <- rbind(pc, data.frame(gp=names(pb[k]), pb[[k]], stringsAsFactors=FALSE))
+Combine everything.
+
+```{r combine_everything, timer=TRUE}
+pc <- px[ , c("gp", "patient_num", "tumor_date")]
+for (k in 1:length(pb)) {
+  pc <- rbind(pc, data.frame(gp=names(pb[k]), pb[[k]], tumor_date=NA, stringsAsFactors=FALSE))
 }
 archive(pc, "stacked patient numbers")
-if (drop_intermediate_objects) rm(pa)
 if (drop_intermediate_objects) rm(pb)
+if (drop_intermediate_objects) rm(px)
 if (qc) {
   print_random_rows(pc)
 }
@@ -202,6 +272,8 @@ if (qc) {
 
 Next, you need to write the patient numbers to the same
 location as the PCORnet CDM database.
+
+The file cdm_config.csv contains login information.
 
 ```{r write_patient_numbers_to_cdm, timer=TRUE}
 
@@ -306,7 +378,7 @@ ce <- read.csv(fn, header=TRUE, as.is=TRUE, row.names=NULL)
 
 ce$dx_new <- align_icd9_codes(ce$diagnosis_code)
 ce$nice_label <- paste(strip_specials(ce$short_label),ce$DX,sep="_")
-ce$dx_label <- paste(strip_specials(ce$short_label), ce$dx_new, sep="_")
+ce$dx_label <- paste("09", strip_specials(ce$short_label), ce$dx_new, sep="_")
 archive(ce, "ICD9 codes and labels")
 
 if (qc) print_random_rows(ce$nice_label)
@@ -323,25 +395,28 @@ if (drop_intermediate_objects) rm(cd)
 if (drop_intermediate_objects) rm(ce)
 
 if (qc) print_random_rows(cf)
+```
 
-# Before we leave this section, save the DX and dx_label
-# values to allow later re-merges.
+Before we leave this section, save the DX and dx_label
+values to allow later re-merges.
 
+```{r allow_re_merges, timer=TRUE}
 cg <- cf[!duplicated(cf$DX), c("DX", "dx_label")]
                                ```
 if (qc) print_random_rows(cg)
 archive(cg, "CDM code key")
-if (drop_intermediate_objects) rm(cf)
 ```
 
 In addition to CDM data, you can get lots of fun stuff
 from i2b2 queries. The individual i2b2 queries appear
 in i2b2_variables_databases.txt.
 
-```{r now_get_i2b2_codes, timer=TRUE}
+```{r find_i2b2_database_locations, timer=TRUE}
 
 # I need to get dates from here. Look for start_time in
 # the observation_fact table.
+#
+# Done!
 
 fn <- "i2b2_variables_databases.txt"
 ia <- read.csv(file=fn, header=TRUE, stringsAsFactors=FALSE)
@@ -354,7 +429,9 @@ for (f in ia$file_location) {
   dbWriteTable(variables_conn, "PC", pc, overwrite=TRUE)
   if (qc) dbListTables(variables_conn)
 }
+```
 
+```{r read_i2b2, timer=TRUE}
 of <- NULL
 
 # Note where clause in the middle of this SQL code.
@@ -383,14 +460,19 @@ sql[["observation_fact"]] <-
    on patient_num = pn"
 
 
-for (f in ia$file_location) {
+for (i in 1:dim(ia)[1]) {
+  f <- ia$file_location[i]
+  v <- ia$variable_category[i]
   variables_conn <- dbConnect(SQLite(), dbname=f)
-  of[[f]] <- dbGetQuery(variables_conn, sql[["observation_fact"]])
+  of[[v]] <- dbGetQuery(variables_conn, sql[["observation_fact"]])
+  of[[v]] <- cbind(of[[v]], abbreviation=ia$abbreviation[i])
 }
+```
 
-# Since we are importing multiple i2b2 files, we need to stack these
-# into a single data frame.
+Since we are importing multiple i2b2 files, we need to stack these
+into a single data frame.
 
+```{r stack_i2b2, timer=TRUE}
 ib <- of[[1]]
 for (i in 2:length(of)) {
   ib <- rbind(ib, of[[i]])
@@ -403,6 +485,11 @@ if (qc) {
 }
 archive(ib, "Stacked i2b2 data")
 if (drop_intermediate_objects) rm(ia)
+```
+
+Now let's try to add counts.
+
+```{r count_concepts}
 
 # Add a concept_count column that notes how often concept_cd appears
 # among the case groups. This will allow you to select only
@@ -427,12 +514,17 @@ if (drop_intermediate_objects) rm(ic)
 
 ie <- merge(ib, id)
 ie$name_char <- strip_specials(ie$name_char)
-ie$dx_label <- paste(ie$name_char, ie$concept_cd, sep="_")
+ie$dx_label <- paste(ie$abbreviation, ie$name_char, ie$concept_cd, sep="_")
 
 if (qc) print_random_rows(ie)
 archive(ie, "Merge counts back in")
 if (drop_intermediate_objects) rm(ib)
 if (drop_intermediate_objects) rm(id)
+```
+
+Almost done. Put the cdm and i2b2 data into a single data frame.
+
+```{r merge_cdm_and_i2b2, timer=TRUE}
 
 i_names <- c("patient_num", "GP", "dx_count", "dx_label", "observation_date")
 c_names <- c("PATIENT_NUM", "GP", "dx_count", "dx_label", "OBSERVATION_DATE")
@@ -459,8 +551,11 @@ for (i in remove_list) {
 lb$dx_label <- gsub(":", "_", lb$dx_label, fixed=TRUE)
 lb$dx_label <- gsub("__", "_", lb$dx_label, fixed=TRUE)
 lb$dx_label <- gsub("__", "_", lb$dx_label, fixed=TRUE)
+```
 
-st <- pc
+Track counts.
+
+```{r counts_in_cz_iz, timer=TRUE}
 
 if (qc) {
   cat("How many patients in lb come from cz?\n")
@@ -470,10 +565,46 @@ if (qc) {
   cat("How many patients are in lb versus pc?\n")
   count_unique_patients(lb, pc)
 }
+```
 
-# Before we go, save the concept_cd and dx_label values
-# so that we can re-merge some files later.
+Below, we include only those codes that appear reasonably often
+among the cases. This chunk should probably be moved back
+into extract_case_conrol.Rmd
 
+```{r include_only_popular_icd9_codes, timer=TRUE}
+cutoff <- 100
+n1 <- length(unique(lb$dx_label))
+lc <- lb[lb$dx_count >= cutoff, ]
+rm(lb)
+n2 <- length(unique(lc$dx_label))
+archive(lc, "popular codes only")
+```
+
+The initial data set has `r n1` unique ICD9 codes. After eliminating
+the codes that occur less than `r cutoff` times among the cases,
+there are `r n2` unique ICD9 codes left.
+
+Optionally, create training and test data sets. Again, this chunk should
+probably be moved back into extract_case_control.Rmd.
+
+```{r create_training_and_test_data_sets}
+proportion_training <- 0.7
+unique_patients <- sort(unique(lc[, "patient_num"]))
+select <- sample(c("Train","Test"), length(unique_patients), replace=TRUE,
+                 prob=c(proportion_training, 1-proportion_training))
+if (qc) {print_random_rows(select)}
+ld <- merge(lc, data.frame(patient_num=unique_patients, select=select))
+archive(ld, "test and training sets")
+le <- ld[ld$select=="Train", ]
+archive(le, "training set only")
+lf <- ld[ld$select=="Test", ]
+archive(lf, "test set only")
+```
+
+Before we go, save the concept_cd and dx_label values
+so that we can re-merge some files later.
+
+```{r save_for_re_merges, timer=TRUE}
 ig <- ie[!duplicated(ie$concept_cd), c("concept_cd", "dx_label")]
 archive(ig, "I2B2 code key")
 if (drop_intermediate_objects) rm(ie)
@@ -489,14 +620,20 @@ if (qc) print_random_rows(zg)
 
 Now save everything for later use.
 
-```{r save-everything, timer=TRUE}
-# extact_case_control.RData stores everything, including intermediate files.
+The file case_control_data.RData stores only the important stuff.
+
+```{r save_important_data, timer=TRUE}
+save(
+  lc, le, lf, pc, i_case, i_control,
+  file="case_control_data.RData")
+```
+
+The file extract_case_control.RData stores everything, including intermediate files.
+
+```{r save_everything, timer=TRUE}
 # case_control_data.RData stores only the important stuff.
 
 save.image(file="extract_case_control.RData")
-save(
-  lb, st, i_case, i_control,
-  file="case_control_data.RData")
 ```
 
 Well done. Here is how long everything took.
