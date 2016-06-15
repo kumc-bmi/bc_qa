@@ -10,6 +10,16 @@ doc$maintainer <- "Steve Simon (KUMC)"
 doc$assistants <- "Dan Connolly"
 ```
 
+First things first. If you run any of these programs, they 
+will near the start use a command rm(list=ls()) that cleans
+out any files left from previous programs. This helps improve
+the reproducibility of the programs. But if you are in the 
+habit of storing information in the default location,
+.RData, this program may accidentally wipe out your stuff.
+
+I've included a save.image("backup.Rdata") command but that
+only provides a fig leaf of protection. You should run these
+programs in a fresh directory or backup your .RData file.
 
 analyze_lasso.Rmd
 =================
