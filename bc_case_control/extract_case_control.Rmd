@@ -166,7 +166,7 @@ archive(pa,"patient file information")
 
 Now loop across file names to get patient numbers for each group.
 
-```{r get_patient_numbers, timer=TRUE}
+```{r get_patient_numbers_controls, timer=TRUE}
 
 # pb: distinct patient numbers in each disease group
 
@@ -191,7 +191,11 @@ for (i in i_control_codes) {
   dbDisconnect(p_connect)
 }
 archive(pb, "patient numbers for control groups")
+```
 
+Get cases separately because we need tumor_date.
+
+```{r get_patient_numbers_cases, timer=TRUE}
 i_case_code <- which(pa$disease_group==i_case)[1] # [1] protects against duplicates.
 p_connect <- dbConnect(SQLite(), dbname=pa$file_location[i_case_code])
 px <- dbGetQuery(p_connect, sql["start_date"])
@@ -237,12 +241,15 @@ if (qc) {
   print(dim(px))
   print_random_rows(px)
 }
+```
 
-pc <- data.frame(gp=names(pb[1]), pb[[1]], tumor_date=NA, stringsAsFactors=FALSE)
-for (k in 2:length(pb)) {
+Combine everything.
+
+```{r combine_everything, timer=TRUE}
+pc <- px[ , c("gp", "patient_num", "tumor_date")]
+for (k in 1:length(pb)) {
   pc <- rbind(pc, data.frame(gp=names(pb[k]), pb[[k]], tumor_date=NA, stringsAsFactors=FALSE))
 }
-pc <- rbind(pc, px[ , c("gp", "patient_num", "tumor_date")])
 archive(pc, "stacked patient numbers")
 if (drop_intermediate_objects) rm(pb)
 if (drop_intermediate_objects) rm(px)
@@ -253,6 +260,8 @@ if (qc) {
 
 Next, you need to write the patient numbers to the same
 location as the PCORnet CDM database.
+
+The file cdm_config.csv contains login information.
 
 ```{r write_patient_numbers_to_cdm, timer=TRUE}
 
@@ -357,7 +366,7 @@ ce <- read.csv(fn, header=TRUE, as.is=TRUE, row.names=NULL)
 
 ce$dx_new <- align_icd9_codes(ce$diagnosis_code)
 ce$nice_label <- paste(strip_specials(ce$short_label),ce$DX,sep="_")
-ce$dx_label <- paste(strip_specials(ce$short_label), ce$dx_new, "09" sep="_")
+ce$dx_label <- paste("09", strip_specials(ce$short_label), ce$dx_new, sep="_")
 archive(ce, "ICD9 codes and labels")
 
 if (qc) print_random_rows(ce$nice_label)
@@ -374,10 +383,12 @@ if (drop_intermediate_objects) rm(cd)
 if (drop_intermediate_objects) rm(ce)
 
 if (qc) print_random_rows(cf)
+```
 
-# Before we leave this section, save the DX and dx_label
-# values to allow later re-merges.
+Before we leave this section, save the DX and dx_label
+values to allow later re-merges.
 
+```{r allow_re_merges, timer=TRUE}
 cg <- cf[!duplicated(cf$DX), c("DX", "dx_label")]
                                ```
 if (qc) print_random_rows(cg)
@@ -388,10 +399,12 @@ In addition to CDM data, you can get lots of fun stuff
 from i2b2 queries. The individual i2b2 queries appear
 in i2b2_variables_databases.txt.
 
-```{r now_get_i2b2_codes, timer=TRUE}
+```{r find_i2b2_database_locations, timer=TRUE}
 
 # I need to get dates from here. Look for start_time in
 # the observation_fact table.
+#
+# Done!
 
 fn <- "i2b2_variables_databases.txt"
 ia <- read.csv(file=fn, header=TRUE, stringsAsFactors=FALSE)
@@ -404,7 +417,9 @@ for (f in ia$file_location) {
   dbWriteTable(variables_conn, "PC", pc, overwrite=TRUE)
   if (qc) dbListTables(variables_conn)
 }
+```
 
+```{r read_i2b2, timer=TRUE}
 of <- NULL
 
 # Note where clause in the middle of this SQL code.
@@ -440,10 +455,12 @@ for (i in 1:dim(ia)[1]) {
   of[[v]] <- dbGetQuery(variables_conn, sql[["observation_fact"]])
   of[[v]] <- cbind(of[[v]], abbreviation=ia$abbreviation[i])
 }
+```
 
-# Since we are importing multiple i2b2 files, we need to stack these
-# into a single data frame.
+Since we are importing multiple i2b2 files, we need to stack these
+into a single data frame.
 
+```{r stack_i2b2, timer=TRUE}
 ib <- of[[1]]
 for (i in 2:length(of)) {
   ib <- rbind(ib, of[[i]])
@@ -485,7 +502,7 @@ if (drop_intermediate_objects) rm(ic)
 
 ie <- merge(ib, id)
 ie$name_char <- strip_specials(ie$name_char)
-ie$dx_label <- paste(ie$name_char, ie$concept_cd, ie$abbreviation, sep="_")
+ie$dx_label <- paste(ie$abbreviation, ie$name_char, ie$concept_cd, sep="_")
 
 if (qc) print_random_rows(ie)
 archive(ie, "Merge counts back in")
@@ -493,7 +510,7 @@ if (drop_intermediate_objects) rm(ib)
 if (drop_intermediate_objects) rm(id)
 ```
 
-Almost done. Put the cdm and i2b2 data into a single place.
+Almost done. Put the cdm and i2b2 data into a single data frame.
 
 ```{r merge_cdm_and_i2b2, timer=TRUE}
 
@@ -522,8 +539,6 @@ for (i in remove_list) {
 lb$dx_label <- gsub(":", "_", lb$dx_label, fixed=TRUE)
 lb$dx_label <- gsub("__", "_", lb$dx_label, fixed=TRUE)
 lb$dx_label <- gsub("__", "_", lb$dx_label, fixed=TRUE)
-
-st <- pc
 ```
 
 Track counts.
@@ -538,6 +553,40 @@ if (qc) {
   cat("How many patients are in lb versus pc?\n")
   count_unique_patients(lb, pc)
 }
+```
+
+Below, we include only those codes that appear reasonably often
+among the cases. This chunk should probably be moved back
+into extract_case_conrol.Rmd
+
+```{r include_only_popular_icd9_codes, timer=TRUE}
+cutoff <- 100
+n1 <- length(unique(lb$dx_label))
+lc <- lb[lb$dx_count >= cutoff, ]
+rm(lb)
+n2 <- length(unique(lc$dx_label))
+archive(lc, "popular codes only")
+```
+
+The initial data set has `r n1` unique ICD9 codes. After eliminating
+the codes that occur less than `r cutoff` times among the cases,
+there are `r n2` unique ICD9 codes left.
+
+Optionally, create training and test data sets. Again, this chunk should
+probably be moved back into extract_case_control.Rmd.
+
+```{r create_training_and_test_data_sets}
+proportion_training <- 0.7
+unique_patients <- sort(unique(lc[, "patient_num"]))
+select <- sample(c("Train","Test"), length(unique_patients), replace=TRUE,
+                 prob=c(proportion_training, 1-proportion_training))
+if (qc) {print_random_rows(select)}
+ld <- merge(lc, data.frame(patient_num=unique_patients, select=select))
+archive(ld, "test and training sets")
+le <- ld[ld$select=="Train", ]
+archive(le, "training set only")
+lf <- ld[ld$select=="Test", ]
+archive(lf, "test set only")
 ```
 
 Before we go, save the concept_cd and dx_label values
@@ -559,14 +608,20 @@ if (qc) print_random_rows(zg)
 
 Now save everything for later use.
 
-```{r save-everything, timer=TRUE}
-# extract_case_control.RData stores everything, including intermediate files.
+The file case_control_data.RData stores only the important stuff.
+
+```{r save_important_data, timer=TRUE}
+save(
+  lc, le, lf, pc, i_case, i_control,
+  file="case_control_data.RData")
+```
+
+The file extract_case_control.RData stores everything, including intermediate files.
+
+```{r save_everything, timer=TRUE}
 # case_control_data.RData stores only the important stuff.
 
 save.image(file="extract_case_control.RData")
-save(
-  lb, st, i_case, i_control,
-  file="case_control_data.RData")
 ```
 
 Well done. Here is how long everything took.

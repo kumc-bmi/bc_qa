@@ -51,9 +51,6 @@ library("reshape2")
 library("glmnet")
 library("Matrix")
 
-# Load the case-control data sets
-load("analyze_lasso.RData")
-
 rm(timing_log)
 start_time <- Sys.time()
 if (qc) {
@@ -64,6 +61,17 @@ if (qc) {
 
 source("create_utility_functions.R")
 
+```
+
+Load the lasso models.
+
+
+```{r load_from_previous_programs, timer=TRUE}
+load("lasso_models.RData")
+
+# clean out the old archive
+
+if (exists("arc")) {rm(arc)}
 ```
 
 A summary of how the data were originally collected appears in 
@@ -121,7 +129,7 @@ for (ic in i_control) {
     data.frame(odds_ratio, beta, direction, entry_step, entry_lambda)
   if (qc) {
     cat("\nComparison of", i_case, "to", ic,"\n\n")
-    print(list_random_rows(coefficients[[ic]]))
+    print_random_rows(coefficients[[ic]])
   }
 }
 ```
@@ -209,9 +217,12 @@ or_consensus[or_consensus$di==3, c("dx", "gm", "co")]
 # the cut.
 #
 or_consensus[or_consensus$di %in% 1:2, c("di", "dx")]
-lasso_model <- or_consensus[or_consensus$di==3, c("dx", "co")]
+lasso_coefficients <- or_consensus[or_consensus$di==3, c("dx", "co")]
 ```
 
+```{r save_important_stuff, timer=TRUE}
+save(lasso_coefficients, file="lasso_coefficients.RData")
+```
 
 ```{r save-everything, timer=TRUE}
 save.image(file="display_lasso.RData")
