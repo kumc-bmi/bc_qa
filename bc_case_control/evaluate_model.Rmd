@@ -214,6 +214,26 @@ By time interval, what fraction of breast cancer patients stay at the baseline p
 tapply(me$probability,me$time_interval, function(x) {round(sum(x==0.1)/length(x==0.1), 2)})
 ```
 
+Now let's draw some ROC curves.
+
+```{r draw_roc, timer=TRUE}
+# the following statement is only needed until we get the data restricted databases.
+old_ids <- me$patient_num[me$time_interval=="1938 to 2009"] 
+mf <- merge(md, data.frame(patient_num=old_ids, exclude=1), all=TRUE)
+mf <- mf[is.na(mf$exclude), ]
+mg <- split(mf$probability, mf$GP)
+probability_list <- sort(unique(mf$probability))
+n_p <- length(probability_list)
+empty_column <- 
+mh <- matrix(NA, nrow=n_p, ncol=length(unique(md$GP)))
+# names(mh) <- sort(c(i_case, i_control))
+for (i in 1:length(probability_list)) {
+  p <- probability_list[i]
+  mh[i, ] <- sapply(mg, function(x) {sum(x > p) / length(x)})
+}
+plot(mh[, 2], mh[, 1], xlim=c(0, 1), ylim=c(0, 1))
+```
+
 Now let's peek at random cases.
 
 The code is a bit of a mess because the format for observation_date is not
