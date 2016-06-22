@@ -1,6 +1,7 @@
 ```{r create_basic_documentation, echo=TRUE}
 
 # This is a test change made at 12:37pm on Wednesday, June 22.
+# This is a second change made at 12:43pm, same day.
 
 # Before anything else, set global options
 opts_chunk$set(echo=TRUE, cache=FALSE, error=TRUE)
