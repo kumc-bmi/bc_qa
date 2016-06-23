@@ -198,7 +198,7 @@ Now let's draw some ROC curves.
 ```{r draw_roc, timer=TRUE}
 # the following statement is only needed until we get the data restricted databases.
 mg <- split(md$probability, md$GP)
-probability_list <- sort(unique(me$probability))
+probability_list <- sort(unique(md$probability))
 n_p <- length(probability_list)
 mh <- matrix(NA, nrow=n_p+2, ncol=length(unique(md$GP)))
 dimnames(mh)[[2]] <- sort(c(i_case, i_control))
