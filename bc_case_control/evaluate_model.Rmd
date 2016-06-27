@@ -1,4 +1,12 @@
 ```{r create_basic_documentation, echo=TRUE}
+
+# As I am learning git, I want to put a few comments in to help me
+# track which files appear where. I'll remove these once I get
+# more comfortable with git.
+
+# This is a test change made at 11:12am on Monday, June 27.
+
+
 # Before anything else, set global options
 opts_chunk$set(echo=TRUE, cache=FALSE, error=TRUE)
 
@@ -236,6 +244,9 @@ plot_time_course <- function(sb) {
   par(mfrow=c(1,2))
   par(mar=c(2.6, 2.6, 2.6, 0.6))
   plot(sb$cumulative_probability, sb$days, type="S", xlim=c(0,1), ylim=c(sb$days[n]+30, y_start))
+  # Note: if there is no tumor_day (as for some of the controls, for example),
+  # then the following two lines of code will quietly fail, and produce no arrow
+  # which is exactly what we want.
   arrows(0.5, sb$tumor_day[1], 0.1, sb$tumor_day, lwd=3, length=0.1, col="red")
   text(0.55, sb$tumor_day[1], "Registry day", col="red", adj=0)
   segments(0.1, -30, 0.1, 0)
@@ -244,6 +255,7 @@ plot_time_course <- function(sb) {
   title(paste(sb$patient_num[1], ", ", sb$GP[1], ", ", res, sep=""))
 }
 write_time_course <- function(sb) {
+  n <- dim(sb)[1]
   y_start <- min(-30, sb$tumor_day-30, na.rm=TRUE)
   par(mar=c(2.6, 0, 2.6, 0))
   plot(sb$cumulative_probability, sb$days, type="n", xlim=c(0,1), ylim=c(sb$days[n]+30, y_start), axes=FALSE)
