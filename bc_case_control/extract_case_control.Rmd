@@ -1,4 +1,9 @@
 ```{r create_basic_documentation, echo=TRUE}
+
+# This is a test change made at 12:37pm on Wednesday, June 22.
+# This is a second change made at 12:43pm, same day.
+# This is a third change made at 1:03pm, same day.
+
 # Before anything else, set global options
 opts_chunk$set(echo=TRUE, cache=FALSE, error=TRUE)
 
@@ -189,11 +194,6 @@ sql[["distinct_patients"]] <-
   "select distinct patient_num
    from observation_fact"
 
-sql[["start_date"]] <-
-  "select *
-   from observation_fact
-   where concept_cd='SEER_SITE:26000'"
-
 pb <- NULL
 i_control_codes <- which(pa$case==0)
 for (i in i_control_codes) {
@@ -208,6 +208,11 @@ archive(pb, "patient numbers for control groups")
 Get cases separately because we need tumor_date.
 
 ```{r get_patient_numbers_cases, timer=TRUE}
+sql[["start_date"]] <-
+  "select *
+   from observation_fact
+   where concept_cd='SEER_SITE:26000'"
+
 i_case_code <- which(pa$disease_group==i_case)[1] # [1] protects against duplicates.
 p_connect <- dbConnect(SQLite(), dbname=pa$file_location[i_case_code])
 px <- dbGetQuery(p_connect, sql["start_date"])
@@ -234,6 +239,9 @@ table(substr(px$end_date, 1, 4))
 
 table(substr(px$download_date, 1, 4)) 
 table(substr(px$import_date, 1, 4)) 
+
+px <- px[!duplicated(px$patient_num), ]
+dim(px)
 
 px$tumor_date <- as.Date(substr(px$start_date, 1, 10), format="%Y-%m-%d")
 cumulative_percent <- 100*(1:length(px$tumor_date)) / length(px$tumor_date)

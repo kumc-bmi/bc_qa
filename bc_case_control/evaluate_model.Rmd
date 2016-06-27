@@ -45,6 +45,13 @@ Here's a rough outline of how the program works.
 4. Calculate a prediction based on those variables.
 5. Assess the quality of that prediction.
 
+It requires the following libraries.
+
+1. chron
+2. knitr
+3. ROracle
+4. RSQLite
+
 This program was run on `r doc$date` using version `r doc$version`.
 The original author is `r doc$author`. `r doc$maintainer`
 is currently maintaining and enhancing this program
@@ -72,9 +79,10 @@ if (qc) {
 
 # load required libraries.
 
+library("chron")
+library("knitr")
 library("ROracle")
 library("RSQLite")
-library("knitr")
 
 # Check to see if you are in the proper subdirectory.
 
@@ -165,70 +173,130 @@ archive(mc, "re-ordered")
 ```
 
 ```{r calculate_predictions_over_time, timer=TRUE}
+update_probability <- function(baseline_probability, co) {
+  baseline_odds <- baseline_probability / (1-baseline_probability)
+  updated_odds <- baseline_odds * exp(co)
+  return(updated_odds / (1+updated_odds))
+}
+
 md <- aggregate(mc$co, mc[, c("patient_num", "GP")], sum)
 names(md)[3] <- c("co")
-baseline_probability <- 0.1
-baseline_odds <- baseline_probability / (1-baseline_probability)
-updated_odds <- baseline_odds * exp(md$co)
-md$updated_probability <- updated_odds / (1+updated_odds)
+md$probability <- update_probability(0.1, md$co)
 if (qc) {
   print_random_rows(md)
   table(md$GP)
 }
 archive(md, "aggregated to a single patient")
-plot(factor(md$GP), md$updated_probability)
-tapply(md$updated_probability,md$GP,function(x) {round(sum(x>0.9)/length(x>0.9), 2)})
-tapply(md$updated_probability,md$GP,function(x) {round(sum(x==0.1)/length(x==0.1), 2)})
+plot(factor(md$GP), md$probability)
+tapply(md$probability,md$GP, function(x) {round(sum(x>0.9)/length(x>0.9), 2)})
+tapply(md$probability,md$GP, function(x) {round(sum(x==0.1)/length(x==0.1), 2)})
+
+```
+
+Now let's draw some ROC curves.
+
+```{r draw_roc, timer=TRUE}
+# the following statement is only needed until we get the data restricted databases.
+mg <- split(md$probability, md$GP)
+probability_list <- sort(unique(md$probability))
+n_p <- length(probability_list)
+mh <- matrix(NA, nrow=n_p+2, ncol=length(unique(md$GP)))
+dimnames(mh)[[2]] <- sort(c(i_case, i_control))
+mh[1, ] <- 1
+mh[n_p+2, ] <- 0
+# names(mh) <- sort(c(i_case, i_control))
+for (i in 1:length(probability_list)) {
+  p <- probability_list[i]
+  mh[i+1, ] <- sapply(mg, function(x) {sum(x > p) / length(x)})
+}
+for (ic in i_control) {
+  plot(mh[, ic], mh[, i_case], xlim=c(0, 1), ylim=c(0, 1), type="l")
+  title(paste("ROC curve for", i_case, "vs", ic))
+}
 ```
 
 Now let's peek at random cases.
 
-The codes a bit of a mess because the format for observation_date is not
+The code is a bit of a mess because the format for observation_date is not
 the same as the format for TUMOR_DATE.
 
 ```{r peek_at_random, fig.width=8, fig.height=5, eval=TRUE}
-library("chron")
-random_patients <- sample(md$patient_num[md$co > 0], 20)
-for (p in random_patients) {
+calculate_time_course <- function(p) {
   sb <- mc[mc$patient_num==p, ]
-  baseline_probability=0.1
-  baseline_odds <- baseline_probability / (1-baseline_probability)
-  cumulative_co <- cumsum(sb$co)
-  cumulative_odds <- exp(cumulative_co)*baseline_odds
-  sb$cumulative_probability <- round(cumulative_odds / (1+cumulative_odds), 2)
+  sb$cumulative_co <- cumsum(sb$co)
+  sb$cumulative_probability <- update_probability(0.1, sb$cumulative_co)
   sb$days <- round(as.numeric(sb$observation_date - sb$observation_date[1]) / (24*60*60), 1)
   sb$days[is.na(sb$days)] <- 0
-  tumor_day <- as.numeric(sb$TUMOR_DATE - as.Date(sb$observation_date[1]))
+  sb$tumor_day <- as.numeric(sb$TUMOR_DATE - as.Date(sb$observation_date[1]))
+  return(sb)
+}
+plot_time_course <- function(sb) {  
   n <- dim(sb)[1]
+  y_start <- min(-30, sb$tumor_day-30, na.rm=TRUE)
   par(mfrow=c(1,2))
   par(mar=c(2.6, 2.6, 2.6, 0.6))
-  y_start <- min(-30, tumor_day-30, na.rm=TRUE)
   plot(sb$cumulative_probability, sb$days, type="S", xlim=c(0,1), ylim=c(sb$days[n]+30, y_start))
-  arrows(0.5, tumor_day[1], 0.1, tumor_day, lwd=3, length=0.1, col="red")
-  text(0.55, tumor_day[1], "Registry day", col="red", adj=0)
+  arrows(0.5, sb$tumor_day[1], 0.1, sb$tumor_day, lwd=3, length=0.1, col="red")
+  text(0.55, sb$tumor_day[1], "Registry day", col="red", adj=0)
   segments(0.1, -30, 0.1, 0)
   segments(0.1, 0, sb$cumulative_probability[1], 0)
   segments(sb$cumulative_probability[n], sb$days[n], sb$cumulative_probability[n], sb$days[n]+30)
-  title(paste(sb$patient_num[1], ", ", sb$GP[1], sep=""))
-  par(mar=c(2.6,0,2.6,0))
-  plot(sb$cumulative_probability, sb$days, type="n", xlim=c(0,1), ylim=c(sb$days[n]+30, -30), axes=FALSE)
+  title(paste(sb$patient_num[1], ", ", sb$GP[1], ", ", res, sep=""))
+}
+write_time_course <- function(sb) {
+  y_start <- min(-30, sb$tumor_day-30, na.rm=TRUE)
+  par(mar=c(2.6, 0, 2.6, 0))
+  plot(sb$cumulative_probability, sb$days, type="n", xlim=c(0,1), ylim=c(sb$days[n]+30, y_start), axes=FALSE)
   title(paste("First event on ", sb$observation_date[1], sep=""))
   text(0, sb$days, sb$dx_label, cex=1, adj=0)
-  cat(paste(sb[1, c("patient_num", "GP")], collapse=", "))
+  cat(paste(c(sb$patient_num[1], sb$GP[1], res), collapse=", "))
   cat("\n")
   print(sb[, c("days", "co", "cumulative_probability", "dx_label")])
 }
+
+
+true_positive_patients <-(md$probability > 0.90) & (md$GP==i_case)
+res <- "True Pos."
+for (p in sample(md$patient_num[true_positive_patients], 20)) {
+  sb <- calculate_time_course(p)
+  plot_time_course(sb)
+  write_time_course(sb)
+}  
+
+false_positive_patients <- (md$probability > 0.90) & (md$GP!=i_case)
+res <- "False Pos."
+for (p in sample(md$patient_num[false_positive_patients], 20)) {
+  sb <- calculate_time_course(p)
+  plot_time_course(sb)
+  write_time_course(sb)
+}  
+
+false_negative_patients <- (md$co > 0) & (md$probability < 0.90) & (md$GP==i_case)
+res <- "False Neg."
+for (p in sample(md$patient_num[false_negative_patients], 20)) {
+  sb <- calculate_time_course(p)
+  plot_time_course(sb)
+  write_time_course(sb)
+}  
+
+true_negative_patients <- (md$co > 0) & (md$probability < 0.90) & (md$GP!=i_case)
+res <- "True Neg."
+for (p in sample(md$patient_num[true_negative_patients], 20)) {
+  sb <- calculate_time_course(p)
+  plot_time_course(sb)
+  write_time_course(sb)
+}  
 ```
 
 Save the important stuff
 
-```{r save_important}
-save(mc, md, file="evaluate_time_course.RData")
+```{r save_important, timer=TRUE}
+save(mc, md, me, file="evaluate_time_course.RData")
 ```
 
 Save everything
 
-```{r save_everything}
+```{r save_everything, timer=TRUE}
 save.image(file="evaluate_model.RData")
 ```
 
