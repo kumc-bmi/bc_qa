@@ -1,0 +1,1281 @@
+<ns3:query_definition xmlns:ns3="http://www.i2b2.org/xsd/cell/crc/psm/querydefinition/1.1/" xmlns:ns2="http://www.i2b2.org/xsd/cell/crc/psm/1.1/" xmlns:ns4="http://www.i2b2.org/xsd/cell/crc/psm/analysisdefinition/1.1/">
+  <query_name>Br-Br-Br-Br-Br-Br@11:29:31</query_name>
+  <query_timing>ANY</query_timing>
+  <specificity_scale>0</specificity_scale>
+  <panel>
+    <panel_number>1</panel_number>
+    <panel_timing>SAMEVISIT</panel_timing>
+    <panel_date_from>2012-05-01T00:00:00.000-05:00</panel_date_from>
+    <panel_accuracy_scale>100</panel_accuracy_scale>
+    <invert>0</invert>
+    <total_item_occurrences>1</total_item_occurrences>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>Breast [10,484 facts; 9,920 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\SEER Site\Breast\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ SEER Site Summary</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>4</hlevel>
+      <item_name>174 Malignant neoplasm of female breast [988,620 facts; 19,147 patients]</item_name>
+      <item_key>\\i2b2_Diagnoses\i2b2\Diagnoses\A18090800\A8359006\A8352677\A8360422\A8343316\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Diagnoses \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>4</hlevel>
+      <item_name>175 Malignant neoplasm of male breast [5,338 facts; 226 patients]</item_name>
+      <item_key>\\i2b2_Diagnoses\i2b2\Diagnoses\A18090800\A8359006\A8352677\A8360422\A8343324\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Diagnoses \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+  </panel>
+  <panel>
+    <panel_number>2</panel_number>
+    <panel_timing>SAMEVISIT</panel_timing>
+    <panel_accuracy_scale>100</panel_accuracy_scale>
+    <invert>0</invert>
+    <total_item_occurrences>1</total_item_occurrences>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>Breast [11,711 facts; 11,071 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\SEER Site\Breast\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ SEER Site Summary</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>4</hlevel>
+      <item_name>174 Malignant neoplasm of female breast [988,620 facts; 19,147 patients]</item_name>
+      <item_key>\\i2b2_Diagnoses\i2b2\Diagnoses\A18090800\A8359006\A8352677\A8360422\A8343316\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Diagnoses \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>4</hlevel>
+      <item_name>175 Malignant neoplasm of male breast [5,338 facts; 226 patients]</item_name>
+      <item_key>\\i2b2_Diagnoses\i2b2\Diagnoses\A18090800\A8359006\A8352677\A8360422\A8343324\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Diagnoses \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0160 Race 1 [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:2 Demographic\0160 Race 1\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 02 Demographic</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0161 Race 2 [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:2 Demographic\0161 Race 2\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 02 Demographic</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0162 Race 3 [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:2 Demographic\0162 Race 3\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 02 Demographic</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0163 Race 4 [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:2 Demographic\0163 Race 4\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 02 Demographic</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0164 Race 5 [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:2 Demographic\0164 Race 5\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 02 Demographic</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0190 Spanish/Hispanic Origin [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:2 Demographic\0190 Spanish/Hispanic Origin\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 02 Demographic</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0220 Sex [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:2 Demographic\0220 Sex\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 02 Demographic</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0240 Date of Birth [86,375 facts; 80,217 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:2 Demographic\0240 Date of Birth\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 02 Demographic</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0380 Sequence Number--Central [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:1 Cancer Identification\0380 Sequence Number--Central\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 01 Cancer Identification</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0390 Date of Diagnosis [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:1 Cancer Identification\0390 Date of Diagnosis\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 01 Cancer Identification</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0400 Primary Site [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:1 Cancer Identification\0400 Primary Site\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 01 Cancer Identification</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0410 Laterality [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:1 Cancer Identification\0410 Laterality\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 01 Cancer Identification</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0440 Grade [86,323 facts; 80,176 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:1 Cancer Identification\0440 Grade\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 01 Cancer Identification</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0490 Diagnostic Confirmation [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:1 Cancer Identification\0490 Diagnostic Confirmation\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 01 Cancer Identification</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0521 Morph--Type&amp;Behav ICD-O-3 [85,811 facts; 79,782 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:1 Cancer Identification\0521 Morph--Type&amp;Behav ICD-O-3\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 01 Cancer Identification</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0610 Class of Case [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0610 Class of Case\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0670 RX Hosp--Surg Prim Site [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0670 RX Hosp--Surg Prim Site\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0820 Regional Nodes Positive [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\0820 Regional Nodes Positive\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0830 Regional Nodes Examined [86,325 facts; 80,177 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\0830 Regional Nodes Examined\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1750 Date of Last Contact [86,375 facts; 80,217 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:4 Follow-up/Recurrence/Death\1750 Date of Last Contact\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 04 Follow-up/Recurrence/Death</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1760 Vital Status [86,375 facts; 80,217 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:4 Follow-up/Recurrence/Death\1760 Vital Status\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 04 Follow-up/Recurrence/Death</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1770 Cancer Status [86,375 facts; 80,217 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:4 Follow-up/Recurrence/Death\1770 Cancer Status\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 04 Follow-up/Recurrence/Death</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1860 Recurrence Date--1st [7,222 facts; 7,129 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:4 Follow-up/Recurrence/Death\1860 Recurrence Date--1st\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 04 Follow-up/Recurrence/Death</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1861 Recurrence Date--1st Flag [79,153 facts; 73,632 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:4 Follow-up/Recurrence/Death\1861 Recurrence Date--1st Flag\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 04 Follow-up/Recurrence/Death</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2850 CS Mets at DX [34,504 facts; 32,706 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2850 CS Mets at DX\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2860 CS Mets Eval [34,506 facts; 32,708 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2860 CS Mets Eval\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2869 CS Site-Specific Factor15 [34,445 facts; 32,655 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2869 CS Site-Specific Factor15\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2876 CS Site-Specific Factor22 [34,446 facts; 32,656 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2876 CS Site-Specific Factor22\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2877 CS Site-Specific Factor23 [34,446 facts; 32,656 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2877 CS Site-Specific Factor23\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2880 CS Site-Specific Factor 1 [34,502 facts; 32,705 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2880 CS Site-Specific Factor 1\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2890 CS Site-Specific Factor 2 [34,503 facts; 32,705 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2890 CS Site-Specific Factor 2\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2940 Derived AJCC-6 T [34,476 facts; 32,679 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2940 Derived AJCC-6 T\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3000 Derived AJCC-6 Stage Grp [34,429 facts; 32,633 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\3000 Derived AJCC-6 Stage Grp\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3020 Derived SS2000 [34,443 facts; 32,647 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\3020 Derived SS2000\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3400 Derived AJCC-7 T [21,613 facts; 20,638 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\3400 Derived AJCC-7 T\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3430 Derived AJCC-7 Stage Grp [21,607 facts; 20,632 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\3430 Derived AJCC-7 Stage Grp\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+  </panel>
+  <panel>
+    <panel_number>3</panel_number>
+    <panel_timing>ANY</panel_timing>
+    <panel_accuracy_scale>100</panel_accuracy_scale>
+    <invert>0</invert>
+    <total_item_occurrences>1</total_item_occurrences>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>Breast [11,711 facts; 11,071 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\SEER Site\Breast\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ SEER Site Summary</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>4</hlevel>
+      <item_name>174 Malignant neoplasm of female breast [988,620 facts; 19,147 patients]</item_name>
+      <item_key>\\i2b2_Diagnoses\i2b2\Diagnoses\A18090800\A8359006\A8352677\A8360422\A8343316\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Diagnoses \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>4</hlevel>
+      <item_name>175 Malignant neoplasm of male breast [5,338 facts; 226 patients]</item_name>
+      <item_key>\\i2b2_Diagnoses\i2b2\Diagnoses\A18090800\A8359006\A8352677\A8360422\A8343324\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Diagnoses \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>4</hlevel>
+      <item_name>Operations on the breast [3,177 facts; 1,364 patients]</item_name>
+      <item_key>\\i2b2_Procedures\i2b2\Procedures\PRC\ICD9 (Inpatient)\(85-86) Operations on integument\(p85) Operations on the breast\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Procedures \ ICD9 (Inpatient) \ Operations on integument</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>2</hlevel>
+      <item_name>[AN000] ANTINEOPLASTICS [2,134,661 facts; 28,484 patients]</item_name>
+      <item_key>\\i2b2_Medications\i2b2\Medications\RXAUI:3257528\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Medications</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>2</hlevel>
+      <item_name>[HS000] HORMONES/SYNTHETICS/MODIFIERS [13,664,909 facts; 240,204 patients]</item_name>
+      <item_key>\\i2b2_Medications\i2b2\Medications\RXAUI:3257701\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Medications</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>Radiology Procedures [3,093,335 facts; 385,392 patients]</item_name>
+      <item_key>\\i2b2_Procedures\i2b2\Procedures\PRC\Metathesaurus CPT Hierarchical Terms\Radiology Procedures\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Procedures \ Metathesaurus CPT Hierarchical Terms</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>Surgical Procedures [1,683,505 facts; 311,687 patients]</item_name>
+      <item_key>\\i2b2_Procedures\i2b2\Procedures\PRC\Metathesaurus CPT Hierarchical Terms\Surgical Procedures\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Procedures \ Metathesaurus CPT Hierarchical Terms</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+  </panel>
+  <panel>
+    <panel_number>4</panel_number>
+    <panel_timing>ANY</panel_timing>
+    <panel_accuracy_scale>100</panel_accuracy_scale>
+    <invert>0</invert>
+    <total_item_occurrences>1</total_item_occurrences>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>Breast [11,711 facts; 11,071 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\SEER Site\Breast\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ SEER Site Summary</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>4</hlevel>
+      <item_name>174 Malignant neoplasm of female breast [988,620 facts; 19,147 patients]</item_name>
+      <item_key>\\i2b2_Diagnoses\i2b2\Diagnoses\A18090800\A8359006\A8352677\A8360422\A8343316\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Diagnoses \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>4</hlevel>
+      <item_name>175 Malignant neoplasm of male breast [5,338 facts; 226 patients]</item_name>
+      <item_key>\\i2b2_Diagnoses\i2b2\Diagnoses\A18090800\A8359006\A8352677\A8360422\A8343324\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Diagnoses \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>2</hlevel>
+      <item_name>Vital Status [2,333,425 facts; 2,133,755 patients]</item_name>
+      <item_key>\\i2b2_Demographics\i2b2\Demographics\Vital Status\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Demographics</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>2</hlevel>
+      <item_name>Gender [2,133,759 facts; 2,133,755 patients]</item_name>
+      <item_key>\\i2b2_Demographics\i2b2\Demographics\Gender\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Demographics</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>2</hlevel>
+      <item_name>Race [2,133,902 facts; 2,133,755 patients]</item_name>
+      <item_key>\\i2b2_Demographics\i2b2\Demographics\Race\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Demographics</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>2</hlevel>
+      <item_name>Language [2,133,759 facts; 2,133,755 patients]</item_name>
+      <item_key>\\i2b2_Demographics\i2b2\Demographics\Language\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Demographics</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>2</hlevel>
+      <item_name>Marital Status [2,133,759 facts; 2,133,755 patients]</item_name>
+      <item_key>\\i2b2_Demographics\i2b2\Demographics\Marital Status\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Demographics</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>Body Mass Index [2,791,907 facts; 413,658 patients]</item_name>
+      <item_key>\\i2b2_Visit Details\i2b2\Visit Details\Vitals\BMI\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Visit Details \ Visit Vitals</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>Height (cm) [2,666,430 facts; 414,337 patients]</item_name>
+      <item_key>\\i2b2_Visit Details\i2b2\Visit Details\Vitals\HEIGHT\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Visit Details \ Visit Vitals</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>Weight (oz) [3,053,737 facts; 457,690 patients]</item_name>
+      <item_key>\\i2b2_Visit Details\i2b2\Visit Details\Vitals\WEIGHT\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Visit Details \ Visit Vitals</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+  </panel>
+  <panel>
+    <panel_number>5</panel_number>
+    <panel_timing>SAMEVISIT</panel_timing>
+    <panel_accuracy_scale>100</panel_accuracy_scale>
+    <invert>0</invert>
+    <total_item_occurrences>1</total_item_occurrences>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>Breast [11,911 facts; 11,264 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\SEER Site\Breast\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ SEER Site Summary</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>5</hlevel>
+      <item_name>174 Malignant neoplasm of female breast [947,092 facts; 19,448 patients]</item_name>
+      <item_key>\\i2b2_Diagnoses\i2b2\Diagnoses\ICD9\A18090800\A8359006\A8352677\A8360422\A8343316\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Diagnoses \ ICD9 \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>5</hlevel>
+      <item_name>175 Malignant neoplasm of male breast [4,865 facts; 223 patients]</item_name>
+      <item_key>\\i2b2_Diagnoses\i2b2\Diagnoses\ICD9\A18090800\A8359006\A8352677\A8360422\A8343324\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Diagnoses \ ICD9 \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0150 Marital Status at DX [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:2 Demographic\0150 Marital Status at DX\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 02 Demographic</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0668 RX Hosp--Surg App 2010 [24,572 facts; 23,415 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0668 RX Hosp--Surg App 2010\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0672 RX Hosp--Scope Reg LN Sur [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0672 RX Hosp--Scope Reg LN Sur\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0674 RX Hosp--Surg Oth Reg/Dis [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0674 RX Hosp--Surg Oth Reg/Dis\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0676 RX Hosp--Reg LN Removed [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0676 RX Hosp--Reg LN Removed\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0690 RX Hosp--Radiation [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0690 RX Hosp--Radiation\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0700 RX Hosp--Chemo [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0700 RX Hosp--Chemo\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0710 RX Hosp--Hormone [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0710 RX Hosp--Hormone\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0720 RX Hosp--BRM [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0720 RX Hosp--BRM\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0730 RX Hosp--Other [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0730 RX Hosp--Other\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0740 RX Hosp--DX/Stg Proc [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0740 RX Hosp--DX/Stg Proc\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0746 RX Hosp--Surg Site 98-02 [50,231 facts; 46,564 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0746 RX Hosp--Surg Site 98-02\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0747 RX Hosp--Scope Reg 98-02 [50,231 facts; 46,564 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0747 RX Hosp--Scope Reg 98-02\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0748 RX Hosp--Surg Oth 98-02 [50,231 facts; 46,564 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0748 RX Hosp--Surg Oth 98-02\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2800 CS Tumor Size [35,503 facts; 33,649 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2800 CS Tumor Size\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2960 Derived AJCC-6 N [35,455 facts; 33,602 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2960 Derived AJCC-6 N\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2980 Derived AJCC-6 M [35,484 facts; 33,630 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2980 Derived AJCC-6 M\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3410 Derived AJCC-7 N [22,586 facts; 21,566 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\3410 Derived AJCC-7 N\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3420 Derived AJCC-7 M [22,587 facts; 21,567 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\3420 Derived AJCC-7 M\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0560 Sequence Number--Hospital [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0560 Sequence Number--Hospital\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+  </panel>
+  <panel>
+    <panel_number>6</panel_number>
+    <panel_timing>SAMEVISIT</panel_timing>
+    <panel_accuracy_scale>100</panel_accuracy_scale>
+    <invert>0</invert>
+    <total_item_occurrences>1</total_item_occurrences>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>Breast [11,911 facts; 11,264 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\SEER Site\Breast\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ SEER Site Summary</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>5</hlevel>
+      <item_name>174 Malignant neoplasm of female breast [947,092 facts; 19,448 patients]</item_name>
+      <item_key>\\i2b2_Diagnoses\i2b2\Diagnoses\ICD9\A18090800\A8359006\A8352677\A8360422\A8343316\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Diagnoses \ ICD9 \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>5</hlevel>
+      <item_name>175 Malignant neoplasm of male breast [4,865 facts; 223 patients]</item_name>
+      <item_key>\\i2b2_Diagnoses\i2b2\Diagnoses\ICD9\A18090800\A8359006\A8352677\A8360422\A8343324\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Diagnoses \ ICD9 \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0230 Age at Diagnosis</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:2 Demographic\0230 Age at Diagnosis\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 02 Demographic</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>0748 RX Hosp--Surg Oth 98-02 [50,231 facts; 46,564 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\0748 RX Hosp--Surg Oth 98-02\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1200 RX Date--Surgery [54,068 facts; 50,731 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1200 RX Date--Surgery\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1201 RX Date--Surgery Flag [33,271 facts; 32,266 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1201 RX Date--Surgery Flag\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1210 RX Date--Radiation [27,278 facts; 26,654 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1210 RX Date--Radiation\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1211 RX Date--Radiation Flag [60,061 facts; 56,191 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1211 RX Date--Radiation Flag\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1220 RX Date--Chemo [27,513 facts; 26,956 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1220 RX Date--Chemo\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1221 RX Date--Chemo Flag [59,826 facts; 55,612 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1221 RX Date--Chemo Flag\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1230 RX Date--Hormone [9,075 facts; 8,857 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1230 RX Date--Hormone\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1240 RX Date--BRM [2,410 facts; 2,380 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1240 RX Date--BRM\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1241 RX Date--BRM Flag [84,928 facts; 78,934 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1241 RX Date--BRM Flag\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1250 RX Date--Other [1,076 facts; 1,065 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1250 RX Date--Other\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1251 RX Date--Other Flag [86,262 facts; 80,182 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1251 RX Date--Other Flag\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1280 RX Date--DX/Stg Proc [28,423 facts; 27,519 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1280 RX Date--DX/Stg Proc\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1281 RX Date--Dx/Stg Proc Flag [58,916 facts; 54,848 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1281 RX Date--Dx/Stg Proc Flag\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1285 RX Summ--Treatment Status [24,780 facts; 23,599 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1285 RX Summ--Treatment Status\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1290 RX Summ--Surg Prim Site [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1290 RX Summ--Surg Prim Site\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1292 RX Summ--Scope Reg LN Sur [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1292 RX Summ--Scope Reg LN Sur\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1294 RX Summ--Surg Oth Reg/Dis [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1294 RX Summ--Surg Oth Reg/Dis\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1296 RX Summ--Reg LN Examined [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1296 RX Summ--Reg LN Examined\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1310 RX Summ--Surgical Approch [80,941 facts; 75,284 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1310 RX Summ--Surgical Approch\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1320 RX Summ--Surgical Margins [87,303 facts; 81,096 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1320 RX Summ--Surgical Margins\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1350 RX Summ--DX/Stg Proc [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1350 RX Summ--DX/Stg Proc\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1340 Reason for No Surgery [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1340 Reason for No Surgery\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1350 RX Summ--DX/Stg Proc [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1350 RX Summ--DX/Stg Proc\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1360 RX Summ--Radiation [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1360 RX Summ--Radiation\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1370 RX Summ--Rad to CNS [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1370 RX Summ--Rad to CNS\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1380 RX Summ--Surg/Rad Seq [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1380 RX Summ--Surg/Rad Seq\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1390 RX Summ--Chemo [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1390 RX Summ--Chemo\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1400 RX Summ--Hormone [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1400 RX Summ--Hormone\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1410 RX Summ--BRM [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1410 RX Summ--BRM\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1420 RX Summ--Other [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1420 RX Summ--Other\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1430 Reason for No Radiation [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1430 Reason for No Radiation\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1639 RX Summ--Systemic/Sur Seq [33,918 facts; 32,159 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1639 RX Summ--Systemic/Sur Seq\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1640 RX Summ--Surgery Type [87,332 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1640 RX Summ--Surgery Type\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1646 RX Summ--Surg Site 98-02 [50,231 facts; 46,564 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1646 RX Summ--Surg Site 98-02\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1647 RX Summ--Scope Reg 98-02 [50,231 facts; 46,564 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1647 RX Summ--Scope Reg 98-02\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1648 RX Summ--Surg Oth 98-02 [50,231 facts; 46,564 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1648 RX Summ--Surg Oth 98-02\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3170 RX Date--Most Defin Surg [52,655 facts; 49,386 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\3170 RX Date--Most Defin Surg\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3171 RX Date Mst Defn Srg Flag [34,684 facts; 33,636 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\3171 RX Date Mst Defn Srg Flag\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3180 RX Date--Surgical Disch [18,981 facts; 18,146 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\3180 RX Date--Surgical Disch\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3181 RX Date Surg Disch Flag [68,357 facts; 63,899 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\3181 RX Date Surg Disch Flag\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3220 RX Date--Radiation Ended [26,403 facts; 25,807 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\3220 RX Date--Radiation Ended\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3221 RX Date Rad Ended Flag [60,936 facts; 57,004 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\3221 RX Date Rad Ended Flag\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3230 RX Date--Systemic [33,460 facts; 32,589 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\3230 RX Date--Systemic\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3231 RX Date Systemic Flag [53,879 facts; 50,229 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\3231 RX Date Systemic Flag\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3250 RX Summ--Transplnt/Endocr [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\3250 RX Summ--Transplnt/Endocr\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3280 RX Hosp--Palliative Proc [87,338 facts; 81,114 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:6 Hospital-Specific\3280 RX Hosp--Palliative Proc\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 06 Hospital-Specific</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1231 RX Date--Hormone Flag [78,263 facts; 72,917 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1231 RX Date--Hormone Flag\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>1330 RX Summ--Reconstruct 1st [35,636 facts; 33,358 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\1330 RX Summ--Reconstruct 1st\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+  </panel>
+</ns3:query_definition>
