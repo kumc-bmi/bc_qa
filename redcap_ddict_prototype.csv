@@ -1,0 +1,6 @@
+"Variable / Field Name","Form Name","Section Header","Field Type","Field Label","Choices, Calculations, OR Slider Labels","Field Note","Text Validation Type OR Show Slider Number","Text Validation Min","Text Validation Max",Identifier?,"Branching Logic (Show field only if...)","Required Field?","Custom Alignment","Question Number (surveys only)","Matrix Group Name","Matrix Ranking?","Field Annotation"
+record_id,medication_exposure,,text,"Record ID",,,,,,,,,,,,,
+study_id,medication_exposure,,text,"Study ID",,,,,,,,y,,,,,
+exposure_date,medication_exposure,,text,"Date of exposure",,,date_ymd,,,y,,y,,,,,
+va_class,medication_exposure,,dropdown,"VA Classification","AN000, [AN000] ANTINEOPLASTICS | AN100, [AN100] ANTINEOPLASTICS,ALKYLATING AGENTS | AN200, [AN200] ANTINEOPLASTIC ANTIBIOTICS | HS000, HORMONES/SYNTHETICS/MODIFIERS | HS100, ANDROGENS/ANABOLICS | HS200, CONTRACEPTIVES,SYSTEMIC",,autocomplete,,,,,,,,,,
+rxcui,medication_exposure,,dropdown,Medication,"370496, Carmustine Injectable Solution | 371165, Busulfan Oral Tablet",,autocomplete,,,,,y,,,,,
