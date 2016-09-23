@@ -1,0 +1,735 @@
+field_name,form_name,section_header,field_type,field_label,select_choices_or_calculations,field_note,text_validation_type_or_show_slider_number,text_validation_max,text_validation_min,identifier,branching_logic,required_field,custom_alignment,question_number,matrix_group_name
+v01_studyid,admin,,text,Study ID,,source: study,,,,,,,,,
+v02_breastsurvey,admin,,dropdown,Breast Cancer Survey Participant,"1, Yes
+2, No",source: study,,,,,,,,,
+v03_medrecordconsent,admin,,dropdown,Medical Record Consent Given,"1, Yes
+2, No",source: study,,,,,,,,,
+v13_seer_site_summary_breast,clinical,,text,SEER Site Summary Breast,,source: registry Should be constant for all tumors,,,,,,,,,
+v14_0400_primary_site,clinical,,text,Primary site,,source: registry ICD-O-2 or ICD-O-3,,,,,,,,,
+v15_0380_sequence_numbercentral,clinical,,dropdown,Sequence number - central,"0, One primary in the patient's lifetime
+1, First of two or more primaries
+2, Second of two or more primaries
+59, Fifty-ninth or higher of fifty-nine or more primaries
+99, Unspecified or unknown sequence number of Federally required in situ or malignant tumors. Sequence number 99 can be used if there is a malignant tumor and its sequence number is unknown. If there is known to be more than one malignant tumor* then the tumors must be sequenced.)
+60, One non-malignant tumor or central registry-defined neoplasm
+61, First of two or more non-malignant tumor or central registry-defined neoplasms
+62, Second of two or more non-malignant tumor or central registry-defined neoplasms
+88, Unspecified or unknown sequence number for non-malignant tumor or central registry-defined neoplasms. (Sequence number 88 can be used if there is a non-malignant tumor and its sequence number is unknown. If there is known to be more than one non-malignant tumor* then the tumors must be sequenced.)
+98, Cervix carcinoma in situ (CIS)/CIN III* Diagnosis Years 1996-2002.",source: registry see note in other tab. Item indicates the sequence of all malignant and non-malignant neoplasms over the lifetime of the patient. The code may differ from the Sequence Number--Central [380] because the definitions of reportable neoplasms often vary between a hospital and a central registry. The two items also handle some types of tumors differently.,,,,,,,,,
+v16_0560_sequence_numberhospital,clinical,,dropdown,Sequence number - hospital,"0, One primary in the patient's lifetime
+1, First of two or more primaries
+2, Second of two or more primaries
+59, Fifty-ninth or higher of fifty-nine or more primaries
+99, Unspecified or unknown sequence number of Federally required in situ or malignant tumors. Sequence number 99 can be used if there is a malignant tumor and its sequence number is unknown. If there is known to be more than one malignant tumor* then the tumors must be sequenced.)
+60, One non-malignant tumor or central registry-defined neoplasm
+61, First of two or more non-malignant tumor or central registry-defined neoplasms
+62, Second of two or more non-malignant tumor or central registry-defined neoplasms
+88, Unspecified or unknown sequence number for non-malignant tumor or central registry-defined neoplasms. (Sequence number 88 can be used if there is a non-malignant tumor and its sequence number is unknown. If there is known to be more than one non-malignant tumor* then the tumors must be sequenced.)
+98, Cervix carcinoma in situ (CIS)/CIN III* Diagnosis Years 1996-2002.",source: registry,,,,,,,,,
+v18_0390_date_of_diagnosis,clinical,,text,Date of diagnosis,,source: registry,,,,,,,,,
+v19_0230_age_at_diagnosis,clinical,,dropdown,Age at diagnosis,"0, Less than 1 year old; diagnosed in utero
+1, 1 year old* but less than 2 years
+2, 2 years old
+, ...
+101, 101 years old
+, ...
+120, 120 years old
+999, Unknown age",source: registry,,,,,,,,,
+v21_2940_derived_ajcc6_t,clinical,,dropdown,AJCC 6th ed tumor stage,"99, TX 
+0, T0 
+5, Tis 
+10, T1 
+11, T1mic 
+12, T1a 
+15, T1b 
+18, T1c 
+20, T2 
+21, T2a 
+22, T2b 
+30, T3 
+31, T3a 
+32, T3b 
+40, T4 
+49, T4 NOS 
+41, T4a 
+42, T4b 
+43, T4c 
+44, T4d 
+88, Not applicable ",source: registry,,,,,,,,,
+v22_2960_derived_ajcc6_n,clinical,,dropdown,AJCC 6th ed node stage,"99, NX 
+0, N0 
+10, N1 
+20, N2 
+21, N2a 
+22, N2b 
+30, N3 
+31, N3a 
+32, N3b 
+33, N3c 
+88, Not applicable ",source: registry,,,,,,,,,
+v23_2980_derived_ajcc6_m,clinical,,dropdown,AJCC 6th ed distance metastasis stage,"99, MX
+00, M0
+10, M1",source: registry,,,,,,,,,
+v24_3000_derived_ajcc6_stage_grp,clinical,,dropdown,AJCC 6th ed group stage,"0, Stage 0 
+10, Stage I 
+32, Stage IIA 
+33, Stage IIB 
+52, Stage IIIA 
+53, Stage IIIB 
+54, Stage IIIC 
+70, Stage IV 
+88, Not applicable 
+99, Stage Unknown ",source: registry,,,,,,,,,
+v25_3020_derived_ss2000,clinical,,dropdown,Derived SS 2000 stage,"0, In Situ 
+1, Localized 
+2, Regional* direct extension 
+3, Regional* lymph nodes only 
+4, Regional* extension and nodes 
+5, Regional* NOS 
+7, Distant 
+8, Not applicable 
+9, Unknown/Unstaged ",source: registry,,,,,,,,,
+v26_3400_derived_ajcc7_t,clinical,,dropdown,AJCC 7th ed tumor stage,"999, TX 
+0, T0 
+50, Tis 
+100, T1 
+110, T1mic 
+120, T1a 
+150, T1b 
+180, T1c 
+200, T2 
+300, T3 
+400, T4 
+410, T4a 
+420, T4b 
+430, T4c 
+440, T4d 
+888, Not applicable ",source: registry,,,,,,,,,
+v27_3410_derived_ajcc7_n,clinical,,dropdown,AJCC 7th ed node stage,"999, NX 
+0, N0 
+100, N1 
+200, N2 
+210, N2a 
+220, N2b 
+300, N3 
+310, N3a 
+320, N3b 
+330, N3c 
+888, Not applicable ",source: registry,,,,,,,,,
+v28_3420_derived_ajcc7_m,clinical,,dropdown,AJCC 7th ed distance metastasis stage,"999, MX 
+0, M0 
+10, M0(i+) 
+100, M1 
+888, Not applicable ",source: registry,,,,,,,,,
+v29_3430_derived_ajcc7_stage_grp,clinical,,dropdown,AJCC 7th ed group stage,"0, Stage 0 
+120, Stage IA 
+150, Stage IB 
+320, Stage IIA 
+330, Stage IIB 
+520, Stage IIIA 
+530, Stage IIIB 
+540, Stage IIIC 
+700, Stage IV 
+888, Not applicable 
+999, Stage Unknown ","source: registry This is the AJCC “Stage Group” component that is derived from CS detailed site-specific codes, using the CS algorithm, effective for 2010+ diagnosis. For list of codes see http://www.ccrcal.org/PAQC_Pubs/V3_2010_Forward/Data_Items/Derived_AJCC-7_Stage_Grp.htm",,,,,,,,,
+v30_2800_cs_tumor_size,clinical,,text,Collaborative stage - tumor size,,source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,,,,,,,,,
+v31_2830_cs_lymph_nodes,clinical,,text,Collaborative stage - number of positive lymph nodes,,source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,,,,,,,,,
+v32_2840_cs_lymph_nodes_eval,clinical,,text,Collaborative stage - number of lymph nodes evaluated,,source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,,,,,,,,,
+v33_440_grade,clinical,,dropdown,Grade,"1, Grade I
+2, Grade II
+3, Grade III
+4, Grade IV
+5, T-cell
+6, B-cell
+7, Null cell
+8, NK (natural killer) cell
+9, Grade/differentiation unknown* not stated* or not applicable","source: registry Should only take values 1-4, 9",,,,,,,,,
+v34_2850_cs_mets_at_dx,clinical,,text,Collaborative stage - metastasis at diagnosis,,source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,,,,,,,,,
+v35_2860_cs_mets_eval,clinical,,text,Collaborative stage - metastasis evaluated,,source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,,,,,,,,,
+v36_521_morphtypebehav_icd03,clinical,,text,Morphology (Histology and Behavior),,source: registry ICD-O-3 (years?),,,,,,,,,
+v37_410_laterality,clinical,,dropdown,Laterality,"0, Not a paired site
+1, Right: origin of primary
+2, Left: origin of primary
+3, Only one side involved* right or left origin unspecified
+4, Bilateral involvement at time of diagnosis* lateral origin unknown for a single primary; or both ovaries involved simultaneously* single histology; bilateral retinoblastomas; bilateral Wilms' tumors
+5, Paired site: midline tumor
+9, Paired site* but no information concerning laterality",source: registry,,,,,,,,,
+v38_2880_cs_sitespecific_factor_1,clinical,,text,ER status,,source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,,,,,,,,,
+v39_2890_cs_sitespecific_factor_2,clinical,,text,PR status,,source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,,,,,,,,,
+v40_2869_cs_sitespecific_factor_15,clinical,,dropdown,HER2 status,"010, Positive/elevated; amplified
+020, Negative/normal; within normal limits; not amplified
+030, Borderline; equivocal; indeterminate; undetermined whether positive or negative
+988, Not applicable: Information not collected for this case
+997, Test(s) ordered* results not in chart
+998, Test(s) not done (test(s) not ordered and not performed)
+999, Unknown or no information. Not documented in patient record",source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,,,,,,,,,
+v41_2876_cs_site_specific_factor_22,clinical,,text,Multigene signature method,,source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,,,,,,,,,
+v42_2877_cs_site_specific_factor_23,clinical,,text,Multigene signature results,,source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,,,,,,,,,
+v43_1760_vital_status,clinical,,dropdown,Vital status,"0, Dead (CoC)
+1, Alive
+4, Dead (SEER)",source: registry,,,,,,,,,
+v46_830_regional_nodes_examined,clinical,,dropdown,Records the total number of regional lymph nodes that were removed and examined by the pathologist.,"0, No nodes were examined
+01 to 89, 1-89 nodes were examined (code the exact number of regional lymph nodes examined)
+90, 90 or more nodes were examined
+95, No regional nodes were removed* but aspiration of regional nodes was performed
+96, Regional lymph node removal was documented as a sampling* and the number of nodes is unknown/not stated
+97, Regional lymph node removal was documented as a dissection* and the number of nodes is unknown/not stated
+98, Regional lymph nodes were surgically removed* but the number of lymph nodes is unknown/not stated and not documented as a sampling or dissection; nodes were examined* but the number is unknown
+99, It is unknown whether nodes were examined; not applicable or negative; not stated in patient record",source: registry,,,,,,,,,
+v47_1770_cancer_status,clinical,,dropdown,Records the presence or absence of clinical evidence of the patient's malignant or non-malignant tumor as of the Date of Last Contact,"1, No evidence of this tumor
+2, Evidence of this tumor
+9, Unknown* indeterminate whether this tumor is present* not stated in patient record",source: registry,,,,,,,,,
+v49_1860_recurrence_date,clinical,,text,1860 Recurrence date,,source: registry,,,,,,,,,
+v53_deceased_per_ssa,clinical,,text,Deceased per SSA,,source: registry,,,,,,,,,
+v116_bmi,clinical,,text,body mass index,,source: emr will likely need multiple values from emr,,,,,,,,,
+v04_0240_date_of_birth,demographic,,text,Date of birth,,source: registry,,,,,,,,,
+v05_0160_race_1,demographic,,dropdown,Race,"1, White
+2, Black
+3, American Indian* Aleutian* or Eskimo (includes all indigenous populations of the Western hemisphere)
+4, Chinese
+5, Japanese
+6, Filipino
+7, Hawaiian
+8, Korean
+10, Vietnamese
+11, Laotian
+12, Hmong
+13, Kampuchean (Cambodian)
+14, Thai
+15, Asian Indian or Pakistani* NOS (code 09 prior to Version 12)
+16, Asian Indian
+17, Pakistani
+20, Micronesian* NOS
+21, Chamorro/Chamoru
+22, Guamanian* NOS
+25, Polynesian* NOS
+26, Tahitian
+27, Samoan
+28, Tongan
+30, Melanesian* NOS
+31, Fiji Islander
+32, New Guinean
+96, Other Asian* including Asian* NOS and Oriental* NOS
+97, Pacific Islander* NOS
+98, Other
+99, Unknown",source: registry Code 09 was retired effective with Version 12.,,,,,,,,,
+v06_0161_race_2,demographic,,dropdown,Race,"1, White
+2, Black
+3, American Indian* Aleutian* or Eskimo (includes all indigenous populations of the Western hemisphere)
+4, Chinese
+5, Japanese
+6, Filipino
+7, Hawaiian
+8, Korean
+10, Vietnamese
+11, Laotian
+12, Hmong
+13, Kampuchean (Cambodian)
+14, Thai
+15, Asian Indian or Pakistani* NOS (code 09 prior to Version 12)
+16, Asian Indian
+17, Pakistani
+20, Micronesian* NOS
+21, Chamorro/Chamoru
+22, Guamanian* NOS
+25, Polynesian* NOS
+26, Tahitian
+27, Samoan
+28, Tongan
+30, Melanesian* NOS
+31, Fiji Islander
+32, New Guinean
+96, Other Asian* including Asian* NOS and Oriental* NOS
+97, Pacific Islander* NOS
+98, Other
+99, Unknown",source: registry Code 09 was retired effective with Version 12.,,,,,,,,,
+v07_0162_race_3,demographic,,dropdown,Race,"1, White
+2, Black
+3, American Indian* Aleutian* or Eskimo (includes all indigenous populations of the Western hemisphere)
+4, Chinese
+5, Japanese
+6, Filipino
+7, Hawaiian
+8, Korean
+10, Vietnamese
+11, Laotian
+12, Hmong
+13, Kampuchean (Cambodian)
+14, Thai
+15, Asian Indian or Pakistani* NOS (code 09 prior to Version 12)
+16, Asian Indian
+17, Pakistani
+20, Micronesian* NOS
+21, Chamorro/Chamoru
+22, Guamanian* NOS
+25, Polynesian* NOS
+26, Tahitian
+27, Samoan
+28, Tongan
+30, Melanesian* NOS
+31, Fiji Islander
+32, New Guinean
+96, Other Asian* including Asian* NOS and Oriental* NOS
+97, Pacific Islander* NOS
+98, Other
+99, Unknown",source: registry Code 09 was retired effective with Version 12.,,,,,,,,,
+v08_0163_race_4,demographic,,dropdown,Race,"1, White
+2, Black
+3, American Indian* Aleutian* or Eskimo (includes all indigenous populations of the Western hemisphere)
+4, Chinese
+5, Japanese
+6, Filipino
+7, Hawaiian
+8, Korean
+10, Vietnamese
+11, Laotian
+12, Hmong
+13, Kampuchean (Cambodian)
+14, Thai
+15, Asian Indian or Pakistani* NOS (code 09 prior to Version 12)
+16, Asian Indian
+17, Pakistani
+20, Micronesian* NOS
+21, Chamorro/Chamoru
+22, Guamanian* NOS
+25, Polynesian* NOS
+26, Tahitian
+27, Samoan
+28, Tongan
+30, Melanesian* NOS
+31, Fiji Islander
+32, New Guinean
+96, Other Asian* including Asian* NOS and Oriental* NOS
+97, Pacific Islander* NOS
+98, Other
+99, Unknown",source: registry Code 09 was retired effective with Version 12.,,,,,,,,,
+v09_0164_race_5,demographic,,dropdown,Race,"1, White
+2, Black
+3, American Indian* Aleutian* or Eskimo (includes all indigenous populations of the Western hemisphere)
+4, Chinese
+5, Japanese
+6, Filipino
+7, Hawaiian
+8, Korean
+10, Vietnamese
+11, Laotian
+12, Hmong
+13, Kampuchean (Cambodian)
+14, Thai
+15, Asian Indian or Pakistani* NOS (code 09 prior to Version 12)
+16, Asian Indian
+17, Pakistani
+20, Micronesian* NOS
+21, Chamorro/Chamoru
+22, Guamanian* NOS
+25, Polynesian* NOS
+26, Tahitian
+27, Samoan
+28, Tongan
+30, Melanesian* NOS
+31, Fiji Islander
+32, New Guinean
+96, Other Asian* including Asian* NOS and Oriental* NOS
+97, Pacific Islander* NOS
+98, Other
+99, Unknown",source: registry Code 09 was retired effective with Version 12.,,,,,,,,,
+v10_0190_spanish__hispanic_origin,demographic,,dropdown,Hispanic/Hispanic Origin,"0, Non-Spanish; non-Hispanic
+1, Mexican (includes Chicano)
+2, Puerto Rican
+3, Cuban
+4, South or Central American (except Brazil)
+5, Other specified Spanish/Hispanic origin (includes European; excludes Dominican Republic)
+6, Spanish* NOS Hispanic* NOS Latino* NOS There is evidence* other than surname or maiden name* that the person is Hispanic* but he/she cannot be assigned to any of the other categories 1-5.
+7, Spanish surname only (Code 7 is ordinarily for central registry use only* hospital registrars may use code 7 if using a list of Hispanic surnames provided by their central registry; otherwise* code 9 'unknown whether Spanish or not' should be used.) The only evidence of the person's Hispanic origin is the surname or maiden name and there is no contrary evidence that the person is not Hispanic.
+8, Dominican Republic
+9, Unknown whether Spanish or not",source: registry,,,,,,,,,
+v11_0220_sex,demographic,,dropdown,Sex,"1, Male
+2, Female
+3, Other (hermaphrodite)
+4, Transsexual* NOS
+5, Transsexual* natal male
+6, Transsexual* natal female
+9, Not stated/Unknown",source: registry,,,,,,,,,
+v12_0150_marital_status_at_dx,demographic,,dropdown,Marital Status at diagnosis,"1, Single (never married)
+2, Married (including common law)
+3, Separated
+4, Divorced
+5, Widowed
+6, Unmarried or Domestic Partner (same sex or opposite sex* registered or unregistered* other than common law marriage)
+9, Unknown",source: registry,,,,,,,,,
+v52_language,demographic,,text,Language,,source: EMR,,,,,,,,,
+v17_0610_class_of_case,registry,,dropdown,Class of case,"00_, Initial diagnosis at the reporting facility AND all treatment or a decision not to treat was done ELSEWHERE
+10_, Initial diagnosis at the reporting facility or in a staff physician's office AND PART OR ALL of first course treatment or a decision not to treat was at the reporting facility* NOS
+11, Initial diagnosis in staff physician's office AND PART of first course treatment was done at the reporting facility
+12, Initial diagnosis in staff physician's office AND ALL first course treatment or a decision not to treat was done at the reporting facility
+13_, Initial diagnosis at the reporting facility AND PART of first course treatment was done at the reporting facility
+14_, Initial diagnosis at the reporting facility AND ALL first course treatment or a decision not to treat was done at the reporting facility
+20_, Initial diagnosis elsewhere AND PART OR ALL of first course treatment was done at the reporting facility* NOS
+21_, Initial diagnosis elsewhere AND PART of treatment was done at the reporting facility
+22_, Initial diagnosis elsewhere AND ALL first course treatment was done at the reporting facility
+30_, Initial diagnosis and all first course treatment elsewhere AND reporting facility participated in DIAGNOSTIC WORKUP (for example* consult only* staging workup after initial diagnosis elsewhere)
+31_, Initial diagnosis and all first course treatment elsewhere AND reporting facility provided IN-TRANSIT care
+32_, Diagnosis AND all first course treatment provided elsewhere AND patient presents at reporting facility with disease RECURRENCE OR PERSISTENCE
+33_, Diagnosis AND all first course treatment provided elsewhere AND patient presents at reporting facility with disease HISTORY ONLY
+34, Type of case not required by CoC to be accessioned (for example* a benign colon tumor) AND initial diagnosis AND part or all of first course treatment by reporting facility
+35, Case diagnosed before program's Reference Date AND initial diagnosis AND PART OR ALL of first course treatment by reporting facility
+36, Type of case not required by CoC to be accessioned (for example* a benign colon tumor) AND initial diagnosis elsewhere AND part of all of first course treatment by reporting facility
+37, Case diagnosed before program's Reference Date AND initial diagnosis elsewhere AND all or part of first course treatment by reporting facility
+38_, Initial diagnosis established by AUTOPSY at the reporting facility* cancer not suspected prior to death
+40, Diagnosis AND all first course treatment given at the same staff physician's office
+41, Diagnosis and all first course treatment given in two or more different staff physician offices
+42, Non-staff physician or non-CoC accredited clinic or other facility* not part of reporting facility* accessioned by reporting facility for diagnosis and/or treatment by that entity (for example* hospital abstracts cases from an independent radiation facility)
+43_, PATHOLOGY or other lab specimens ONLY
+49_, DEATH CERTIFICATE ONLY
+99_, Nonanalytic case of unknown relationship to facility (not for use by CoC accredited cancer programs for analytic cases.); UNKNOWN",source: registry,,,,,,,,,
+v44_1750_date_of_last_contact,registry,,text,Date of last contact,,source: registry,,,,,,,,,
+v48_1750_date_of_last_contact,registry,,text,1750 date of last contact,,source: registry DUPLICATE,,,,,,,,,
+v50_1861_recurrence_date__1st_flag,registry,,dropdown,"This flag explains why no appropriate value is in the field, Recurrence Date--1st [1860].","10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if the patient had a first recurrence)
+11, No proper value is applicable in this context (e.g.* patient became disease-free after treatment; never had a recurrence; or patient was never disease-free; autopsy only case)
+12, A proper value is appicable but not known (i.e.* there was a recurrence* but the date is unknown)
+Blank, A valid date value is provided in item Recurrence Date--1st [1860]* or the date was not expected to have been transmitted",source: registry,,,,,,,,,
+v20_0490_diagnostic_confirmation,test,,dropdown,Method of diagnostic confirmation,"1, Positive histology
+2, Positive cytology
+3, Positive histology PLUS - positive immunophenotyping AND/OR positive genetic studies (Used only for hematopoietic and lymphoid neoplasms M-9590/3-9992/3)
+4, Positive microscopic confirmation* method not specified
+5, Positive laboratory test/marker study
+6, Direct visualization without microscopic confirmation
+7, Radiography and/or other imaging techniques without microscopic confirmation
+8, Clinical diagnosis only (other than 5* 6* or 7)
+9, Unknown whether or not microscopically confirmed; death certificate only",source: registry,,,,,,,,,
+v51_670_rx_hospsurg_prim_site,treatment,,text,Describes surgical procedures used to treat the primary site of the reportable tumor. ,,source: registry http://seer.cancer.gov/archive/manuals/2011/Surgery_Codes_Breast_09272011.pdf,,,,,,,,,
+v54_668_rx_hospsurg_app_2010,treatment,,dropdown,"This item is used to describe the method of surgical approach used for patients undergoing surgery of the primary site at the reporting facility. If the patient has multiple surgeries to the primary site, this item describes the approach used for the most invasive, definitive surgery","0, No surgical procedure of primary site at this facility. Diagnosed at autopsy.
+1, Robotic assisted.
+2, Robotic converted to open.
+3, Endoscopic or laparoscopic.
+4, Endoscopic or laparoscopic converted to open.
+5, Open. Approach not specified.
+9, Unknown whether surgery was performed; Patient record does not state whether a surgical procedure of the primary site was performed and no information is available. Death certificate only.",source: registry,,,,,,,,,
+v55_670_rx_hospsurg_prim_site,treatment,,dropdown,Describes surgical procedures used to treat the primary site of the reportable tumor. This item records that portion of the first course of treatment given at the reporting facility.,"0, None. No surgical procedure of primary site. Diagnosed at autopsy.
+10-19, Site-specific codes. Tumor destruction; no pathologic specimen produced.
+20-80, Site-specific codes. Resection. Path specimen produced.
+90, Surgery* NOS; surgical treatment of the primary site was done* but no information on the type of procedure is provided.
+98, Site specific codes; special.
+99, Unknown. Patient record does not state whether surgical treatment of the primary site was performed* and no information is available. Death certificate-only.",source: registry,,,,,,,,,
+v56_672_rx_hospscope_reg_ln_sur,treatment,,dropdown,"Describes the removal, biopsy, or aspiration of regional lymph node(s) performed at the reporting facility for diagnosis and/or staging or as a part of the first course of therapy.","0, No regional lymph nodes removed. No lymph nodes found in the pathologic specimen. Diagnosed at autopsy.
+1, Biopsy or aspiration of regional lymph node* NOS.
+2, Sentinel lymph node biopsy.
+3, Regional lymph node(s) removed and the number of nodes removed is unknown or not stated; the procedure is not specified as sentinel node biopsy. Regional lymph nodes removed* NOS.
+4, 1 to 3 regional lymph nodes removed.
+5, 4 or more regional lymph nodes removed.
+6, Sentinel node biopsy and code 3* 4* or 5 at same time or timing not stated.
+7, Sentinel node biopsy and code 3* 4* or 5 at different times.
+9, Unknown or not applicable. It is unknown whether regional lymph node surgery was performed. Death certificate only case; unknown or ill-defined primary site; hematopoietic* reticuloendothelial* ummunoproliferative or myeloproliferative disease.",source: registry,,,,,,,,,
+v57_674_rx_hospsurg_oth_regdis,treatment,,dropdown,Records the surgical removal of distant lymph nodes or other tissue(s)/organ(s) beyond the primary site performed at this facility as a part of first course of treatment,"0, None; no non-primary site resection was performed. Diagnosed at autopsy.
+1, Non-primary surgical procedure performed* unknown if whether site is regional or distant.
+2, Non-primary surgical procedure to other regional sites
+3, Non-primary surgical procedure to distant lymph node(s).
+4, Non-primary surgical procedure to distant site.
+5, Any combination of codes 2* 3* or 4.
+9, Unknown; it is unknown whether any surgical procedure of a non-primary site was performed. Death certificate only.",source: registry,,,,,,,,,
+v58_676_rx_hospreg_ln_removed,treatment,,dropdown,Describes number of regional lymph nodes removed at the reporting facility as part of the first course of treatment,"0, No regional lymph nodes removed
+1, One regional lymph node removed
+2, Two regional lymph nodes removed
+90, Ninety or more regional lymph nodes removed
+95, No regional lymph node(s) removed* but aspiration of regional lymph node(s) was performed
+96, Regional lymph node removal documented as a sampling and number of lymph nodes unknown/not stated
+97, Regional lymph node removal documented as a dissection and number of lymph nodes unknown/not stated
+98, Regional lymph nodes surgically removed* but number of lymph nodes unknown/not stated and not documented as sampling or dissection
+99, Unknown; not stated; death certificate-only",source: registry,,,,,,,,,
+v59_690_rx_hospradiation,treatment,,dropdown,Defines the type of radiation therapy the patient received at the reporting facility as a part of the first course of treatment.,"0, None
+1, Beam radiation
+2, Radioactive implants
+3, Radioisotopes
+4, Combination of 1 with 2 or 3
+5, Radiation* NOS—method or source not specified
+9, Unknown if radiation therapy administered",source: registry,,,,,,,,,
+v60_700_rx_hospchemo,treatment,,dropdown,Records the type of chemotherapy administered at the reporting facility as a part of first course therapy or the reason chemotherapy was not given.,"0, None* chemotherapy was not part of the first course of therapy or there was progression of disease prior to administration; Not customary therapy for this cancer. Diagnosed at autopsy.
+1, Chemotherapy was administered* but type and number of agents is not documented in patient record.
+2, Chemotherapy* single agent.
+3, Chemotherapy* multiple agents.
+82, Chemotherapy was not recommended/administered because it was contraindicated due to patient risk factors (comorbid conditions* advanced age) or there was progression of disease prior to planned administration.
+85, Chemotherapy was not administered because the patient died prior to planned or recommended therapy.
+86, Chemotherapy was recommended by the patient's physician* but was not administered as part of first-course therapy. No reason was stated in the patient record.
+87, Chemotherapy was not administered; it was recommended by the patient's physician* but this treatment was refused by the patient* the patient's family member* or the patient's guardian. The refusal was noted in the patient record.
+88, Chemotherapy was recommended* but it is unknown if it was administered.
+99, It is unknown whether chemotherapy was recommended or administered because it is not stated in patient record. Death certificate-only case",source: registry,,,,,,,,,
+v61_710_rx_hosphormone,treatment,,dropdown,Records whether systemic hormonal agents were administered as first-course treatment at this facility or the reason they were not given. Hormone therapy consists of a group of drugs that may affect the long-term control of a cancer’s growth. It is not usually used as a curative measure.,"0, None* hormone therapy was not part of the planned first course of therapy. Diagnosed at autopsy.
+1, Hormone therapy was administered as first course therapy.
+82, Hormone therapy was not recommended/administered because it was contraindicated due to patient risk factors (comorbid conditions* advanced age) or there was progression of disease prior to administration.
+85, Hormone therapy was not administered because the patient died prior to planned or recommended therapy.
+86, Hormone therapy was not administered. It was recommended by the patient's physician* but was not administered as part of first-course therapy. No reason was stated in the patient record.
+87, Hormone therapy was not administered. It was recommended by the patient's physician* but was refused by the patient* or the patient's family member or guardian. The refusal was noted in the patient record.
+88, Hormone therapy was recommended* but it is unknown if it was administered.
+99, It is unknown whether hormone therapy was recommended or administered because it is not stated in the patient record; death certificate-only cases.",source: registry,,,,,,,,,
+v62_720_rx_hospbrm,treatment,,dropdown,Records whether immunotherapeutic agents (biologic response modifiers) were administered as first-course treatment at this facility or the reason they were not given. Immunotherapy consists of biological or chemical agents that alter the immune system or change the host’s response to tumor cells.,"0, None* immunotherapy was not part of the planned first course of therapy; not customary therapy for this cancer. Diagnosed at autopsy.
+1, Immunotherapy administered as first course therapy.
+82, Immunotherapy was not recommended/administered because it was contraindicated due to patient risk factors (comorbid conditions* advanced age* etc.) or there was progression of disease prior to administration.
+85, Immunotherapy was not administered because the patient died prior to planned or recommended therapy.
+86, Immunotherapy was not administered. It was recommended by the patient's physician but was not administered as part of the first-course of therapy. No reason was noted in the patient record.
+87, Immunotherapy was not administered. It was recommended by the patient's physician but was refused by the patient or the patient's family or guardian. The refusal was noted in the patient record.
+88, Immunotherapy was recommended* but it is unknown if it was administered.
+99, It is unknown if immunotherapy was recommended or administered because it was not stated in the patient record. Death certificate-only case.",source: registry,,,,,,,,,
+v63_730_rx_hospother,treatment,,dropdown,"Identifies treatment given at this facility that cannot be defined as surgery, radiation, or systemic therapy according to the defined data items in this manual.","0, None; all cancer treatment was coded in other treatment fields. Patient received no cancer treatment. Diagnosed at autopsy.
+1, Cancer treatment that cannot be assigned to specified treatment data items.
+2, Other-Experimental; this code is not defined. It may be used to record participation in institution-based clinical trials.
+3, Patient is involved in a double-blind clinical trial. Code the treatment actually administered when the double-blind trial code is broken.
+6, Other unproven; Cancer treatments administered by nonmedical personnel.
+7, Refusal; other treatment was not administered. Treatment listed in code 1* 2 or 3 was recommended by the patient's physician but was refused by the patient or the patient's family or guardian. The refusal was noted in the patient record.
+8, Recommended* unknown if administered; other treatment was recommended* but it is unknown whether it was administered.
+9, It is unknown whether other treatment was recommended or administered because it is not stated in the patient record. Death certificate only case.",source: registry,,,,,,,,,
+v64_740_rx_hospdxstg_proc,treatment,,dropdown,Identifies the surgical procedure(s) performed in an effort to diagnose and/or stage disease at this facility.,"0, No surgical diagnostic or staging procedure was performed.
+1, A biopsy (incisional* needle* or aspiration) was done to a site other than the primary site. No exploratory procedure was done.
+2, A biopsy (incisional* needle* or aspiration) was done of the primary site or biopsy of a lymph node was done to diagnose or stage lymphoma.
+3, A surgical exploration only. The patient was not biopsied or treated during the procedure.
+4, A surgical procedure with a bypass was performed* but no biopsy was done.
+5, An exploratory procedure was performed* and a biopsy of either the primary site or another site was done.
+6, A bypass procedure was performed* and a biopsy of either the primary site or another site was done.
+7, A procedure was done* but the type of procedure is unknown.
+9, No information about whether a diagnostic or staging procedure was performed.",source: registry,,,,,,,,,
+v65_746_rx_hospsurg_site_9802,treatment,,dropdown,Describes surgical procedures used to treat the primary site of the reportable tumor. This item records that portion of the first course of treatment given at the reporting facility.,"0, No surgery performed
+99, Unknown if surgery performed
+xx, site specific codes",source: registry,,,,,,,,,
+v66_747_rx_hospscope_reg_9802,treatment,,text,"Describes the removal, biopsy, or aspiration of regional lymph node(s) at the time of surgery of the primary site or during a separate surgical event at the reporting facility.",,source: registry,,,,,,,,,
+v67_748_rx_hospsurg_oth_9802,treatment,,text,Records the surgical removal of distant lymph nodes or other tissue(s)/organ(s) beyond the primary site at this facility. This field is to be used for ROADS codes after the ROADS to FORDS conversion.,,source: registry,,,,,,,,,
+v68_3280_rx_hosppalliative_proc,treatment,,dropdown,"Identifies care provided at the reporting facility in an effort to palliate or alleviate symptoms. Palliative procedures may include surgery, radiation therapy, systemic therapy (chemotherapy, hormone therapy, or other systemic drugs), and/or pain management.","0, No palliative care provided. Diagnosed at autopsy
+1, Surgery (which may involve a bypass procedure) performed to alleviate symptoms* but no attempt to diagnose* stage* or treat the tumor is made.
+2, Radiation therapy given to alleviate symptoms* but no attempt to produce cure is made.
+3, Chemotherapy* hormone therapy* or other systemic drugs given to alleviate symptoms without curative intent.
+4, Patient received or was referred for pain management only.
+5, Any combination of codes 1* 2* and/or 3 without code 4.
+6, Any combination of codes 1* 2* and/or 3 with code 4.
+7, Palliative care was performed or recommended* but no information on the type of procedure is available in the patient record.
+9, Unknown if palliative care was performed or recommended. Not stated in patient record.",source: registry,,,,,,,,,
+v69_1285_rx_summtreatment_status,treatment,,dropdown,This data item is a summary of the status for all treatment modalities.,"0, No treatment given
+1, Treatment given
+2, Active surveillance (watchful waiting)
+9, Unknown if treatment was given",source: registry,,,,,,,,,
+v70_1290_rx_summsurg_prim_site,treatment,,dropdown,Site-specific codes for the type of surgery to the primary site performed as part of the first course of treatment. This includes treatment given at all facilities as part of the first course of treatment.,"0, None
+19-Oct, Site-specific code; tumor destruction
+20-80, Site-specific codes; resection
+90, Surgery* NOS
+98, Site specific codes; special
+99, Unknown",source: registry,,,,,,,,,
+v71_1292_rx_summscope_reg_ln_sur,treatment,,dropdown,"Describes the removal, biopsy or aspiration of regional lymph node(s) at the time of surgery of the primary site or during a separate surgical event at all facilities.","0, None
+1, Biopsy or aspiration of regional lymph node* NOS
+2, Sentinel lymph node biopsy
+3, Number of regional lymph nodes removed unknown* not stated; regional lymph nodes removed* NOS
+4, 1 to 3 regional lymph nodes removed
+5, 4 or more regional lymph nodes removed
+6, Sentinel node biopsy and code 3* 4* or 5 at same time or timing not noted
+7, Sentinel node biopsy and code 3* 4* or 5 at different times
+9, Unknown or not applicable",source: registry,,,,,,,,,
+v72_1294_rx_summsurg_oth_regdis,treatment,,dropdown,Records the surgical removal of distant lymph nodes or other tissue(s)/organ(s) beyond the primary site.,"0, None; diagnosed at autopsy
+1, Non-primary surgical procedure performed
+2, Non-primary surgical procedure to other regional sites
+3, Non-primary surgical procedure to distant lymph node(s)
+4, Non-primary surgical procedure to distant site
+5, Any combination of codes 2* 3* or 4
+9, Unknown; death certificate only",source: registry,,,,,,,,,
+v73_1296_rx_summreg_ln_examined,treatment,,dropdown,Codes for the number of regional lymph nodes examined in conjunction with surgery performed as part of the first-course treatment.,"0, No regional lymph nodes examined
+1, One regional lymph node examined
+2, Two regional lymph nodes examined
+90, 90 or more regional lymph nodes examined
+95, No regional lymph node(s) removed* but aspiration of regional lymph node(s) was performed
+96, Regional lymph node removal documented as sampling* and number of lymph nodes unknown/not stated
+97, Regional lymph node removal documented as a dissection* and number of lymph nodes unknown/not stated
+98, Regional lymph nodes surgically removed* but number of lymph nodes unknown/not stated and not documented as sampling or dissection
+99, Unknown; not stated; death certificate-only",source: registry,,,,,,,,,
+v74_1310_rx_summsurgical_approch,treatment,,text,Codes for method used to approach the surgical field for the primary site.,,source: registry,,,,,,,,,
+v75_1320_rx_summsurgical_margins,treatment,,dropdown,Codes describe the final status of surgical margins after resection of the primary tumor.,"0, No residual tumor
+1, Residual tumor* NOS
+2, Microscopic residual tumor
+3, Macroscopic residual tumor
+7, Margins not evaluable
+8, No primary site surgery
+9, Unknown or not applicable",source: registry,,,,,,,,,
+v76_1330_rx_summreconstruct_1st,treatment,,text,"Codes for surgical procedures done to reconstruct, restore, or improve the shape and appearance or function of body structures that are missing, defective, damaged, or misshapen by cancer or therapies. Reconstructive/restorative procedures are coded here when started during the first course of therapy.",,source: registry,,,,,,,,,
+v77_1340_reason_for_no_surgery,treatment,,dropdown,Records the reason that no surgery was performed on the primary site.,"0, Surgery of the primary site was performed.
+1, Surgery of the primary site was not performed because it was not part of the planned first-course treatment.
+2, Surgery of the primary site was not recommended/performed because it was contraindicated due to patient risk factors (comorbid conditions* advanced age* etc.).
+5, Surgery of the primary site was not performed because the patient died prior to planned or recommended surgery.
+6, Surgery of the primary site was not performed; it was recommended by the patient's physician* but was not performed as part of the first-course therapy. No reason was noted in the patient's record.
+7, Surgery of the primary site was not performed; it was recommended by the patient's physician* but this treatment was refused by the patient* the patient's family member* or the patient's guardian. The refusal was noted in the patient record.
+8, Surgery of the primary site was recommended* but it is unknown if it was performed. Further follow-up is recommended.
+9, It is unknown if surgery of the primary site was recommended or performed. Death certificate-only cases and autopsy-only cases.",source: registry,,,,,,,,,
+v79_1360_rx_summradiation,treatment,,dropdown,Codes for the type of radiation therapy performed as part of the first course of treatment.,"0, None
+1, Beam radiation
+2, Radioactive implants
+3, Radioisotopes
+4, Combination of 1 with 2 or 3
+5, Radiation* NOS-method or source not specified
+6, Currently allowable for historic cases only; see note below
+7, Patient or patient's guardian refused*
+8, Radiation recommended* unknown if administered*
+9, Unknown if radiation administered",source: registry,,,,,,,,,
+v80_1370_rx_summrad_to_cns,treatment,,dropdown,"For lung and leukemia cases only, codes for radiation given to the brain or central nervous system. Includes treatment given at all facilities as part of the first course.","0, No radiation to the brain and/or central nervous system
+1, Radiation
+7, Patient or patient's guardian refused
+8, Radiation recommended* unknown if administered
+9, Unknown
+, For all other cases (primaries other than lung or leukemia):
+, 9     Not Applicable",source: registry,,,,,,,,,
+v81_1380_rx_summsurgrad_seq,treatment,,dropdown,Codes for the sequencing of radiation and surgery given as part of the first course of treatment.,"0, No radiation and/or no surgery; unknown if surgery and/or radiation given
+2, Radiation before surgery
+3, Radiation after surgery
+4, Radiation both before and after surgery
+5, Intraoperative radiation
+6, Intraoperative radiation with other radiation given before and/or after surgery
+7, Surgery both before and after radiation
+9, Sequence unknown* but both surgery and radiation were given",source: registry,,,,,,,,,
+v82_1390_rx_summchemo,treatment,,dropdown,Codes for chemotherapy given as part of the first course of treatment or the reason chemotherapy was not given. Includes treatment given at all facilities as part of the first course.,"0, None* chemotherapy was not part of the planned first course of therapy.
+1, Chemotherapy* NOS.
+2, Chemotherapy* single agent.
+3, Chemotherapy* multiple agents.
+82, Chemotherapy was not recommended/administered because it was contraindicated due to patient risk factors (i.e.* comorbid conditions* advanced age).
+85, Chemotherapy was not administered because the patient died prior to planned or recommended therapy.
+86, Chemotherapy was not administered. It was recommended by the patient's physician* but was not administered as part of first-course therapy. No reason was stated in the patient record.
+87, Chemotherapy was not administered; it was recommended by the patient's physician* but this treatment was refused by the patient* the patient's family member* or the patient's guardian. The refusal was noted in the patient record.
+88, Chemotherapy was recommended* but it is unknown if it was administered.
+99, It is unknown whether a chemotherapeutic agent(s) was recommended or administered because it is not stated in patient record; death certificate-only cases.",source: registry,,,,,,,,,
+v83_1400_rx_summhormone,treatment,,dropdown,"Records whether systemic hormonal agents were administered as first-course treatment at any facility, or the reason they were not given. Hormone therapy consists of a group of drugs that may affect the long-term control of a cancer’s growth. It is not usually used as a curative measure.","0, None* hormone therapy was not part of the planned first course of therapy.
+1, Hormone therapy administered as first course therapy.
+82, Hormone therapy was not recommended/administered because it was contraindicated due to patient risk factors (i.e.* comorbid conditions* advanced age).
+85, Hormone therapy was not administered because the patient died prior to planned or recommended therapy.
+86, Hormone therapy was not administered. It was recommended by the patient's physician* but was not administered as part of first-course therapy. No reason was stated in the patient record.
+87, Hormone therapy was not administered. It was recommended by the patient's physician* but this treatment was refused by the patient* the patient's family member* or the patient's guardian. The refusal was noted in the patient record.
+88, Hormone therapy was recommended* but it is unknown if it was administered.
+99, It is unknown whether a hormonal agent(s) was recommended or administered because it is not stated in the patient record. Death certificate-only cases.",source: registry,,,,,,,,,
+v84_1410_rx_summbrm,treatment,,dropdown,Records whether immunotherapeutic (biologic response modifiers) agents were administered as first-course treatment at all facilities or the reason they were not given. Immunotherapy consists of biological or chemical agents that alter the immune system or change the host’s response to tumor cells.,"0, None* immunotherapy was not part of the planned first course of therapy.
+1, Immunotherapy administered as first course therapy.
+82, Immunotherapy was not recommended/administered because it was contraindicated due to patient risk factors (i.e.* comorbid conditions* advanced age).
+85, Immunotherapy was not administered because the patient died prior to planned or recommended therapy.
+86, Immunotherapy was not administered. It was recommended by the patient's physician* but was not administered as part of first-course therapy. No reason was stated in the patient record.
+87, Immunotherapy was not administered. It was recommended by the patient's physician* but this treatment was refused by the patient* the patient's family member* or the patient's guardian. The refusal was noted in the patient record.
+88, Immunotherapy was recommended* but it is unknown if it was administered.
+99, It is unknown whether an immunotherapeutic agent(s) was recommended or administered because it is not stated in patient record; death certificate-only cases.",source: registry,,,,,,,,,
+v85_1420_rx_summother,treatment,,dropdown,"Identifies other treatment given at all facilities that cannot be defined as surgery, radiation, or systemic therapy according to the defined data items in this manual.","0, None
+1, Other
+2, Other Experimental
+3, Other-Double Blind
+6, Other-Unproven
+7, Refusal
+8, Recommended
+9, Unknown; unknown if administered",source: registry,,,,,,,,,
+v86_1430_reason_for_no_radiation,treatment,,dropdown,Code the reason the patient did not receive radiation treatment as part of first course of therapy.,"0, Radiation therapy was administered.
+1, Radiation therapy was not administered because it was not part of the planned first-course treatment. Diagnosed at autopsy.
+2, Radiation therapy was not administered because it was contraindicated due to patient risk factors (comorbid conditions* advanced age* etc).
+5, Radiation therapy was not administered because the patient died prior to planned or recommended treatment.
+6, Radiation therapy was not administered; it was recommended by the patient's physician* but was not administered as part of the first-course therapy. No reason was noted in the patient's record.
+7, Radiation therapy was not administered; it was recommended by the patient's physician* but this treatment was refused by the patient* the patient's family member* or the patient's guardian. The refusal was noted in the patient record.
+8, Radiation therapy was recommended* but it is unknown if it was administered.
+9, It is unknown if radiation therapy was recommended or administered. Death-certificate-only.",source: registry,,,,,,,,,
+v87_1639_rx_summsystemicsur_seq,treatment,,dropdown,Records the sequencing of systemic therapy,"0, No systemic therapy and/or surgical procedures; unknown if surgery and/or systemic therapy given
+2, Systemic therapy before surgery
+3, Systemic therapy after surgery
+4, Systemic therapy both before and after surgery
+5, Intraoperative systemic therapy
+6, Intraoperative systemic therapy with other therapy administered before and/or after surgery
+7, Surgery both before and after systemic therapy
+9, Sequence unknown* but both surgery and systemic therapy given",source: registry,,,,,,,,,
+v88_1640_rx_summsurgery_type,treatment,,text,Field for pre-1996 surgery codes for CoC and pre-1998 surgery codes for SEER. ,,source: registry,,,,,,,,,
+v89_1646_rx_summsurg_site_9802,treatment,,dropdown,Site-specific codes for the type of surgery to the primary site performed as part of the first course of treatment.,"0, No primary site surgery performed
+99, Unknown if primary site surgery performed
+xx, site specific codes",source: registry,,,,,,,,,
+v90_1647_rx_summscope_reg_9802,treatment,,text,"Describes the removal, biopsy or aspiration of regional lymph node(s) at the time of surgery of the primary site or during a separate surgical event at all facilities.",,source: registry,,,,,,,,,
+v91_1648_rx_summsurg_oth_9802,treatment,,text,Records the surgical removal of distant lymph nodes or other tissue(s)/organ(s) beyond the primary site given at all facilities as part of the first course of treatment.,,source: registry,,,,,,,,,
+v92_3250_rx_summtransplntendocr,treatment,,dropdown,"Identifies systemic therapeutic procedures administered as part of the first course of treatment at this and all other facilities. If none of these procedures were administered then this item records the reason they were not performed. These include bone marrow transplants, stem cell harvests, surgical and/or radiation endocrine therapy.","0, No transplant procedure or endocrine therapy was administered as part of first course therapy; diagnosed at autopsy
+10, Bone marrow transplant procedure was administered* but the type was not specified.
+11, Bone marrow transplant-autologous
+12, Bone marrow transplant-allogeneic
+20, Stem cell harvest and infusion
+30, Endocrine surgery and/or endocrine radiation therapy.
+40, Combination of endocrine surgery and/or radiation with a transplant procedure. (combination of codes 30 and 10* 11* 12 or 20).
+82, Hematologic transplant and/or endocrine surgery/radiation was not recommended/administered because it was contraindicated due to patient risk factors (i.e.* comorbid conditions* advanced age).
+85, Hematologic transplant and/or endocrine surgery/radiation was not administered because the patient died prior to planned or recommended therapy.
+86, Hematologic transplant and/or endocrine surgery/radiation was not administered. It was recommended by the patient's physician* but was not administered as part of first-course therapy. No reason was stated in the patient record.
+87, Hematologic transplant and/or endocrine surgery/radiation was not administered; it was recommended by the patient's physician* but this treatment was refused by the patient* the patient's family member* or the patient's guardian; refusal noted in patient record
+88, Hematologic transplant and/or endocrine surgery/radiation was recommended* but it is unknown if it was administered
+99, It is unknown whether hematologic transplant and/or endocrine surgery/radiation was recommended or administered because it is not stated in patient record; death certificate-only cases",source: registry,,,,,,,,,
+v93_3270_rx_summpalliative_proc,treatment,,dropdown,Identifies any care provided in an effort to palliate or alleviate symptoms. P,"0, No palliative care provided; diagnosed at autopsy
+1, Surgery (which may involve a bypass procedure) to alleviate symptoms* but no attempt to diagnose* stage* or treat the primary tumor is made
+2, Radiation therapy to alleviate symptoms* but no attempt to diagnose* stage* or treat the primary tumor is made
+3, Chemotherapy* hormone therapy* or other systemic drugs to alleviate symptoms* but no attempt to diagnose* stage* or treat the primary tumor is made
+4, Patient received or was referred for pain management therapy with no other palliative care
+5, Any combination of codes 1* 2* and/or 3 without code 4
+6, Any combination of codes 1* 2* and/or 3 with code 4
+7, Palliative care was performed or referred* but no information on the type of procedure is available in the patient record
+9, Unknown if palliative care was performed or referred; not stated in patient record",source: registry,,,,,,,,,
+v94_1200_rx_date_surgery,treatment,,text,1200 RX DATE SURGERY,,source: registry,,,,,,,,,
+v95_1201_flagrx_date_surgery,treatment,,dropdown,Reason for blank fields,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown if any surgical procedure site was performed).
+11, No proper value is applicable in this context (e.g.* no surgical procedure was performed; autopsy only case).
+12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* surgery was performed but the date is unknown).
+Blank, A valid date value is provided in item RX Date Surgery [1200]* or the date was not expected to have been transmitted.",source: registry,,,,,,,,,
+v96_1210_rx_date_radiation,treatment,,text,1210 RX DATE RADIATION,,source: registry,,,,,,,,,
+v97_1211_flagrx_date_radiation,treatment,,dropdown,Reason for blank fields,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown whether any radiation therapy administered).
+11, No proper value is applicable in this context (e.g.* no radiation therapy administered; autopsy only case).
+12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* radiation therapy administered but date is unknown).
+15, Information is not available at this time* but it is expected that it will be available later (e.g.* radiation therapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).
+Blank, A valid date value is provided in item RX Date Radiation [1210]* or the date was not expected to have been transmitted.",source: registry,,,,,,,,,
+v98_1220_rx_date_chemo,treatment,,text,1220 RX DATE CHEMO,,source: registry,,,,,,,,,
+v99_1221_flagrx_date_chemo,treatment,,dropdown,Reason for blank fields,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown if chemotherapy administered).
+11, No proper value is applicable in this context (e.g.* no chemotherapy administered; autopsy only case).
+12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* chemotherapy administered but date is unknown).
+15, Information is not available at this time* but it is expected that it will be available later (e.g.* chemotherapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).
+Blank, A valid date value is provided in item RX Date Chemo [1220]* or the date was not expected to have been transmitted.",source: registry,,,,,,,,,
+v100_1230_rx_date_hormone,treatment,,text,1230 RX DATE HORMONE,,source: registry,,,,,,,,,
+v101_1231_flagrx_date_hormone,treatment,,dropdown,Reason for blank fields,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown if any hormone therapy administered).
+11, No proper value is applicable in this context (e.g.* no hormone therapy administered; autopsy only cases).
+12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* hormone therapy administered but date is unknown).
+15, Information is not available at this time* but it is expected that it will be available later (e.g.* hormone therapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).
+Blank, A valid date value is provided in item RX Date Hormone [1230]* or the date was not expected to have been transmitted.",source: registry,,,,,,,,,
+v102_1240_rx_date_brm,treatment,,text,1240 RX DATE BRM,,source: registry,,,,,,,,,
+v103_1241_flagrx_date_brm,treatment,,dropdown,Reason for blank fields,"10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if immunotherapy administered).
+11, No proper value is applicable in this context (e.g.* no immunotherapy administered; autopsy only case).
+12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* immunotherapy administered but date is unknown).
+15, Information is not available at this time* but it is expected that it will be available later (e.g.* immune therapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).
+Blank, A valid date value is provided in item RX Date BRM [1240]* or the date was not expected to have been transmitted.",source: registry,,,,,,,,,
+v104_1250_rx_date_other,treatment,,text,1250 RX DATE OTHER,,source: registry,,,,,,,,,
+v105_1251_flagrx_date_other,treatment,,dropdown,Reason for blank fields,"10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if other therapy administered).
+11, No proper value is applicable in this context (e.g.* no other treatment administered; autopsy only case).
+12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* other therapy administered but the date is unknown).
+15, Information is not available at this time* but it is expected that it will be available later (e.g.* other therapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).
+Blank, A valid date value is provided in item RX Date Other [1250]* or the date was not expected to have been transmitted.",source: registry,,,,,,,,,
+v106_1280_rx_date_dxstg_proc,treatment,,text,1280 RX DATE DX/STG PROC,,source: registry,,,,,,,,,
+v107_1281_flagrx_date_dxstg_proc,treatment,,dropdown,Reason for blank fields,"10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if any diagnostic or staging procedure performed).
+11, No proper value is applicable in this context (e.g.* no diagnostic or staging procedure performed; autopsy only case).
+12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* diagnostic or staging procedure performed but date is unknown).
+Blank, A valid date value is provided in item RX Date DX/Stg Proc [1280]* or the date was not expected to have been transmitted.",source: registry,,,,,,,,,
+v108_3170_rx_date_mst_defn_srg,treatment,,text,3170 RX DATE MST DEFN SRG,,source: registry,,,,,,,,,
+v109_3171_flagrx_date_mst_defn_srg,treatment,,dropdown,Reason for blank fields,"10, No information whatsoever can be inferred from this exceptional value. (e.g* unknown if any surgical procedure of the primary site was performed).
+11, No proper value is applicable in this context (e.g.* no surgical resection of the primary site was performed and for cases diagnosed at autopsy).
+12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* surgical procedure of the primary site was performed but the date is unknown).
+Blank, A valid date value is provided in item RX Date Mst Defn Srg [3170]* or the date was not expected to have been transmitted.",source: registry,,,,,,,,,
+v110_3180_rx_date_surg_disch,treatment,,text,3180 RX DATE SURG DISCH,,source: registry,,,,,,,,,
+v111_3181_flagrx_date_surg_disch,treatment,,dropdown,Reason for blank fields,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown whether surgical treatment was performed).
+11, No proper value is applicable in this context (e.g.* no surgical treatment of the primary site was performed; autopsy only case).
+12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* surgical treatment performed but the date of discharge is unknown).
+Blank, A valid date value is provided in item RX Date Surg Disch [3180]* or the date was not expected to have been transmitted.",source: registry,,,,,,,,,
+v112_3220_rx_date_rad_ended,treatment,,text,3220 RX DATE RAD ENDED,,source: registry,,,,,,,,,
+v113_3221_flagrx_date_rad_ended,treatment,,dropdown,Reason for blank fields,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown if radiation therapy administered).
+11, No proper value is applicable in this context (e.g.* radiation therapy was not administered; diagnosed at autopsy).
+12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* date radiation ended is unknown).
+15, Information is not available at this time* but it is expected that it will be available later (e.g.* radiation was administered and was ongoing at the time of most recent follow-up).
+Blank, A valid date value is provided in item RX Date Rad Ended [3220]* or the date was not expected to have been transmitted.",source: registry,,,,,,,,,
+v114_3230_rx_date_systemic,treatment,,text,3230 RX DATE SYSTEMIC,,source: registry,,,,,,,,,
+v115_3231_flagrx_date_systemic,treatment,,dropdown,Reason for blank fields,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown if systemic therapy was administered).
+11, No proper value is applicable in this context (e.g.* no systemic therapy was administered; autopsy only case).
+12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* systemic therapy administered but date is unknown).
+15, Information is not available at this time* but it is expected that it will be available later (e.g.* systemic therapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).
+Blank, A valid date value is provided in item RX Date Systemic [3230]* or the date was not expected to have been transmitted.",source: registry,,,,,,,,,
+v45_820_regional_nodes_positive,x__missing,,dropdown,Records the exact number of regional nodes examined by the pathologist and found to contain metastases.,"0, All nodes examined are negative 
+01 to 89, Exact number of nodes positive 
+90, 90 or more nodes are positive 
+95, Positive aspiration of lymph node(s) was performed 
+97, Positive nodes are documented* but number is unspecified 
+98, No nodes were examined 
+99, Unknown whether nodes are positive; not applicable; not stated in patient record ",source: registry,,,,,,,,,
+v78_1350_rx_summdxstg_proc,x__missing,,dropdown,Identifies the surgical procedure(s) performed in an effort to diagnose and/or stage disease.,"0, No surgical diagnostic or staging procedure was performed.
+1, A biopsy (incisional* needle* or aspiration) was done to a site other than the primary site. No exploratory procedure was done.
+2, A biopsy (incisional* needle* or aspiration) was done of the primary site.
+3, A surgical exploratory only. The patient was not biopsied or treated.
+4, A surgical procedure with a bypass was performed* but no biopsy was done.
+5, An exploratory procedure was performed* and a biopsy of either the primary site or another site was done.
+6, A bypass procedure was performed* and a biopsy of either the primary site or another site was done.
+7, A procedure was done* but the type of procedure is unknown.
+9, No information about whether a diagnostic or staging procedure was performed.",source: registry,,,,,,,,,
