@@ -37,10 +37,6 @@ class Codebook(object):
     def as_field(cls, v_id, records):
         records = list(records)
 
-        # Use x__ in attempt to be sure we don't put
-        # such fields before the study ID.
-        form_required = lambda hint: hint or 'x__missing'
-
         # Variables/field names must consist of ONLY
         # lower-case letters, numbers, and underscores.
         mk_name = lambda id, hint: 'v%02d_%s' % (
@@ -79,7 +75,7 @@ class Codebook(object):
             else ('text', None, (None, None, None)))
 
         f = FieldDef._default()._replace(
-            form_name=form_required(item['var_type']),
+            form_name=item['var_type'],
             field_name=mk_name(v_id, item['Variable Name']),
             field_label=item['Variable Name'],
             field_note=note_source(item['Concept'],
@@ -88,8 +84,8 @@ class Codebook(object):
             text_validation_type_or_show_slider_number=validation,
             text_validation_min=val_min,
             text_validation_max=val_max,
-            select_choices_or_calculations=choices
-            )
+            select_choices_or_calculations=choices,
+            identifier='y' if (ty, validation) == ('text', 'date_ymd') else '')
         return f
 
 

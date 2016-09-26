@@ -27,7 +27,7 @@ v16_0560_sequence_numberhospital,clinical,,dropdown,0560 Sequence Number-Hospita
 62, Second of two or more non-malignant tumor or central registry-defined neoplasms
 88, Unspecified or unknown sequence number for non-malignant tumor or central registry-defined neoplasms. (Sequence number 88 can be used if there is a non-malignant tumor and its sequence number is unknown. If there is known to be more than one non-malignant tumor* then the tumors must be sequenced.)
 98, Cervix carcinoma in situ (CIS)/CIN III* Diagnosis Years 1996-2002.",Sequence number - hospital source: registry,,,,,,,,,
-v18_0390_date_of_diagnosis,clinical,,text,0390 Date of diagnosis,,Date of diagnosis source: registry,date_ymd,,,,,,,,
+v18_0390_date_of_diagnosis,clinical,,text,0390 Date of diagnosis,,Date of diagnosis source: registry,date_ymd,,,y,,,,,
 v19_0230_age_at_diagnosis,clinical,,text,0230 Age at Diagnosis,,Age at diagnosis source: registry,integer,000,999,,,,,,
 v21_2940_derived_ajcc6_t,clinical,,dropdown,2940 Derived AJCC-6 T,"99, TX 
 00, T0 
@@ -138,7 +138,7 @@ v37_410_laterality,clinical,,dropdown,410 Laterality,"0, Not a paired site
 9, Paired site* but no information concerning laterality",Laterality source: registry,,,,,,,,,
 v38_2880_cs_sitespecific_factor_1,clinical,,text,2880 CS Site-Specific Factor 1,,"ER status source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html - but codes are site specific and we may have other sites, so let's allow any",integer,000,999,,,,,,
 v39_2890_cs_sitespecific_factor_2,clinical,,text,2890 CS Site-Specific Factor 2,,PR status source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,000,999,,,,,,
-v40_2869_cs_sitespecific_factor_15,clinical,,text,2869 CS Site-Specific Factor 15,,HER2 status source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,010,,,,,,,
+v40_2869_cs_sitespecific_factor_15,clinical,,text,2869 CS Site-Specific Factor 15,,HER2 status source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,010,999,,,,,,
 v41_2876_cs_site_specific_factor_22,clinical,,text,2876 CS Site Specific Factor 22,,Multigene signature method source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,000,999,,,,,,
 v42_2877_cs_site_specific_factor_23,clinical,,text,2877 CS Site Specific Factor 23,,Multigene signature results source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,000,999,,,,,,
 v43_1760_vital_status,clinical,,dropdown,1760 Vital Status,"0, Dead (CoC)
@@ -149,11 +149,11 @@ v46_830_regional_nodes_examined,clinical,,text,830 Regional Nodes Examined,,Reco
 v47_1770_cancer_status,clinical,,dropdown,1770 cancer status,"1, No evidence of this tumor
 2, Evidence of this tumor
 9, Unknown* indeterminate whether this tumor is present* not stated in patient record",Records the presence or absence of clinical evidence of the patient's malignant or non-malignant tumor as of the Date of Last Contact source: registry,,,,,,,,,
-v49_1860_recurrence_date,clinical,,text,1860 Recurrence date,,source: registry,,,,,,,,,
+v49_1860_recurrence_date,clinical,,text,1860 Recurrence date,,source: registry,date_ymd,,,y,,,,,
 v53_deceased_per_ssa,clinical,,text,Deceased per SSA,,source: registry,,,,,,,,,
 v116_bmi_before,clinical,,text,BMI Before,,"body mass index: The measure that is closest to and prior to the date of diagnosis source: emr ** longitudinal vitals: 1 year after, two years after",,,,,,,,,
 v117_bmi_after,clinical,,text,BMI After,,body mass index: The measure that is closest to and after the date of diagnosis source: emr,,,,,,,,,
-v04_0240_date_of_birth,demographic,,text,0240 Date of birth,,Date of birth source: registry,date_ymd,,,,,,,,
+v04_0240_date_of_birth,demographic,,text,0240 Date of birth,,Date of birth source: registry,date_ymd,,,y,,,,,
 v05_0160_race_1,demographic,,dropdown,0160 Race 1,"01, White
 02, Black
 03, American Indian* Aleutian* or Eskimo (includes all indigenous populations of the Western hemisphere)
@@ -357,11 +357,9 @@ v17_0610_class_of_case,registry,,dropdown,0610 Class of Case,"00, Initial diagno
 43, PATHOLOGY or other lab specimens ONLY
 49, DEATH CERTIFICATE ONLY
 99, Nonanalytic case of unknown relationship to facility (not for use by CoC accredited cancer programs for analytic cases.); UNKNOWN",Class of case source: registry,,,,,,,,,
-v44_1750_date_of_last_contact,registry,,text,1750 date of last contact,,Date of last contact source: registry,date_ymd,,,,,,,,
-v48_1750_date_of_last_contact,registry,,text,1750 date of last contact,,source: registry DUPLICATE,,,,,,,,,
-v50_1861_recurrence_date_1st_flag,registry,,dropdown,1861 Recurrence date - 1st flag,"10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if the patient had a first recurrence)
-11, No proper value is applicable in this context (e.g.* patient became disease-free after treatment; never had a recurrence; or patient was never disease-free; autopsy only case)
-12, A proper value is appicable but not known (i.e.* there was a recurrence* but the date is unknown)","This flag explains why no appropriate value is in the field, Recurrence Date--1st [1860]. source: registry",,,,,,,,,
+v44_1750_date_of_last_contact,registry,,text,1750 date of last contact,,Date of last contact source: registry,date_ymd,,,y,,,,,
+v48_1750_date_of_last_contact,registry,,text,1750 date of last contact,,source: registry DUPLICATE,date_ymd,,,y,,,,,
+v50_1861_recurrence_date_1st_flag,registry,,text,1861 Recurrence date - 1st flag,,"This flag explains why no appropriate value is in the field, Recurrence Date--1st [1860]. source: registry",date_ymd,,,y,,,,,
 v20_0490_diagnostic_confirmation,test,,dropdown,0490 Diagnostic Confirmation,"1, Positive histology
 2, Positive cytology
 3, Positive histology PLUS - positive immunophenotyping AND/OR positive genetic studies (Used only for hematopoietic and lymphoid neoplasms M-9590/3-9992/3)
@@ -499,7 +497,7 @@ v75_1320_rx_summsurgical_margins,treatment,,dropdown,1320 RX Summ--Surgical Marg
 7, Margins not evaluable
 8, No primary site surgery
 9, Unknown or not applicable",Codes describe the final status of surgical margins after resection of the primary tumor. source: registry,,,,,,,,,
-v76_1330_rx_summreconstruct_1st,treatment,,text,1330 RX Summ--Reconstruct 1st,,"Codes for surgical procedures done to reconstruct, restore, or improve the shape and appearance or function of body structures that are missing, defective, damaged, or misshapen by cancer or therapies. Reconstructive/restorative procedures are coded here when started during the first course of therapy. source: registry",,,,,,,,,
+v76_1330_rx_summreconstruct_1st,treatment,,text,1330 RX Summ--Reconstruct 1st,,"Codes for surgical procedures done to reconstruct, restore, or improve the shape and appearance or function of body structures that are missing, defective, damaged, or misshapen by cancer or therapies. Reconstructive/restorative procedures are coded here when started during the first course of therapy. source: registry CoC ROADS Manual 1998 Supplement",,,,,,,,,
 v77_1340_reason_for_no_surgery,treatment,,dropdown,1340 Reason for No Surgery,"0, Surgery of the primary site was performed.
 1, Surgery of the primary site was not performed because it was not part of the planned first-course treatment.
 2, Surgery of the primary site was not recommended/performed because it was contraindicated due to patient risk factors (comorbid conditions* advanced age* etc.).
@@ -618,53 +616,53 @@ v93_3270_rx_summpalliative_proc,treatment,,dropdown,3270 RX Summ--Palliative Pro
 6, Any combination of codes 1* 2* and/or 3 with code 4
 7, Palliative care was performed or referred* but no information on the type of procedure is available in the patient record
 9, Unknown if palliative care was performed or referred; not stated in patient record",Identifies any care provided in an effort to palliate or alleviate symptoms. P source: registry,,,,,,,,,
-v94_1200_rx_date_surgery,treatment,,text,1200 RX DATE SURGERY,,source: registry,date_ymd,,,,,,,,
+v94_1200_rx_date_surgery,treatment,,text,1200 RX DATE SURGERY,,source: registry,date_ymd,,,y,,,,,
 v95_1201_flagrx_date_surgery,treatment,,dropdown,1201 FLAG-RX DATE SURGERY,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown if any surgical procedure site was performed).
 11, No proper value is applicable in this context (e.g.* no surgical procedure was performed; autopsy only case).
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* surgery was performed but the date is unknown).",Reason for blank fields source: registry,,,,,,,,,
-v96_1210_rx_date_radiation,treatment,,text,1210 RX DATE RADIATION,,source: registry,date_ymd,,,,,,,,
+v96_1210_rx_date_radiation,treatment,,text,1210 RX DATE RADIATION,,source: registry,date_ymd,,,y,,,,,
 v97_1211_flagrx_date_radiation,treatment,,dropdown,1211 FLAG-RX DATE RADIATION,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown whether any radiation therapy administered).
 11, No proper value is applicable in this context (e.g.* no radiation therapy administered; autopsy only case).
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* radiation therapy administered but date is unknown).
 15, Information is not available at this time* but it is expected that it will be available later (e.g.* radiation therapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).",Reason for blank fields source: registry,,,,,,,,,
-v98_1220_rx_date_chemo,treatment,,text,1220 RX DATE CHEMO,,source: registry,,,,,,,,,
+v98_1220_rx_date_chemo,treatment,,text,1220 RX DATE CHEMO,,source: registry,date_ymd,,,y,,,,,
 v99_1221_flagrx_date_chemo,treatment,,dropdown,1221 FLAG-RX DATE CHEMO,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown if chemotherapy administered).
 11, No proper value is applicable in this context (e.g.* no chemotherapy administered; autopsy only case).
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* chemotherapy administered but date is unknown).
 15, Information is not available at this time* but it is expected that it will be available later (e.g.* chemotherapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).",Reason for blank fields source: registry,,,,,,,,,
-v100_1230_rx_date_hormone,treatment,,text,1230 RX DATE HORMONE,,source: registry,date_ymd,,,,,,,,
+v100_1230_rx_date_hormone,treatment,,text,1230 RX DATE HORMONE,,source: registry,date_ymd,,,y,,,,,
 v101_1231_flagrx_date_hormone,treatment,,dropdown,1231 FLAG-RX DATE HORMONE,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown if any hormone therapy administered).
 11, No proper value is applicable in this context (e.g.* no hormone therapy administered; autopsy only cases).
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* hormone therapy administered but date is unknown).
 15, Information is not available at this time* but it is expected that it will be available later (e.g.* hormone therapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).",Reason for blank fields source: registry,,,,,,,,,
-v102_1240_rx_date_brm,treatment,,text,1240 RX DATE BRM,,source: registry,date_ymd,,,,,,,,
+v102_1240_rx_date_brm,treatment,,text,1240 RX DATE BRM,,source: registry,date_ymd,,,y,,,,,
 v103_1241_flagrx_date_brm,treatment,,dropdown,1241 FLAG-RX DATE BRM,"10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if immunotherapy administered).
 11, No proper value is applicable in this context (e.g.* no immunotherapy administered; autopsy only case).
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* immunotherapy administered but date is unknown).
 15, Information is not available at this time* but it is expected that it will be available later (e.g.* immune therapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).",Reason for blank fields source: registry,,,,,,,,,
-v104_1250_rx_date_other,treatment,,text,1250 RX DATE OTHER,,source: registry,date_ymd,,,,,,,,
+v104_1250_rx_date_other,treatment,,text,1250 RX DATE OTHER,,source: registry,date_ymd,,,y,,,,,
 v105_1251_flagrx_date_other,treatment,,dropdown,1251 FLAG-RX DATE OTHER,"10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if other therapy administered).
 11, No proper value is applicable in this context (e.g.* no other treatment administered; autopsy only case).
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* other therapy administered but the date is unknown).
 15, Information is not available at this time* but it is expected that it will be available later (e.g.* other therapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).",Reason for blank fields source: registry,,,,,,,,,
-v106_1280_rx_date_dxstg_proc,treatment,,text,1280 RX DATE DX/STG PROC,,source: registry,date_ymd,,,,,,,,
+v106_1280_rx_date_dxstg_proc,treatment,,text,1280 RX DATE DX/STG PROC,,source: registry,date_ymd,,,y,,,,,
 v107_1281_flagrx_date_dxstg_proc,treatment,,dropdown,1281 FLAG-RX DATE DX/STG PROC,"10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if any diagnostic or staging procedure performed).
 11, No proper value is applicable in this context (e.g.* no diagnostic or staging procedure performed; autopsy only case).
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* diagnostic or staging procedure performed but date is unknown).",Reason for blank fields source: registry,,,,,,,,,
-v108_3170_rx_date_mst_defn_srg,treatment,,text,3170 RX DATE MST DEFN SRG,,source: registry,date_ymd,,,,,,,,
+v108_3170_rx_date_mst_defn_srg,treatment,,text,3170 RX DATE MST DEFN SRG,,source: registry,date_ymd,,,y,,,,,
 v109_3171_flagrx_date_mst_defn_srg,treatment,,dropdown,3171 FLAG-RX DATE MST DEFN SRG,"10, No information whatsoever can be inferred from this exceptional value. (e.g* unknown if any surgical procedure of the primary site was performed).
 11, No proper value is applicable in this context (e.g.* no surgical resection of the primary site was performed and for cases diagnosed at autopsy).
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* surgical procedure of the primary site was performed but the date is unknown).",Reason for blank fields source: registry,,,,,,,,,
-v110_3180_rx_date_surg_disch,treatment,,text,3180 RX DATE SURG DISCH,,source: registry,date_ymd,,,,,,,,
+v110_3180_rx_date_surg_disch,treatment,,text,3180 RX DATE SURG DISCH,,source: registry,date_ymd,,,y,,,,,
 v111_3181_flagrx_date_surg_disch,treatment,,dropdown,3181 FLAG-RX DATE SURG DISCH,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown whether surgical treatment was performed).
 11, No proper value is applicable in this context (e.g.* no surgical treatment of the primary site was performed; autopsy only case).
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* surgical treatment performed but the date of discharge is unknown).",Reason for blank fields source: registry,,,,,,,,,
-v112_3220_rx_date_rad_ended,treatment,,text,3220 RX DATE RAD ENDED,,source: registry,date_ymd,,,,,,,,
+v112_3220_rx_date_rad_ended,treatment,,text,3220 RX DATE RAD ENDED,,source: registry,date_ymd,,,y,,,,,
 v113_3221_flagrx_date_rad_ended,treatment,,dropdown,3221 FLAG-RX DATE RAD ENDED,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown if radiation therapy administered).
 11, No proper value is applicable in this context (e.g.* radiation therapy was not administered; diagnosed at autopsy).
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* date radiation ended is unknown).
 15, Information is not available at this time* but it is expected that it will be available later (e.g.* radiation was administered and was ongoing at the time of most recent follow-up).",Reason for blank fields source: registry,,,,,,,,,
-v114_3230_rx_date_systemic,treatment,,text,3230 RX DATE SYSTEMIC,,source: registry,date_ymd,,,,,,,,
+v114_3230_rx_date_systemic,treatment,,text,3230 RX DATE SYSTEMIC,,source: registry,date_ymd,,,y,,,,,
 v115_3231_flagrx_date_systemic,treatment,,dropdown,3231 FLAG-RX DATE SYSTEMIC,"10, No information whatsoever can be inferred from this exceptional value (e.g.* unknown if systemic therapy was administered).
 11, No proper value is applicable in this context (e.g.* no systemic therapy was administered; autopsy only case).
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* systemic therapy administered but date is unknown).
