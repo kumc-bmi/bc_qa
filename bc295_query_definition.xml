@@ -1,11 +1,10 @@
-<ns3:query_definition xmlns:ns3="http://www.i2b2.org/xsd/cell/crc/psm/querydefinition/1.1/" xmlns:ns2="http://www.i2b2.org/xsd/cell/crc/psm/1.1/" xmlns:ns4="http://www.i2b2.org/xsd/cell/crc/psm/analysisdefinition/1.1/">
-  <query_name>Br-Br-Br-Br-Br-Br@11:29:31</query_name>
+<ns4:query_definition xmlns:ns4="http://www.i2b2.org/xsd/cell/crc/psm/querydefinition/1.1/" xmlns:ns2="http://www.i2b2.org/xsd/cell/crc/psm/1.1/" xmlns:ns3="http://www.i2b2.org/xsd/cell/crc/psm/analysisdefinition/1.1/">
+  <query_name>BC Phase 2f (lymph)@18:08:43</query_name>
   <query_timing>ANY</query_timing>
   <specificity_scale>0</specificity_scale>
   <panel>
     <panel_number>1</panel_number>
     <panel_timing>SAMEVISIT</panel_timing>
-    <panel_date_from>2012-05-01T00:00:00.000-05:00</panel_date_from>
     <panel_accuracy_scale>100</panel_accuracy_scale>
     <invert>0</invert>
     <total_item_occurrences>1</total_item_occurrences>
@@ -16,6 +15,9 @@
       <item_icon>LA</item_icon>
       <tooltip>Cancer Cases \ SEER Site Summary</tooltip>
       <class>ENC</class>
+      <constrain_by_date>
+        <date_from>2012-05-01T00:00:00.000-05:00</date_from>
+      </constrain_by_date>
       <item_is_synonym>false</item_is_synonym>
     </item>
     <item>
@@ -25,6 +27,9 @@
       <item_icon>FA</item_icon>
       <tooltip>Diagnoses \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
       <class>ENC</class>
+      <constrain_by_date>
+        <date_from>2012-05-01T00:00:00.000-05:00</date_from>
+      </constrain_by_date>
       <item_is_synonym>false</item_is_synonym>
     </item>
     <item>
@@ -34,6 +39,9 @@
       <item_icon>FA</item_icon>
       <tooltip>Diagnoses \ 140-239.99 NEOPLASMS \ 170-176.99 MALIGNANT NEOPLASM OF BONE, CONNECTIVE TISSUE, SKIN, AND BREAST</tooltip>
       <class>ENC</class>
+      <constrain_by_date>
+        <date_from>2012-05-01T00:00:00.000-05:00</date_from>
+      </constrain_by_date>
       <item_is_synonym>false</item_is_synonym>
     </item>
   </panel>
@@ -1277,5 +1285,32 @@
       <class>ENC</class>
       <item_is_synonym>false</item_is_synonym>
     </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2830 CS Lymph Nodes [40,261 facts; 38,053 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2830 CS Lymph Nodes\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2840 CS Lymph Nodes Eval [40,255 facts; 38,049 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:11 Stage/Prognostic Factors\2840 CS Lymph Nodes Eval\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 11 Stage/Prognostic Factors</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>3270 RX Summ--Palliative Proc [92,141 facts; 85,515 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\3270 RX Summ--Palliative Proc\</item_key>
+      <item_icon>FA</item_icon>
+      <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
   </panel>
-</ns3:query_definition>
+</ns4:query_definition>
