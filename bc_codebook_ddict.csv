@@ -168,6 +168,13 @@ v42_2877_cs_site_specific_factor_23,clinical,,text,2877 CS Site Specific Factor 
 v43_1760_vital_status,clinical,,dropdown,1760 Vital Status,"00, Dead (CoC)
 01, Alive
 04, Dead (SEER)",Vital status source: registry,,,,,,,,,
+v45_820_regional_nodes_positive,clinical,,dropdown,820 Regional Nodes Positive,"00, All nodes examined are negative 
+01 to 89, Exact number of nodes positive 
+90, 90 or more nodes are positive 
+95, Positive aspiration of lymph node(s) was performed 
+97, Positive nodes are documented* but number is unspecified 
+98, No nodes were examined 
+99, Unknown whether nodes are positive; not applicable; not stated in patient record ",Records the exact number of regional nodes examined by the pathologist and found to contain metastases. source: registry,,,,,,,,,
 v46_830_regional_nodes_examined,clinical,,dropdown,830 Regional Nodes Examined,"00, No nodes were examined
 01 to 89, 1-89 nodes were examined (code the exact number of regional lymph nodes examined)
 90, 90 or more nodes were examined
@@ -182,6 +189,7 @@ v47_1770_cancer_status,clinical,,dropdown,1770 cancer status,"01, No evidence of
 v49_1860_recurrence_date,clinical,,text,1860 Recurrence date,,source: registry,,,,,,,,,
 v53_deceased_per_ssa,clinical,,text,Deceased per SSA,,source: registry,,,,,,,,,
 v116_bmi_before,clinical,,text,BMI Before,,"body mass index: The measure that is closest to and prior to the date of diagnosis source: emr ** longitudinal vitals: 1 year after, two years after",,,,,,,,,
+v117_bmi_after,clinical,,text,BMI After,,body mass index: The measure that is closest to and after the date of diagnosis source: emr,,,,,,,,,
 v04_0240_date_of_birth,demographic,,text,0240 Date of birth,,Date of birth source: registry,date_ymd,,,,,,,,
 v05_0160_race_1,demographic,,dropdown,0160 Race 1,"01, White
 02, Black
@@ -333,7 +341,7 @@ v09_0164_race_5,demographic,,dropdown,0164 Race 5,"01, White
 97, Pacific Islander* NOS
 98, Other
 99, Unknown",Race source: registry Code 09 was retired effective with Version 12.,,,,,,,,,
-v10_0190_spanish__hispanic_origin,demographic,,dropdown,0190 SPANISH / HISPANIC ORIGIN,"00, Non-Spanish; non-Hispanic
+v10_0190_spanish_hispanic_origin,demographic,,dropdown,0190 SPANISH / HISPANIC ORIGIN,"00, Non-Spanish; non-Hispanic
 01, Mexican (includes Chicano)
 02, Puerto Rican
 03, Cuban
@@ -384,7 +392,7 @@ v17_0610_class_of_case,registry,,dropdown,0610 Class of Case,"00, Initial diagno
 99, Nonanalytic case of unknown relationship to facility (not for use by CoC accredited cancer programs for analytic cases.); UNKNOWN",Class of case source: registry,,,,,,,,,
 v44_1750_date_of_last_contact,registry,,text,1750 date of last contact,,Date of last contact source: registry,date_ymd,,,,,,,,
 v48_1750_date_of_last_contact,registry,,text,1750 date of last contact,,source: registry DUPLICATE,,,,,,,,,
-v50_1861_recurrence_date__1st_flag,registry,,dropdown,1861 Recurrence date - 1st flag,"10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if the patient had a first recurrence)
+v50_1861_recurrence_date_1st_flag,registry,,dropdown,1861 Recurrence date - 1st flag,"10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if the patient had a first recurrence)
 11, No proper value is applicable in this context (e.g.* patient became disease-free after treatment; never had a recurrence; or patient was never disease-free; autopsy only case)
 12, A proper value is appicable but not known (i.e.* there was a recurrence* but the date is unknown)
 Blank, A valid date value is provided in item Recurrence Date--1st [1860]* or the date was not expected to have been transmitted","This flag explains why no appropriate value is in the field, Recurrence Date--1st [1860]. source: registry",,,,,,,,,
@@ -552,6 +560,15 @@ v77_1340_reason_for_no_surgery,treatment,,dropdown,1340 Reason for No Surgery,"0
 07, Surgery of the primary site was not performed; it was recommended by the patient's physician* but this treatment was refused by the patient* the patient's family member* or the patient's guardian. The refusal was noted in the patient record.
 08, Surgery of the primary site was recommended* but it is unknown if it was performed. Further follow-up is recommended.
 09, It is unknown if surgery of the primary site was recommended or performed. Death certificate-only cases and autopsy-only cases.",Records the reason that no surgery was performed on the primary site. source: registry,,,,,,,,,
+v78_1350_rx_summdxstg_proc,treatment,,dropdown,1350 RX Summ--DX/Stg Proc,"00, No surgical diagnostic or staging procedure was performed.
+01, A biopsy (incisional* needle* or aspiration) was done to a site other than the primary site. No exploratory procedure was done.
+02, A biopsy (incisional* needle* or aspiration) was done of the primary site.
+03, A surgical exploratory only. The patient was not biopsied or treated.
+04, A surgical procedure with a bypass was performed* but no biopsy was done.
+05, An exploratory procedure was performed* and a biopsy of either the primary site or another site was done.
+06, A bypass procedure was performed* and a biopsy of either the primary site or another site was done.
+07, A procedure was done* but the type of procedure is unknown.
+09, No information about whether a diagnostic or staging procedure was performed.",Identifies the surgical procedure(s) performed in an effort to diagnose and/or stage disease. source: registry,,,,,,,,,
 v79_1360_rx_summradiation,treatment,,dropdown,1360 RX Summ--Radiation,"00, None
 01, Beam radiation
 02, Radioactive implants
@@ -678,7 +695,7 @@ v101_1231_flagrx_date_hormone,treatment,,dropdown,1231 FLAG-RX DATE HORMONE,"10,
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* hormone therapy administered but date is unknown).
 15, Information is not available at this time* but it is expected that it will be available later (e.g.* hormone therapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).
 Blank, A valid date value is provided in item RX Date Hormone [1230]* or the date was not expected to have been transmitted.",Reason for blank fields source: registry,,,,,,,,,
-v102_1240_rx_date_brm,treatment,,text,1240 RX DATE BRM,,source: registry,,,,,,,,,
+v102_1240_rx_date_brm,treatment,,text,1240 RX DATE BRM,,source: registry,date_ymd,,,,,,,,
 v103_1241_flagrx_date_brm,treatment,,dropdown,1241 FLAG-RX DATE BRM,"10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if immunotherapy administered).
 11, No proper value is applicable in this context (e.g.* no immunotherapy administered; autopsy only case).
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* immunotherapy administered but date is unknown).
@@ -717,20 +734,3 @@ v115_3231_flagrx_date_systemic,treatment,,dropdown,3231 FLAG-RX DATE SYSTEMIC,"1
 12, A proper value is applicable but not known. This event occurred* but the date is unknown (e.g.* systemic therapy administered but date is unknown).
 15, Information is not available at this time* but it is expected that it will be available later (e.g.* systemic therapy is planned as part of the first course of therapy* but had not been started at the time of the most recent follow-up).
 Blank, A valid date value is provided in item RX Date Systemic [3230]* or the date was not expected to have been transmitted.",Reason for blank fields source: registry,,,,,,,,,
-v45_820_regional_nodes_positive,x__missing,,dropdown,820 Regional Nodes Positive,"00, All nodes examined are negative 
-01 to 89, Exact number of nodes positive 
-90, 90 or more nodes are positive 
-95, Positive aspiration of lymph node(s) was performed 
-97, Positive nodes are documented* but number is unspecified 
-98, No nodes were examined 
-99, Unknown whether nodes are positive; not applicable; not stated in patient record ",Records the exact number of regional nodes examined by the pathologist and found to contain metastases. source: registry,,,,,,,,,
-v78_1350_rx_summdxstg_proc,x__missing,,dropdown,1350 RX Summ--DX/Stg Proc,"00, No surgical diagnostic or staging procedure was performed.
-01, A biopsy (incisional* needle* or aspiration) was done to a site other than the primary site. No exploratory procedure was done.
-02, A biopsy (incisional* needle* or aspiration) was done of the primary site.
-03, A surgical exploratory only. The patient was not biopsied or treated.
-04, A surgical procedure with a bypass was performed* but no biopsy was done.
-05, An exploratory procedure was performed* and a biopsy of either the primary site or another site was done.
-06, A bypass procedure was performed* and a biopsy of either the primary site or another site was done.
-07, A procedure was done* but the type of procedure is unknown.
-09, No information about whether a diagnostic or staging procedure was performed.",Identifies the surgical procedure(s) performed in an effort to diagnose and/or stage disease. source: registry,,,,,,,,,
-v117_bmi_after,x__missing,,text,BMI After,,body mass index: The measure that is closest to and after the date of diagnosis source:,,,,,,,,,
