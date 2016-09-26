@@ -1,4 +1,4 @@
-field_name,form_name,section_header,field_type,field_label,select_choices_or_calculations,field_note,text_validation_type_or_show_slider_number,text_validation_max,text_validation_min,identifier,branching_logic,required_field,custom_alignment,question_number,matrix_group_name
+field_name,form_name,section_header,field_type,field_label,select_choices_or_calculations,field_note,text_validation_type_or_show_slider_number,text_validation_min,text_validation_max,identifier,branching_logic,required_field,custom_alignment,question_number,matrix_group_name
 v00_tumorid,admin,,text,TumorID,,Study ID and Sequence Number source: mixed,,,,,,,,,
 v01_studyid,admin,,text,StudyID,,Study ID source: study,,,,,,,,,
 v02_breastsurvey,admin,,dropdown,breastsurvey,"1, Yes
@@ -28,7 +28,7 @@ v16_0560_sequence_numberhospital,clinical,,dropdown,0560 Sequence Number-Hospita
 88, Unspecified or unknown sequence number for non-malignant tumor or central registry-defined neoplasms. (Sequence number 88 can be used if there is a non-malignant tumor and its sequence number is unknown. If there is known to be more than one non-malignant tumor* then the tumors must be sequenced.)
 98, Cervix carcinoma in situ (CIS)/CIN III* Diagnosis Years 1996-2002.",Sequence number - hospital source: registry,,,,,,,,,
 v18_0390_date_of_diagnosis,clinical,,text,0390 Date of diagnosis,,Date of diagnosis source: registry,date_ymd,,,,,,,,
-v19_0230_age_at_diagnosis,clinical,,text,0230 Age at Diagnosis,,Age at diagnosis source: registry,integer,999,000,,,,,,
+v19_0230_age_at_diagnosis,clinical,,text,0230 Age at Diagnosis,,Age at diagnosis source: registry,integer,000,999,,,,,,
 v21_2940_derived_ajcc6_t,clinical,,dropdown,2940 Derived AJCC-6 T,"99, TX 
 00, T0 
 05, Tis 
@@ -75,17 +75,13 @@ v22_2960_derived_ajcc6_n,clinical,,dropdown,2960 Derived AJCC-6 N,"99, NX
 88, Not applicable ",AJCC 6th ed node stage source: registry,,,,,,,,,
 v23_2980_derived_ajcc6_m,clinical,,dropdown,2980 Derived AJCC-6 M,"99, MX
 00, M0
-10, M1",AJCC 6th ed distance metastasis stage source: registry,,,,,,,,,
-v24_3000_derived_ajcc6_stage_grp,clinical,,dropdown,3000 Derived AJCC-6 Stage Grp,"00, Stage 0 
-10, Stage I 
-32, Stage IIA 
-33, Stage IIB 
-52, Stage IIIA 
-53, Stage IIIB 
-54, Stage IIIC 
-70, Stage IV 
-88, Not applicable 
-99, Stage Unknown ",AJCC 6th ed group stage source: registry,,,,,,,,,
+10, M1
+11, 11
+12, 12
+13, 13
+19, 19
+88, 88","AJCC 6th ed distance metastasis stage source: registry TODO: labels for 11, 12, 13, 19, 88",,,,,,,,,
+v24_3000_derived_ajcc6_stage_grp,clinical,,text,3000 Derived AJCC-6 Stage Grp,,AJCC 6th ed group stage source: registry TODO: all 50 codes,integer,00,99,,,,,,
 v25_3020_derived_ss2000,clinical,,dropdown,3020 Derived SS2000,"0, In Situ 
 1, Localized 
 2, Regional* direct extension 
@@ -111,36 +107,16 @@ v26_3400_derived_ajcc7_t,clinical,,dropdown,3400 Derived AJCC-7 T,"999, TX
 430, T4c 
 440, T4d 
 888, Not applicable ",AJCC 7th ed tumor stage source: registry,,,,,,,,,
-v27_3410_derived_ajcc7_n,clinical,,dropdown,3410 Derived AJCC-7 N,"999, NX 
-000, N0 
-100, N1 
-200, N2 
-210, N2a 
-220, N2b 
-300, N3 
-310, N3a 
-320, N3b 
-330, N3c 
-888, Not applicable ",AJCC 7th ed node stage source: registry,,,,,,,,,
+v27_3410_derived_ajcc7_n,clinical,,text,3410 Derived AJCC-7 N,,"AJCC 7th ed node stage source: registry TODO: add N0, N1, … NX codes",integer,000,999,,,,,,
 v28_3420_derived_ajcc7_m,clinical,,dropdown,3420 Derived AJCC-7 M,"999, MX 
 000, M0 
 010, M0(i+) 
 100, M1 
 888, Not applicable ",AJCC 7th ed distance metastasis stage source: registry,,,,,,,,,
-v29_3430_derived_ajcc7_stage_grp,clinical,,dropdown,3430 Derived AJCC-7 Stage Grp,"000, Stage 0 
-120, Stage IA 
-150, Stage IB 
-320, Stage IIA 
-330, Stage IIB 
-520, Stage IIIA 
-530, Stage IIIB 
-540, Stage IIIC 
-700, Stage IV 
-888, Not applicable 
-999, Stage Unknown ","AJCC 7th ed group stage source: registry This is the AJCC “Stage Group” component that is derived from CS detailed site-specific codes, using the CS algorithm, effective for 2010+ diagnosis. For list of codes see http://www.ccrcal.org/PAQC_Pubs/V3_2010_Forward/Data_Items/Derived_AJCC-7_Stage_Grp.htm",,,,,,,,,
+v29_3430_derived_ajcc7_stage_grp,clinical,,text,3430 Derived AJCC-7 Stage Grp,,"AJCC 7th ed group stage source: registry This is the AJCC “Stage Group” component that is derived from CS detailed site-specific codes, using the CS algorithm, effective for 2010+ diagnosis. For list of codes see http://www.ccrcal.org/PAQC_Pubs/V3_2010_Forward/Data_Items/Derived_AJCC-7_Stage_Grp.htm TODO: all 53 codes",integer,000,999,,,,,,
 v30_2800_cs_tumor_size,clinical,,text,2800 CS Tumor Size,,Collaborative stage - tumor size source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,,,,,,,,,
-v31_2830_cs_lymph_nodes,clinical,,text,2830 CS Lymph Nodes,,Collaborative stage - number of positive lymph nodes source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,999,0,,,,,,
-v32_2840_cs_lymph_nodes_eval,clinical,,text,2840 CS Lymph Nodes Eval,,Collaborative stage - number of lymph nodes evaluated source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,999,0,,,,,,
+v31_2830_cs_lymph_nodes,clinical,,text,2830 CS Lymph Nodes,,Collaborative stage - number of positive lymph nodes source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,0,999,,,,,,
+v32_2840_cs_lymph_nodes_eval,clinical,,text,2840 CS Lymph Nodes Eval,,Collaborative stage - number of lymph nodes evaluated source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,0,999,,,,,,
 v33_440_grade,clinical,,dropdown,440 Grade,"1, Grade I
 2, Grade II
 3, Grade III
@@ -160,16 +136,16 @@ v37_410_laterality,clinical,,dropdown,410 Laterality,"0, Not a paired site
 4, Bilateral involvement at time of diagnosis* lateral origin unknown for a single primary; or both ovaries involved simultaneously* single histology; bilateral retinoblastomas; bilateral Wilms' tumors
 5, Paired site: midline tumor
 9, Paired site* but no information concerning laterality",Laterality source: registry,,,,,,,,,
-v38_2880_cs_sitespecific_factor_1,clinical,,text,2880 CS Site-Specific Factor 1,,"ER status source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html - but codes are site specific and we may have other sites, so let's allow any",integer,999,000,,,,,,
-v39_2890_cs_sitespecific_factor_2,clinical,,text,2890 CS Site-Specific Factor 2,,PR status source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,999,000,,,,,,
-v40_2869_cs_sitespecific_factor_15,clinical,,text,2869 CS Site-Specific Factor 15,,HER2 status source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,,010,,,,,,
-v41_2876_cs_site_specific_factor_22,clinical,,text,2876 CS Site Specific Factor 22,,Multigene signature method source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,999,000,,,,,,
-v42_2877_cs_site_specific_factor_23,clinical,,text,2877 CS Site Specific Factor 23,,Multigene signature results source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,999,000,,,,,,
+v38_2880_cs_sitespecific_factor_1,clinical,,text,2880 CS Site-Specific Factor 1,,"ER status source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html - but codes are site specific and we may have other sites, so let's allow any",integer,000,999,,,,,,
+v39_2890_cs_sitespecific_factor_2,clinical,,text,2890 CS Site-Specific Factor 2,,PR status source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,000,999,,,,,,
+v40_2869_cs_sitespecific_factor_15,clinical,,text,2869 CS Site-Specific Factor 15,,HER2 status source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,010,,,,,,,
+v41_2876_cs_site_specific_factor_22,clinical,,text,2876 CS Site Specific Factor 22,,Multigene signature method source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,000,999,,,,,,
+v42_2877_cs_site_specific_factor_23,clinical,,text,2877 CS Site Specific Factor 23,,Multigene signature results source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,000,999,,,,,,
 v43_1760_vital_status,clinical,,dropdown,1760 Vital Status,"0, Dead (CoC)
 1, Alive
 4, Dead (SEER)",Vital status source: registry,,,,,,,,,
-v45_820_regional_nodes_positive,clinical,,text,820 Regional Nodes Positive,,Records the exact number of regional nodes examined by the pathologist and found to contain metastases. source: registry,integer,99,00,,,,,,
-v46_830_regional_nodes_examined,clinical,,text,830 Regional Nodes Examined,,Records the total number of regional lymph nodes that were removed and examined by the pathologist. source: registry,integer,99,00,,,,,,
+v45_820_regional_nodes_positive,clinical,,text,820 Regional Nodes Positive,,Records the exact number of regional nodes examined by the pathologist and found to contain metastases. source: registry,integer,00,99,,,,,,
+v46_830_regional_nodes_examined,clinical,,text,830 Regional Nodes Examined,,Records the total number of regional lymph nodes that were removed and examined by the pathologist. source: registry,integer,00,99,,,,,,
 v47_1770_cancer_status,clinical,,dropdown,1770 cancer status,"1, No evidence of this tumor
 2, Evidence of this tumor
 9, Unknown* indeterminate whether this tumor is present* not stated in patient record",Records the presence or absence of clinical evidence of the patient's malignant or non-malignant tumor as of the Date of Last Contact source: registry,,,,,,,,,
@@ -403,7 +379,7 @@ v54_668_rx_hospsurg_app_2010,treatment,,dropdown,668 RX HOSP--SURG APP 2010,"0, 
 4, Endoscopic or laparoscopic converted to open.
 5, Open. Approach not specified.
 9, Unknown whether surgery was performed; Patient record does not state whether a surgical procedure of the primary site was performed and no information is available. Death certificate only.","This item is used to describe the method of surgical approach used for patients undergoing surgery of the primary site at the reporting facility. If the patient has multiple surgeries to the primary site, this item describes the approach used for the most invasive, definitive surgery source: registry",,,,,,,,,
-v55_670_rx_hospsurg_prim_site,treatment,,text,670 RX HOSP--SURG PRIM SITE,,Describes surgical procedures used to treat the primary site of the reportable tumor. This item records that portion of the first course of treatment given at the reporting facility. source: registry,integer,99,00,,,,,,
+v55_670_rx_hospsurg_prim_site,treatment,,text,670 RX HOSP--SURG PRIM SITE,,Describes surgical procedures used to treat the primary site of the reportable tumor. This item records that portion of the first course of treatment given at the reporting facility. source: registry,integer,00,99,,,,,,
 v56_672_rx_hospscope_reg_ln_sur,treatment,,dropdown,672 RX HOSP--SCOPE REG LN SUR,"0, No regional lymph nodes removed. No lymph nodes found in the pathologic specimen. Diagnosed at autopsy.
 1, Biopsy or aspiration of regional lymph node* NOS.
 2, Sentinel lymph node biopsy.
@@ -420,7 +396,7 @@ v57_674_rx_hospsurg_oth_regdis,treatment,,dropdown,674 RX HOSP--SURG OTH REG/DIS
 4, Non-primary surgical procedure to distant site.
 5, Any combination of codes 2* 3* or 4.
 9, Unknown; it is unknown whether any surgical procedure of a non-primary site was performed. Death certificate only.",Records the surgical removal of distant lymph nodes or other tissue(s)/organ(s) beyond the primary site performed at this facility as a part of first course of treatment source: registry,,,,,,,,,
-v58_676_rx_hospreg_ln_removed,treatment,,text,676 RX HOSP--REG LN REMOVED,,Describes number of regional lymph nodes removed at the reporting facility as part of the first course of treatment source: registry,integer,99,00,,,,,,
+v58_676_rx_hospreg_ln_removed,treatment,,text,676 RX HOSP--REG LN REMOVED,,Describes number of regional lymph nodes removed at the reporting facility as part of the first course of treatment source: registry,integer,00,99,,,,,,
 v59_690_rx_hospradiation,treatment,,dropdown,690 RX HOSP--RADIATION,"0, None
 1, Beam radiation
 2, Radioactive implants
@@ -471,7 +447,7 @@ v64_740_rx_hospdxstg_proc,treatment,,dropdown,740 RX HOSP--DX/STG PROC,"00, No s
 06, A bypass procedure was performed* and a biopsy of either the primary site or another site was done.
 07, A procedure was done* but the type of procedure is unknown.
 09, No information about whether a diagnostic or staging procedure was performed.",Identifies the surgical procedure(s) performed in an effort to diagnose and/or stage disease at this facility. source: registry,,,,,,,,,
-v65_746_rx_hospsurg_site_9802,treatment,,text,746 RX HOSP--SURG SITE 98-02,,Describes surgical procedures used to treat the primary site of the reportable tumor. This item records that portion of the first course of treatment given at the reporting facility. source: registry,integer,99,00,,,,,,
+v65_746_rx_hospsurg_site_9802,treatment,,text,746 RX HOSP--SURG SITE 98-02,,Describes surgical procedures used to treat the primary site of the reportable tumor. This item records that portion of the first course of treatment given at the reporting facility. source: registry,integer,00,99,,,,,,
 v66_747_rx_hospscope_reg_9802,treatment,,dropdown,747 RX HOSP--SCOPE REG 98-02,"0, 0
 1, 1
 3, 3
@@ -497,7 +473,7 @@ v69_1285_rx_summtreatment_status,treatment,,dropdown,1285 RX SUMM--TREATMENT STA
 1, Treatment given
 2, Active surveillance (watchful waiting)
 9, Unknown if treatment was given",This data item is a summary of the status for all treatment modalities. source: registry,,,,,,,,,
-v70_1290_rx_summsurg_prim_site,treatment,,text,1290 RX Summ--Surg Prim Site,,Site-specific codes for the type of surgery to the primary site performed as part of the first course of treatment. This includes treatment given at all facilities as part of the first course of treatment. source: registry,integer,99,00,,,,,,
+v70_1290_rx_summsurg_prim_site,treatment,,text,1290 RX Summ--Surg Prim Site,,Site-specific codes for the type of surgery to the primary site performed as part of the first course of treatment. This includes treatment given at all facilities as part of the first course of treatment. source: registry,integer,00,99,,,,,,
 v71_1292_rx_summscope_reg_ln_sur,treatment,,dropdown,1292 RX Summ--Scope Reg LN Sur,"0, None
 1, Biopsy or aspiration of regional lymph node* NOS
 2, Sentinel lymph node biopsy
@@ -514,8 +490,8 @@ v72_1294_rx_summsurg_oth_regdis,treatment,,dropdown,1294 RX Summ--Surg Oth Reg/D
 4, Non-primary surgical procedure to distant site
 5, Any combination of codes 2* 3* or 4
 9, Unknown; death certificate only",Records the surgical removal of distant lymph nodes or other tissue(s)/organ(s) beyond the primary site. source: registry,,,,,,,,,
-v73_1296_rx_summreg_ln_examined,treatment,,text,1296 RX Summ--Reg LN Examined,,Codes for the number of regional lymph nodes examined in conjunction with surgery performed as part of the first-course treatment. source: registry,integer,99,00,,,,,,
-v74_1310_rx_summsurgical_approch,treatment,,text,1310 RX Summ--Surgical Approch,,"Codes for method used to approach the surgical field for the primary site. source: registry See the CoC ROADS Manual, 1998 Supplement, for site-specific codes",integer,9,0,,,,,,
+v73_1296_rx_summreg_ln_examined,treatment,,text,1296 RX Summ--Reg LN Examined,,Codes for the number of regional lymph nodes examined in conjunction with surgery performed as part of the first-course treatment. source: registry,integer,00,99,,,,,,
+v74_1310_rx_summsurgical_approch,treatment,,text,1310 RX Summ--Surgical Approch,,"Codes for method used to approach the surgical field for the primary site. source: registry See the CoC ROADS Manual, 1998 Supplement, for site-specific codes",integer,0,9,,,,,,
 v75_1320_rx_summsurgical_margins,treatment,,dropdown,1320 RX Summ--Surgical Margins,"0, No residual tumor
 1, Residual tumor* NOS
 2, Microscopic residual tumor
