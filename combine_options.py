@@ -45,7 +45,9 @@ class Codebook(object):
         # lower-case letters, numbers, and underscores.
         mk_name = lambda id, hint: 'v%02d_%s' % (
             v_id,
-            re.sub(r'[^a-z0-9_]', '', hint.replace(' ', '_').lower()))
+            re.sub('__+', '_',
+                   re.sub(r'[^a-z0-9_]', '',
+                          hint.replace(' ', '_').lower())))
 
         note_source = lambda concept, source, note: (
             '%s source: %s %s' % (
