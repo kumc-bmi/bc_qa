@@ -11,13 +11,13 @@ from redcap_upload import FieldDef
 log = logging.getLogger(__name__)
 
 
-def main(access):
-    input_lines, open_out = access()
-    records = csv.DictReader(input_lines)
+def main(argv, cwd):
+    [input_filename, output_filename] = argv[1:3]
+    records = csv.DictReader((cwd / input_filename).open('rb'))
 
     codebook = Codebook.convert(list(records))
 
-    with open_out() as out:
+    with (cwd / output_filename).open('wb') as out:
         dest = csv.DictWriter(out, FieldDef._fields)
         dest.writerow(dict(zip(FieldDef._fields, FieldDef._fields)))
         dest.writerows([fdef._asdict() for fdef in codebook])
@@ -58,7 +58,7 @@ class Codebook(object):
         # that contain spaces or other characters. Please make
         # the following corrections:
         # "00*" (F51) - Suggestion: replace with "00"
-        fix_code = lambda c: c.replace('*', '_')
+        fix_code = lambda c: c.replace('*', '')
 
         item = records[0]
 
@@ -87,18 +87,25 @@ class Codebook(object):
         return f
 
 
+class Path(object):
+    def __init__(self, path, ops):
+        io_open, pathjoin = ops
+        self.open = lambda mode='r': io_open(path, mode=mode)
+        self.pathjoin = lambda other: Path(pathjoin(path, other), ops)
+
+    def __div__(self, other):
+        return self.pathjoin(other)
+
+
 if __name__ == '__main__':
     def _script():
-        from __builtin__ import open as open_any
+        from io import open as io_open
         from sys import argv
+        from os.path import join as pathjoin
 
-        def access():
-            logging.basicConfig(level=logging.DEBUG if '--debug' in argv
-                                else logging.INFO)
-            input_filename, output_filename = argv[1:3]
-            return (open_any(input_filename),
-                    lambda: open_any(output_filename, 'wb'))
+        logging.basicConfig(level=logging.DEBUG if '--debug' in argv
+                            else logging.INFO)
 
-        main(access)
+        main(argv, cwd=Path('.', (io_open, pathjoin)))
 
     _script()
