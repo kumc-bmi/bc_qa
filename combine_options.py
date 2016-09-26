@@ -47,9 +47,9 @@ class Codebook(object):
             v_id,
             re.sub(r'[^a-z0-9_]', '', hint.replace(' ', '_').lower()))
 
-        note_source = lambda source, note: (
-            'source: %s %s' % (
-                source, note)).strip()
+        note_source = lambda concept, source, note: (
+            '%s source: %s %s' % (
+                concept, source, note)).strip()
 
         # Multiple choice fields can only have coded values
         # (in the choices in column F) that are numeric or
@@ -62,26 +62,31 @@ class Codebook(object):
 
         item = records[0]
 
-        ty, choices = (
+        ty, choices, validation = (
+            ('text', None, 'date_ymd')
+            if item['Code, width, format '] == 'date_ymd'
+            else
             ('dropdown', FieldDef.encode_choices(pairs=[
 
                 (fix_code(r['Code values']),
                  r['Label']) for r in records
                 if r['Label']  # skip "headings"
-            ]))
+            ]), None)
             if len(records) > 1 and item['Code values']
             else
             ('dropdown', FieldDef.encode_choices(labels=[
-                r['Label'] for r in records]))
+                r['Label'] for r in records]), None)
             if len(records) > 1
-            else ('text', None))
+            else ('text', None, None))
 
         f = FieldDef._default()._replace(
             form_name=form_required(item['var_type']),
             field_name=mk_name(v_id, item['Variable Name']),
-            field_label=item['Concept'] or item['Variable Name'],
-            field_note=note_source(item['source'], item['Notes']),
+            field_label=item['Variable Name'],
+            field_note=note_source(item['Concept'],
+                                   item['source'], item['Notes']),
             field_type=ty,
+            text_validation_type_or_show_slider_number=validation,
             select_choices_or_calculations=choices
             )
         return f
