@@ -53,33 +53,30 @@ class Codebook(object):
             '%s source: %s %s' % (
                 concept, source, note)).strip()
 
-        # Multiple choice fields can only have coded values
-        # (in the choices in column F) that are numeric or
-        # alpha-numeric (lower case or upper case, with or
-        # without underscores), thus they cannot have codings
-        # that contain spaces or other characters. Please make
-        # the following corrections:
-        # "00*" (F51) - Suggestion: replace with "00"
-        fix_code = lambda c: c.replace('*', '')
-
         item = records[0]
 
-        ty, choices, validation = (
-            ('text', None, 'date_ymd')
+        ty, choices, (validation, val_min, val_max) = (
+            ('text', None, ('date_ymd', None, None))
             if item['Code, width, format '] == 'date_ymd'
+            else
+            ('text', None, ('integer',
+                            records[0]['Code values'],
+                            records[-1]['Code values']))
+            if item['Code, width, format '] == 'integer'
             else
             ('dropdown', FieldDef.encode_choices(pairs=[
 
-                (fix_code(r['Code values']),
+                (r['Code values'],
                  r['Label']) for r in records
-                if r['Label']  # skip "headings"
-            ]), None)
+                # skip "headings", Blank codes
+                if r['Label'] and r['Code values'] != 'Blank'
+            ]), (None, None, None))
             if len(records) > 1 and item['Code values']
             else
             ('dropdown', FieldDef.encode_choices(labels=[
-                r['Label'] for r in records]), None)
+                r['Label'] for r in records]), (None, None, None))
             if len(records) > 1
-            else ('text', None, None))
+            else ('text', None, (None, None, None)))
 
         f = FieldDef._default()._replace(
             form_name=form_required(item['var_type']),
@@ -89,6 +86,8 @@ class Codebook(object):
                                    item['source'], item['Notes']),
             field_type=ty,
             text_validation_type_or_show_slider_number=validation,
+            text_validation_min=val_min,
+            text_validation_max=val_max,
             select_choices_or_calculations=choices
             )
         return f
