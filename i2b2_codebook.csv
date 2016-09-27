@@ -440,7 +440,7 @@ registry,clinical,1,47,1,1770 cancer status,Records the presence or absence of c
 ,,3,47, ,,,,9,"Unknown, indeterminate whether this tumor is present, not stated in patient record",,
 registry,registry,1,48,1,1750 date of last contact,,date_ymd,,SPECIFY DATE FORMAT,DUPLICATE,
 registry,clinical,1,49,1,1860 Recurrence date,,date_ymd,,SPECIFY DATE FORMAT,,
-registry,registry,1,50,1,1861 Recurrence date - 1st flag,"This flag explains why no appropriate value is in the field, Recurrence Date--1st [1860].",date_ymd,10,"No information whatsoever can be inferred from this exceptional value (e.g, unknown if the patient had a first recurrence)",,
+registry,registry,1,50,1,1861 Recurrence date - 1st flag,"This flag explains why no appropriate value is in the field, Recurrence Date--1st [1860].",,10,"No information whatsoever can be inferred from this exceptional value (e.g, unknown if the patient had a first recurrence)",,
 ,,2,50, ,,,,11,"No proper value is applicable in this context (e.g., patient became disease-free after treatment; never had a recurrence; or patient was never disease-free; autopsy only case)",,
 ,,3,50, ,,,,12,"A proper value is appicable but not known (i.e., there was a recurrence, but the date is unknown)",,
 ,,4,50, ,,,,Blank,"A valid date value is provided in item Recurrence Date--1st [1860], or the date was not expected to have been transmitted",,

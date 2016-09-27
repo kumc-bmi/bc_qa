@@ -359,7 +359,9 @@ v17_0610_class_of_case,registry,,dropdown,0610 Class of Case,"00, Initial diagno
 99, Nonanalytic case of unknown relationship to facility (not for use by CoC accredited cancer programs for analytic cases.); UNKNOWN",Class of case source: registry,,,,,,,,,
 v44_1750_date_of_last_contact,registry,,text,1750 date of last contact,,Date of last contact source: registry,date_ymd,,,y,,,,,
 v48_1750_date_of_last_contact,registry,,text,1750 date of last contact,,source: registry DUPLICATE,date_ymd,,,y,,,,,
-v50_1861_recurrence_date_1st_flag,registry,,text,1861 Recurrence date - 1st flag,,"This flag explains why no appropriate value is in the field, Recurrence Date--1st [1860]. source: registry",date_ymd,,,y,,,,,
+v50_1861_recurrence_date_1st_flag,registry,,dropdown,1861 Recurrence date - 1st flag,"10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if the patient had a first recurrence)
+11, No proper value is applicable in this context (e.g.* patient became disease-free after treatment; never had a recurrence; or patient was never disease-free; autopsy only case)
+12, A proper value is appicable but not known (i.e.* there was a recurrence* but the date is unknown)","This flag explains why no appropriate value is in the field, Recurrence Date--1st [1860]. source: registry",,,,,,,,,
 v20_0490_diagnostic_confirmation,test,,dropdown,0490 Diagnostic Confirmation,"1, Positive histology
 2, Positive cytology
 3, Positive histology PLUS - positive immunophenotyping AND/OR positive genetic studies (Used only for hematopoietic and lymphoid neoplasms M-9590/3-9992/3)
