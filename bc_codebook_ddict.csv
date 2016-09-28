@@ -374,6 +374,12 @@ v48_1750_date_of_last_contact,registry,,text,1750 date of last contact,,source: 
 v50_1861_recurrence_date_1st_flag,registry,,dropdown,1861 Recurrence date - 1st flag,"10, No information whatsoever can be inferred from this exceptional value (e.g* unknown if the patient had a first recurrence)
 11, No proper value is applicable in this context (e.g.* patient became disease-free after treatment; never had a recurrence; or patient was never disease-free; autopsy only case)
 12, A proper value is appicable but not known (i.e.* there was a recurrence* but the date is unknown)","This flag explains why no appropriate value is in the field, Recurrence Date--1st [1860]. source: registry",,,,,,,,,
+v128_2085_date_case_initiated_,registry,,text,2085 Date Case Initiated ,,source: registry,date_ymd,,,y,,,,,
+v129_2090_date_case_completed_,registry,,text,2090 Date Case Completed ,,source: registry,date_ymd,,,y,,,,,
+v130_2092_date_case_completedcoc_,registry,,text,2092 Date Case Completed--CoC ,,source: registry,date_ymd,,,y,,,,,
+v131_2100_date_case_last_changed_,registry,,text,2100 Date Case Last Changed ,,source: registry,date_ymd,,,y,,,,,
+v132_2110_date_case_report_exported_,registry,,text,2110 Date Case Report Exported ,,source: registry,date_ymd,,,y,,,,,
+v133_2111_date_case_report_received_,registry,,text,2111 Date Case Report Received ,,source: registry,date_ymd,,,y,,,,,
 v20_0490_diagnostic_confirmation,test,,dropdown,0490 Diagnostic Confirmation,"1, Positive histology
 2, Positive cytology
 3, Positive histology PLUS - positive immunophenotyping AND/OR positive genetic studies (Used only for hematopoietic and lymphoid neoplasms M-9590/3-9992/3)
