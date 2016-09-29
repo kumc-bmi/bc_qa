@@ -63,7 +63,7 @@ class Codebook(object):
             ('dropdown', FieldDef.encode_choices(pairs=[
 
                 (r['Code values'],
-                 r['Label']) for r in records
+                 r['Code values'] + '-' + r['Label']) for r in records
                 # skip "headings", Blank codes
                 if r['Label'] and r['Code values'] != 'Blank'
             ]), (None, None, None))
