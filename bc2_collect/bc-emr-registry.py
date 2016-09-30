@@ -21,12 +21,10 @@ site_access_group = '15'
 builder_filename = 'site-data/bc-g297-{site}.db'.format(site=site_access_group)
 crosswalk_filename = 'site-data/consented_crosswalk.csv'
 
-#@@TODO: change order
-
 per_tumor_out = 'site-data/per-tumor.csv'
 per_med_exp_out = 'site-data/per-medication-exposure.csv'
 
-chunk_size = 2000  # output will be broken into files of at most this many records
+chunk_size = 2000  # med output will be broken into files of at most this many records
 
 
 # ## Preface: PyData Scientific Python Tools
@@ -37,6 +35,7 @@ chunk_size = 2000  # output will be broken into files of at most this many recor
 
 import pandas as pd
 
+# TODO: show(...) these when run as script as well.
 dict(pandas=pd.__version__)
 
 
@@ -106,7 +105,15 @@ naaccr_field.head()
 
 # In[ ]:
 
-# @@TODO: vital status: @ -> NI
+seer_site = pd.read_sql('''
+select * from (
+   select distinct encounter_num
+        , substr(concept_cd, instr(concept_cd, ':') + 1) v13_seer_site_summary
+   from observation_fact
+   where concept_cd like 'SEER%'
+) where v13_seer_site_summary > ''
+''', bc_data, index_col='encounter_num')
+seer_site.head()
 
 
 # ## NAACCR Coded Data
@@ -129,13 +136,6 @@ print len(naaccr_coded_eav), len(naaccr_coded_eav[['encounter_num', 'item']].dro
 naaccr_coded_eav.head()
 
 
-# In[ ]:
-
-# TODO: why no data for this item at KUMC?
-# 746 RX HOSP--SURG SITE 98-02
-naaccr_coded_eav[naaccr_coded_eav.item == 746]
-
-
 # Now pivot the data:
 
 # In[ ]:
@@ -143,6 +143,7 @@ naaccr_coded_eav[naaccr_coded_eav.item == 746]
 naaccr_coded = (naaccr_coded_eav
                 .merge(naaccr_field, left_on='item', right_index=True)
                 .pivot(index='encounter_num', columns='field_name', values='code'))
+naaccr_coded = naaccr_coded.join(seer_site, how='left')
 print "coded data on", len(naaccr_coded), "tumors"
 naaccr_coded.head()
 
@@ -230,7 +231,7 @@ join concept_dimension cd on cd.concept_path like (t.concept_path || '%')
 join observation_fact obs on obs.concept_cd = cd.concept_cd
 group by obs.patient_num, t.field_name
 ''', bc_data)
-dem_eav
+dem_eav.set_value(dem_eav.code == '@', 'code', 'NI')
 dem = pd.DataFrame(dem_eav.pivot(index='patient_num', columns='field_name', values='code'),
                    columns=emr_dem_terms.field_name)
 dem.head()
