@@ -1,5 +1,5 @@
 <ns4:query_definition xmlns:ns4="http://www.i2b2.org/xsd/cell/crc/psm/querydefinition/1.1/" xmlns:ns2="http://www.i2b2.org/xsd/cell/crc/psm/1.1/" xmlns:ns3="http://www.i2b2.org/xsd/cell/crc/psm/analysisdefinition/1.1/">
-  <query_name>BC Phase 2f (lymph)@18:08:43</query_name>
+  <query_name>BC Phase 2g (exported)@13:23:47</query_name>
   <query_timing>ANY</query_timing>
   <specificity_scale>0</specificity_scale>
   <panel>
@@ -1309,6 +1309,60 @@
       <item_key>\\i2b2_naaccr\i2b2\naaccr\S:15 Treatment-1st Course\3270 RX Summ--Palliative Proc\</item_key>
       <item_icon>FA</item_icon>
       <tooltip>Cancer Cases \ 15 Treatment-1st Course</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2085 Date Case Initiated [26,487 facts; 25,463 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:3 Edit Overrides/Conversion History/System Admin\2085 Date Case Initiated\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 03 Edit Overrides/Conversion History/System Admin</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2090 Date Case Completed [65,468 facts; 61,289 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:3 Edit Overrides/Conversion History/System Admin\2090 Date Case Completed\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 03 Edit Overrides/Conversion History/System Admin</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2092 Date Case Completed--CoC [25,723 facts; 24,459 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:3 Edit Overrides/Conversion History/System Admin\2092 Date Case Completed--CoC\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 03 Edit Overrides/Conversion History/System Admin</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2100 Date Case Last Changed [92,186 facts; 85,554 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:3 Edit Overrides/Conversion History/System Admin\2100 Date Case Last Changed\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 03 Edit Overrides/Conversion History/System Admin</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2110 Date Case Report Exported [92,191 facts; 85,554 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:3 Edit Overrides/Conversion History/System Admin\2110 Date Case Report Exported\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 03 Edit Overrides/Conversion History/System Admin</tooltip>
+      <class>ENC</class>
+      <item_is_synonym>false</item_is_synonym>
+    </item>
+    <item>
+      <hlevel>3</hlevel>
+      <item_name>2111 Date Case Report Received [92,141 facts; 85,515 patients]</item_name>
+      <item_key>\\i2b2_naaccr\i2b2\naaccr\S:3 Edit Overrides/Conversion History/System Admin\2111 Date Case Report Received\</item_key>
+      <item_icon>LA</item_icon>
+      <tooltip>Cancer Cases \ 03 Edit Overrides/Conversion History/System Admin</tooltip>
       <class>ENC</class>
       <item_is_synonym>false</item_is_synonym>
     </item>
