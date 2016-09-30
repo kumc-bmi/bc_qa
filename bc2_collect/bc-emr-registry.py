@@ -18,19 +18,15 @@
 
 site_access_group = '15'
 
-builder_filename = 'site-data/bc-g297.db'
+builder_filename = 'site-data/bc-g297-{site}.db'.format(site=site_access_group)
 crosswalk_filename = 'site-data/consented_crosswalk.csv'
+
+#@@TODO: change order
 
 per_tumor_out = 'site-data/per-tumor.csv'
 per_med_exp_out = 'site-data/per-medication-exposure.csv'
 
 chunk_size = 2000  # output will be broken into files of at most this many records
-
-
-# In[ ]:
-
-tumor_import_template_filename = 'BreastCancerTumorDatamart_ImportTemplate_2016-09-28.csv'
-med_import_template_filename = 'GPCBreastCancerMediationExposu_ImportTemplate_2016-09-29.csv'
 
 
 # ## Preface: PyData Scientific Python Tools
@@ -84,10 +80,7 @@ def fix_template(t):
         t, columns=[c for c in t.columns
                     if not c.startswith('Unnamed: ')])
     
-import_template = fix_template(pd.read_csv(tumor_import_template_filename))
-
-if len(import_template.columns) != 141:
-    raise ValueError('expected 125 columns; got: %s' % len(import_template.columns))
+import_template = fix_template(pd.read_csv('bc_tumor_import_template.csv'))
 
 print "First few fields..."
 import_template.columns[:10]
@@ -543,7 +536,7 @@ med_exp['medication_exposure_complete'] = '2'
 
 med_exp['redcap_data_access_group'] = site_access_group
 
-med_import_template = fix_template(pd.read_csv(med_import_template_filename))
+med_import_template = fix_template(pd.read_csv('bc_med_import_template.csv'))
 med_exp = pd.DataFrame(med_exp, columns=med_import_template.columns)
 print len(med_exp), len(med_exp.record_id.unique())
 assert len(med_exp) == len(med_exp.record_id.unique())
