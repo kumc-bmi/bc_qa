@@ -35,8 +35,37 @@ chunk_size = 2000  # med output will be broken into files of at most this many r
 
 import pandas as pd
 
-# TODO: show(...) these when run as script as well.
-dict(pandas=pd.__version__)
+
+# In[ ]:
+
+import logging
+
+try:
+    get_ipython
+    log = logging.getLogger()
+    log.setLevel(logging.INFO)
+    log.info('running in ipython notebook')
+    def show(x, label=None):
+        if label:
+            log.info('%s', label)
+        return x
+except:
+    from sys import stdout
+    logging.basicConfig(level=logging.INFO, stream=stdout)
+    log = logging.getLogger(__name__)
+    log.info('running as script')
+    pd.set_option('display.width', 160)
+    pd.set_option('display.max_columns', 0)
+    pd.set_option('display.max_colwidth', 25)
+    def show(x, label=None):
+        if label:
+            log.info('%s', label)
+        print(x)
+
+
+# In[ ]:
+
+show(dict(pandas=pd.__version__))
 
 
 # ### Mix crosswalk into builder file
@@ -49,23 +78,24 @@ def builder_file_access(name):
 
 bc_data = builder_file_access(builder_filename)
 
-pd.read_sql('select count(*) from patient_dimension', bc_data)
+show(pd.read_sql('select count(*) from patient_dimension', bc_data), 'cohort size from %s' % builder_filename)
 
 
 # In[ ]:
 
-pd.read_sql('select pset, name from job', bc_data)
+show(pd.read_sql('select pset, name from job', bc_data), 'job info')
 
 
 # In[ ]:
 
 consented_crosswalk = pd.read_csv(crosswalk_filename)
 consented_crosswalk.date_shift = pd.to_timedelta(consented_crosswalk.date_shift, unit='day')
-consented_crosswalk.head()
+show(consented_crosswalk.head(), 'crosswalk file %s (top)' % crosswalk_filename)
 
 
 # In[ ]:
 
+log.info('creating consented_crosswalk table in %s', crosswalk_filename)
 consented_crosswalk[['study_id', 'patient_num']].to_sql('consented_crosswalk', bc_data, if_exists='replace')
 
 
@@ -81,8 +111,7 @@ def fix_template(t):
     
 import_template = fix_template(pd.read_csv('bc_tumor_import_template.csv'))
 
-print "First few fields..."
-import_template.columns[:10]
+show(import_template.columns[:10], "tumor import template: first few fields...")
 
 
 # For NAACCR fields, extract the NAACCR item number from the variable name:
@@ -94,13 +123,8 @@ import re
 naaccr_field = pd.DataFrame(dict(field_name=name, item=int(name.split('_', 3)[1]))
             for name in import_template.columns
             if re.match('v\d{2,3}_\d{3,4}_', name)).sort_values('field_name').set_index('item')
-print len(naaccr_field)
-naaccr_field.head()
-
-
-# In[ ]:
-
-# @@TODO: Seer site summary
+log.info('NAACCR field count: %s', len(naaccr_field))
+show(naaccr_field.head(), 'NAACCR fields (top):')
 
 
 # In[ ]:
@@ -113,7 +137,7 @@ select * from (
    where concept_cd like 'SEER%'
 ) where v13_seer_site_summary > ''
 ''', bc_data, index_col='encounter_num')
-seer_site.head()
+show(seer_site.head(), 'seer_site (top)')
 
 
 # ## NAACCR Coded Data
@@ -132,8 +156,9 @@ select * from (
 ) where code > ''
 ''', bc_data)
 
-print len(naaccr_coded_eav), len(naaccr_coded_eav[['encounter_num', 'item']].drop_duplicates())
-naaccr_coded_eav.head()
+log.info('coded NAACCR values: %s; encounters x items: %s',
+         len(naaccr_coded_eav), len(naaccr_coded_eav[['encounter_num', 'item']].drop_duplicates()))
+show(naaccr_coded_eav.head(), 'naaccr_coded_eav (top)')
 
 
 # Now pivot the data:
@@ -144,8 +169,8 @@ naaccr_coded = (naaccr_coded_eav
                 .merge(naaccr_field, left_on='item', right_index=True)
                 .pivot(index='encounter_num', columns='field_name', values='code'))
 naaccr_coded = naaccr_coded.join(seer_site, how='left')
-print "coded data on", len(naaccr_coded), "tumors"
-naaccr_coded.head()
+log.info("coded data on %s tumors (top)", len(naaccr_coded))
+show(naaccr_coded.head())
 
 
 # ## NAACCR Date fields, unshifted
@@ -165,7 +190,7 @@ naaccr_dated_eav = pd.read_sql('''
 ''', bc_data, parse_dates=['date_deid'])
 naaccr_dated_eav = naaccr_dated_eav.merge(consented_crosswalk[['patient_num', 'date_shift']], how='left')
 naaccr_dated_eav['date'] = naaccr_dated_eav.date_deid - naaccr_dated_eav.date_shift
-naaccr_dated_eav.head()
+show(naaccr_dated_eav.head(), 'NAACCR dated EAV (top)')
 
 
 # In[ ]:
@@ -173,8 +198,8 @@ naaccr_dated_eav.head()
 naaccr_dated = (naaccr_dated_eav
                 .merge(naaccr_field, left_on='item', right_index=True)
                 .pivot(index='encounter_num', columns='field_name', values='date'))
-print "date fields for", len(naaccr_dated), "tumors"
-naaccr_dated.head()
+log.info("date fields for %s tumors", len(naaccr_dated))
+show(naaccr_dated.head(), "top")
 
 
 # ## All NAACCR fields: coded fields + date fields
@@ -182,8 +207,8 @@ naaccr_dated.head()
 # In[ ]:
 
 naaccr_records = naaccr_coded.join(naaccr_dated)
-print len(naaccr_records)
-naaccr_records.head()
+
+show(naaccr_records.head(), "%s NAACCR records with coded and date fields (top)" % len(naaccr_records))
 
 
 # ## Per-patient fields: language, consent, SSA vital status
@@ -191,7 +216,7 @@ naaccr_records.head()
 # In[ ]:
 
 # remember to double \\s in sqlite string literals
-pd.read_sql('''
+show(pd.read_sql('''
 select v.id, v.concept_path, v.name
 from variable v
 where concept_path not like '\\i2b2\\naaccr\\%'
@@ -200,7 +225,7 @@ and concept_path not like '\\i2b2\\Procedures\\%'
 and concept_path not like '\\i2b2\\Medications\\%'
 and concept_path not like '\\i2b2\\Visit Details\\Vitals\\%'
 order by concept_path
-''', bc_data, index_col='id')
+''', bc_data, index_col='id'), 'demographic query variables')
 
 
 # In[ ]:
@@ -234,7 +259,7 @@ group by obs.patient_num, t.field_name
 dem_eav.set_value(dem_eav.code == '@', 'code', 'NI')
 dem = pd.DataFrame(dem_eav.pivot(index='patient_num', columns='field_name', values='code'),
                    columns=emr_dem_terms.field_name)
-dem.head()
+show(dem.head())
 
 
 # In[ ]:
@@ -244,9 +269,8 @@ pat = pd.read_sql('''
    from consented_crosswalk cw
 ''', bc_data, index_col='patient_num')
 pat = pat.join(dem[['v52_language', 'v53_deceased_per_ssa']], how='left')
-#pat = pat.set_index('v01_studyid')
-print len(pat)
-pat.head()
+
+show(pat.head(), 'info on %s participants (top)' % len(pat))
 
 
 # ## Vitals - baseline, 1yr, 2yrs
@@ -320,7 +344,7 @@ order by encounter_num, yr, sign
 emr_numeric_eav = emr_numeric_eav.merge(consented_crosswalk[['patient_num', 'date_shift']], how='left')
 emr_numeric_eav['obs_date'] = emr_numeric_eav.obs_date_deid - emr_numeric_eav.date_shift
 
-emr_numeric_eav.head(20)
+show(emr_numeric_eav.head(20), 'vitals EAV (top)')
 
 
 # In[ ]:
@@ -336,14 +360,14 @@ vital_date = vital_date.rename(
 
 vital = vital_num.join(vital_date)
 vital = pd.DataFrame(vital, columns=sorted(vital.columns))
-vital.describe()
+show(vital.describe())
 
 
 # In[ ]:
 
 x = pd.DataFrame(dict(name=vital.columns))
 x['label'] = x.name.str.replace(r'^v\d+_', '').str.replace('bmi', 'BMI').str.replace('_', ' ')
-x
+# x
 
 
 # ## Full record: Tumor ID, tumor data, Patient data, vitals
@@ -366,12 +390,26 @@ tumor = (tumor[['v00_tumorid', 'v01_studyid']]
          .join(naaccr_records, how='left')
          .join(vital, how='left')
          .merge(pat, on='v01_studyid', how='left'))
-print len(tumor)
-tumor.head()
+show(tumor.head(), '%s tumor records (top)' % len(tumor))
 
-#admin = pd.read_sql(admin_q, bc_data)
 
-#admin
+# In[ ]:
+
+show(set(import_template.columns) - set(tumor.columns),
+     'import template columns that do not occur in the data')
+
+
+# In[ ]:
+
+d = set(naaccr_coded_eav.item.append(naaccr_dated_eav.item))
+dd = set(naaccr_field.index)
+show(dict(
+    data_item_qty=len(d),
+    ddict_qty=len(dd),
+    both=len(d & dd),
+    data_only=d - dd,
+    ddict_only=dd - d
+))
 
 
 # In[ ]:
@@ -381,19 +419,19 @@ data['redcap_data_access_group'] = site_access_group
 
 data['admin_complete'] = 2
 
-data[['v00_tumorid', 'v01_studyid', 'v02_breastsurvey', 'v03_medrecordconsent', 'admin_complete']].head()
+show(data[['v00_tumorid', 'v01_studyid', 'v02_breastsurvey', 'v03_medrecordconsent', 'admin_complete']].head())
 
 
 # In[ ]:
 
 data.set_value(~pd.isnull(data.v20_0490_diagnostic_confirmation), 'test_complete', '2')
-data[['v20_0490_diagnostic_confirmation', 'test_complete']].describe()
+show(data[['v20_0490_diagnostic_confirmation', 'test_complete']].describe())
 
 
 # In[ ]:
 
 data.set_value(~pd.isnull(data.v52_language), 'demographic_complete', '2')
-data[['v52_language', 'demographic_complete']].describe()
+show(data[['v52_language', 'demographic_complete']].describe())
 
 
 # In[ ]:
@@ -405,26 +443,8 @@ data['treatment_complete'] = '2'
 
 # In[ ]:
 
+log.info('saving to %s', per_tumor_out)
 data.to_csv(per_tumor_out, index=False)
-
-
-# In[ ]:
-
-set(import_template.columns) - set(tumor.columns)
-
-
-# In[ ]:
-
-#@@ TODO: reconcile query vs. data dictionary
-d = set(naaccr_coded_eav.item.append(naaccr_dated_eav.item))
-dd = set(naaccr_field.index)
-dict(
-    data_item_qty=len(d),
-    ddict_qty=len(dd),
-    both=len(d & dd),
-    data_only=d - dd,
-    ddict_only=dd - d
-)
 
 
 # ## Medication Exposures
@@ -451,15 +471,15 @@ select sub.concept_path concept_path, sub.concept_cd concept_cd, sub.name_char n
 from concept_dimension sub
 join med_var on sub.concept_path like (med_var.concept_path || '%%') escape '@' 
 ''', bc_data)
-print len(med_term)
+
 med_term['parent_path'] = med_term.concept_path.apply(parent_path)
-med_term.head()
+show(med_term.head(), '%s Medication concepts (top)' % len(med_term))
 
 
 # In[ ]:
 
 va_class = med_term[med_term.name_char.str.match(r'^\[.....\]')]
-va_class.head()
+show(va_class.head(), 'VA classes (top)')
 
 
 # In[ ]:
@@ -470,9 +490,10 @@ rx = rx[rx.concept_path.apply(parent_path).isin(va_class.concept_path)  # direct
         & rx.concept_cd.str.match('^RXCUI:')]
 rx['rxcui'] = rx.concept_cd.str.slice(len('RXCUI:'))
 rx.set_index('rxcui', inplace=True)
-print len(rx), len(rx.index.unique())
-rx[rx.index.isin(
-        rx[rx.index.duplicated()].index)]
+log.info('%s rx items, i.e. RXCUI concepts directly below a VA class, have %s distinct RXCUIs',
+        len(rx), len(rx.index.unique()))
+show(rx[rx.index.isin(
+        rx[rx.index.duplicated()].index)], 'rx with duplicated rxcui')
 
 
 # In[ ]:
@@ -511,21 +532,22 @@ group by instance_num, patient_num, start_date
 order by patient_num, start_date
 ''', bc_data, parse_dates=['start_date', 'end_date']).drop_duplicates()
 med_obs = med_obs[med_obs.concept_cd.isin(med_term.concept_cd)]
-print len(med_obs)
-med_obs.head()
+show(med_obs.head(), '%s med_obs (top)' % len(med_obs))
 
 
 # In[ ]:
 
 med_code = med_term[med_term.concept_cd.isin(med_obs.concept_cd)].copy()
-print len(med_code), len(med_code.concept_cd.unique())
+log.info('%s med_code (codes from med_obs) have %s distinct concept_cds',
+         len(med_code), len(med_code.concept_cd.unique()))
 x = ancestors(rx.reset_index()[['rxcui', 'name_char', 'concept_path']],
               med_code[['concept_cd', 'name_char', 'concept_path']])
 med_code = med_code.merge(x.rename(columns=dict(name_char_a='drug_name')), how='left')[[
             'concept_cd', 'name_char', 'rxcui', 'drug_name']]
 med_code = med_code.groupby('concept_cd')[['name_char', 'rxcui', 'drug_name']].min().reset_index()
-print len(med_code), len(med_code.concept_cd.unique())
-med_code.head()
+log.info('%s med_code after removing dups have %s distinct concept_cds',
+         len(med_code), len(med_code.concept_cd.unique()))
+show(med_code.head(), 'med_code (top)')
 
 
 # In[ ]:
@@ -546,9 +568,10 @@ med_exp['redcap_data_access_group'] = site_access_group
 
 med_import_template = fix_template(pd.read_csv('bc_med_import_template.csv'))
 med_exp = pd.DataFrame(med_exp, columns=med_import_template.columns)
-print len(med_exp), len(med_exp.record_id.unique())
-assert len(med_exp) == len(med_exp.record_id.unique())
-med_exp.head()
+
+show(med_exp.head(),
+     '%s med_exp (medication exposures) have %s unique ids (top)' % (
+        len(med_exp), len(med_exp.record_id.unique())))
 
 
 # In[ ]:
@@ -564,7 +587,7 @@ def save_in_chunks(df, fn, chunk_size):
     digits = len(str(len(df)))
     for chunk in range(0, len(med_exp), chunk_size):
         fn = '%s-%0*d.%s' % (base, digits, chunk, ext)
-        print >>stderr, 'writing to', fn
+        log.info('writing to %s', fn)
         df[chunk:chunk + chunk_size].to_csv(fn, index=False)
 
 save_in_chunks(med_exp, per_med_exp_out, chunk_size)
