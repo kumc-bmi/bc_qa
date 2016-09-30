@@ -398,6 +398,13 @@ data[['v52_language', 'demographic_complete']].describe()
 
 # In[ ]:
 
+data['clinical_complete'] = '2'
+data['registry_complete'] = '2'
+data['treatment_complete'] = '2'
+
+
+# In[ ]:
+
 data.to_csv(per_tumor_out, index=False)
 
 
