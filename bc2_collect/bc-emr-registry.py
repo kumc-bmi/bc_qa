@@ -567,7 +567,7 @@ med_exp['medication_exposure_complete'] = '2'
 med_exp['redcap_data_access_group'] = site_access_group
 
 med_import_template = fix_template(pd.read_csv('bc_med_import_template.csv'))
-med_exp = pd.DataFrame(med_exp, columns=med_import_template.columns)
+med_exp = pd.DataFrame(med_exp, columns=med_import_template.columns).sort_values('record_id')
 
 show(med_exp.head(),
      '%s med_exp (medication exposures) have %s unique ids (top)' % (
