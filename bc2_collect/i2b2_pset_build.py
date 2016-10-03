@@ -136,6 +136,7 @@ class Workplace(object):
         self.execute = execute
 
         def save_data(df):
+            log.info('creating %s', scratch)
             df.to_sql(scratch, if_exists='replace')
         self.save_data = save_data
 
@@ -148,11 +149,9 @@ class Workplace(object):
         where qm.name = :query_name
         ''', query_name=query_name).fetchone()
 
-    def add_pset_result(self, query_name, pat,
-                        cohort_table):
+    def add_pset_result(self, query_name, pat):
         qi = self.lookup_query(query_name)
 
-        log.info('creating %s', cohort_table)
         self.save_data(pat[['patient_num']])
 
         pset_id = self.execute('''
