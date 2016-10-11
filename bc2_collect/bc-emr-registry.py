@@ -171,6 +171,13 @@ naaccr_coded = (naaccr_coded_eav
                 .merge(naaccr_field, left_on='item', right_index=True)
                 .pivot(index='encounter_num', columns='field_name', values='code'))
 naaccr_coded = naaccr_coded.join(seer_site, how='left')
+
+for col in ['v15_0380_sequence_numbercentral', 'v16_0560_sequence_numberhospital']:
+    if col not in naaccr_coded.columns:
+        log.warn('All missing: %s', col)
+        naaccr_coded[col] = None
+
+
 log.info("coded data on %s tumors (top)", len(naaccr_coded))
 show(naaccr_coded.head())
 
