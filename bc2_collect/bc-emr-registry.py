@@ -21,6 +21,8 @@ site_access_group = '15'
 builder_filename = 'site-data/bc-g297-{site}.db'.format(site=site_access_group)
 crosswalk_filename = 'site-data/consented_crosswalk.csv'
 
+bmi_concept_path = r'\i2b2\Visit Details\Vitals\BMI\ '[:-1]
+
 per_tumor_out = 'site-data/per-tumor.csv'
 per_med_exp_out = 'site-data/per-medication-exposure.csv'
 
@@ -338,7 +340,7 @@ select winner.*
          || winner.yr || 'yr')  field_name
 from winner
 order by encounter_num, yr, sign
-''', bc_data, params=[r'\i2b2\Visit Details\Vitals\BMI\ '[:-1], 116, 'bmi'],
+''', bc_data, params=[bmi_concept_path, 116, 'bmi'],
     parse_dates=['dx_date', 'event_date', 'obs_date_deid'])
 
 emr_numeric_eav = emr_numeric_eav.merge(consented_crosswalk[['patient_num', 'date_shift']], how='left')
