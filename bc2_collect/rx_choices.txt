@@ -15,6 +15,7 @@
 373476, [AN100] RXCUI:373476 Pipobroman Oral Tablet
 363194, [AN100] RXCUI:363194 Thiotepa Injectable Solution
 375319, [AN100] RXCUI:375319 Thiotepa Injectable Solution
+1660003, [AN100] RXCUI:1660003 Thiotepa Injection
 374270, [AN100] RXCUI:374270 Uracil Mustard Oral Capsule
 790322, [AN100] RXCUI:790322 bendamustine Injectable Solution
 835944, [AN100] RXCUI:835944 temozolomide Injectable Solution
@@ -37,7 +38,9 @@
 968806, [AN300] RXCUI:968806 Cytarabine liposome Injectable Suspension
 376908, [AN300] RXCUI:376908 Floxuridine Injectable Solution
 372228, [AN300] RXCUI:372228 Fluorouracil Injectable Solution
+1655203, [AN300] RXCUI:1655203 Methotrexate Auto-Injector
 372835, [AN300] RXCUI:372835 Methotrexate Injectable Solution
+1655955, [AN300] RXCUI:1655955 Methotrexate Injection
 372836, [AN300] RXCUI:372836 Methotrexate Oral Tablet
 865178, [AN300] RXCUI:865178 Pralatrexate Injectable Solution
 374104, [AN300] RXCUI:374104 Thioguanine Oral Tablet
@@ -50,22 +53,24 @@
 1536483, [AN300] RXCUI:1536483 mercaptopurine Oral Suspension
 372782, [AN300] RXCUI:372782 mercaptopurine Oral Tablet
 603565, [AN300] RXCUI:603565 nelarabine Injectable Solution
+1657189, [AN300] RXCUI:1657189 nivolumab Injection
+1597586, [AN300] RXCUI:1597586 olaparib Oral Capsule
 406178, [AN300] RXCUI:406178 pemetrexed Injectable Solution
 372578, [AN400] RXCUI:372578 Levamisole Oral Tablet
 379243, [AN500] RXCUI:379243 Goserelin Drug Implant
-379298, [AN500] RXCUI:379298 Leuprolide Drug Implant
 370480, [AN500] RXCUI:370480 Leuprolide Drug Implant
+379298, [AN500] RXCUI:379298 Leuprolide Drug Implant
 372576, [AN500] RXCUI:372576 Leuprolide Injectable Solution
 378232, [AN500] RXCUI:378232 Leuprolide Injectable Suspension
-727602, [AN500] RXCUI:727602 Leuprolide Prefilled Syringe
 727599, [AN500] RXCUI:727599 Leuprolide Prefilled Syringe
+727602, [AN500] RXCUI:727602 Leuprolide Prefilled Syringe
 825324, [AN500] RXCUI:825324 Leuprolide Prefilled Syringe
 393416, [AN500] RXCUI:393416 Tamoxifen Oral Solution
 374020, [AN500] RXCUI:374020 Tamoxifen Oral Tablet
 374049, [AN500] RXCUI:374049 Testolactone Oral Tablet
 374167, [AN500] RXCUI:374167 Toremifene Oral Tablet
-905056, [AN500] RXCUI:905056 Triptorelin Injectable Suspension
 379232, [AN500] RXCUI:379232 Triptorelin Injectable Suspension
+905056, [AN500] RXCUI:905056 Triptorelin Injectable Suspension
 402339, [AN500] RXCUI:402339 abarelix Injectable Suspension
 1100074, [AN500] RXCUI:1100074 abiraterone Oral Tablet
 828748, [AN500] RXCUI:828748 degarelix Injectable Solution
@@ -77,8 +82,11 @@
 1430445, [AN900] RXCUI:1430445 Afatinib Oral Tablet
 370551, [AN900] RXCUI:370551 Altretamine Oral Capsule
 402924, [AN900] RXCUI:402924 BCG, Live, Connaught Strain Irrigation Solution
+1653475, [AN900] RXCUI:1653475 BCG, Live, Connaught Strain Topical Suspension [TheraCys]
 402830, [AN900] RXCUI:402830 BCG, Live, Montreal Strain Irrigation Solution
 402922, [AN900] RXCUI:402922 BCG, Live, Tice Strain Injectable Suspension
+1653578, [AN900] RXCUI:1653578 BCG, Live, Tice Strain Injection
+1653485, [AN900] RXCUI:1653485 BCG, Live, Tice Strain Topical Suspension [Tice BCG]
 378363, [AN900] RXCUI:378363 Carboplatin Injectable Solution
 376433, [AN900] RXCUI:376433 Cisplatin Injectable Solution
 377182, [AN900] RXCUI:377182 Dacarbazine Injectable Solution
@@ -95,6 +103,7 @@
 375173, [AN900] RXCUI:375173 Mitoxantrone Injectable Solution
 377111, [AN900] RXCUI:377111 Paclitaxel Injectable Solution
 486612, [AN900] RXCUI:486612 Paclitaxel Injectable Suspension
+1663181, [AN900] RXCUI:1663181 Paclitaxel Injection
 377090, [AN900] RXCUI:377090 Pentostatin Injectable Solution
 373602, [AN900] RXCUI:373602 Procarbazine Oral Capsule
 378773, [AN900] RXCUI:378773 Rasburicase Injectable Solution
@@ -107,29 +116,36 @@
 376857, [AN900] RXCUI:376857 Vinblastine Injectable Solution
 377037, [AN900] RXCUI:377037 Vincristine Injectable Solution
 668578, [AN900] RXCUI:668578 Vorinostat Oral Capsule
+1658083, [AN900] RXCUI:1658083 ado-trastuzumab emtansine Injection
 1232153, [AN900] RXCUI:1232153 aflibercept Injectable Solution
 378757, [AN900] RXCUI:378757 alemtuzumab Injectable Solution
+1656629, [AN900] RXCUI:1656629 alemtuzumab Injection
 370588, [AN900] RXCUI:370588 anastrozole Oral Tablet
 377225, [AN900] RXCUI:377225 arsenic trioxide Injectable Solution
 1243003, [AN900] RXCUI:1243003 axitinib Oral Tablet
 1543546, [AN900] RXCUI:1543546 belinostat Injectable Solution
 437106, [AN900] RXCUI:437106 bevacizumab Injectable Solution
+1657065, [AN900] RXCUI:1657065 bevacizumab Injection
 379069, [AN900] RXCUI:379069 bexarotene Oral Capsule
 378079, [AN900] RXCUI:378079 bexarotene Topical Gel
 371070, [AN900] RXCUI:371070 bicalutamide Oral Tablet
+1651250, [AN900] RXCUI:1651250 blinatumomab Injection
 402394, [AN900] RXCUI:402394 bortezomib Injectable Solution
 1307623, [AN900] RXCUI:1307623 bosutinib Oral Tablet
 1147322, [AN900] RXCUI:1147322 brentuximab vedotin Injectable Solution
+1655962, [AN900] RXCUI:1655962 brentuximab vedotin Injection
 996053, [AN900] RXCUI:996053 cabazitaxel Injectable Solution
 1363272, [AN900] RXCUI:1363272 cabozantinib Oral Capsule
 1302969, [AN900] RXCUI:1302969 carfilzomib Injectable Solution
 1535461, [AN900] RXCUI:1535461 ceritinib Oral Capsule
 485254, [AN900] RXCUI:485254 cetuximab Injectable Solution
+1657657, [AN900] RXCUI:1657657 cetuximab Injection
 1148497, [AN900] RXCUI:1148497 crizotinib Oral Capsule
 1424915, [AN900] RXCUI:1424915 dabrafenib Oral Capsule
 643104, [AN900] RXCUI:643104 dasatinib Oral Tablet
 636630, [AN900] RXCUI:636630 decitabine Injectable Solution
 377180, [AN900] RXCUI:377180 denileukin diftitox Injectable Solution
+1657967, [AN900] RXCUI:1657967 dinutuximab Injection
 376888, [AN900] RXCUI:376888 docetaxel Injectable Solution
 1307302, [AN900] RXCUI:1307302 enzalutamide Oral Capsule
 1045455, [AN900] RXCUI:1045455 eribulin Injectable Solution
@@ -149,17 +165,26 @@
 746605, [AN900] RXCUI:746605 nilotinib Oral Capsule
 373082, [AN900] RXCUI:373082 nilutamide Oral Tablet
 1442692, [AN900] RXCUI:1442692 obinutuzumab Injectable Solution
+1656294, [AN900] RXCUI:1656294 obinutuzumab Injection
 876299, [AN900] RXCUI:876299 ofatumumab Injectable Solution
+1658041, [AN900] RXCUI:1658041 ofatumumab Injection
 1356592, [AN900] RXCUI:1356592 omacetaxine mepesuccinate Injectable Solution
 377209, [AN900] RXCUI:377209 oxaliplatin Injectable Solution
+1601379, [AN900] RXCUI:1601379 palbociclib Oral Capsule
 667880, [AN900] RXCUI:667880 panitumumab Injectable Solution
+1657702, [AN900] RXCUI:1657702 panitumumab Injection
+1603354, [AN900] RXCUI:1603354 panobinostat Oral Capsule
 867501, [AN900] RXCUI:867501 pazopanib Oral Tablet
 373250, [AN900] RXCUI:373250 pegaspargase Injectable Solution
+1657745, [AN900] RXCUI:1657745 pembrolizumab Injection
 1298947, [AN900] RXCUI:1298947 pertuzumab Injectable Solution
+1657572, [AN900] RXCUI:1657572 pertuzumab Injection
 1364351, [AN900] RXCUI:1364351 ponatinib Oral Tablet
 1535991, [AN900] RXCUI:1535991 ramucirumab Injectable Solution
+1657774, [AN900] RXCUI:1657774 ramucirumab Injection
 1312401, [AN900] RXCUI:1312401 regorafenib Oral Tablet
 377259, [AN900] RXCUI:377259 rituximab Injectable Solution
+1657861, [AN900] RXCUI:1657861 rituximab Injection
 877512, [AN900] RXCUI:877512 romidepsin Injectable Solution
 597746, [AN900] RXCUI:597746 sorafenib Oral Tablet
 616278, [AN900] RXCUI:616278 sunitinib Oral Capsule
@@ -176,6 +201,7 @@
 371056, [HS051] RXCUI:371056 Betamethasone Oral Tablet
 1489770, [HS051] RXCUI:1489770 Budesonide Delayed Release Oral Capsule
 1366549, [HS051] RXCUI:1366549 Budesonide Extended Release Oral Tablet
+1596772, [HS051] RXCUI:1596772 Budesonide Rectal Foam
 375724, [HS051] RXCUI:375724 Cortisone Injectable Solution
 371634, [HS051] RXCUI:371634 Cortisone Injectable Suspension
 371635, [HS051] RXCUI:371635 Cortisone Oral Tablet
@@ -192,6 +218,7 @@
 372866, [HS051] RXCUI:372866 Methylprednisolone Injectable Suspension
 372868, [HS051] RXCUI:372868 Methylprednisolone Oral Tablet
 373232, [HS051] RXCUI:373232 Paramethasone Oral Tablet
+1303124, [HS051] RXCUI:1303124 Prednisone Delayed Release Oral Tablet
 373583, [HS051] RXCUI:373583 Prednisone Oral Solution
 373585, [HS051] RXCUI:373585 Prednisone Oral Tablet
 96818, [HS051] RXCUI:96818 Triamcinolone Injectable Suspension
@@ -223,10 +250,11 @@
 378786, [HS100] RXCUI:378786 Testosterone Drug Implant
 374050, [HS100] RXCUI:374050 Testosterone Injectable Solution
 376305, [HS100] RXCUI:376305 Testosterone Injectable Suspension
+1543189, [HS100] RXCUI:1543189 Testosterone Nasal Gel
 379231, [HS100] RXCUI:379231 Testosterone Topical Cream
+370420, [HS100] RXCUI:370420 Testosterone Topical Gel
 370440, [HS100] RXCUI:370440 Testosterone Topical Gel
 378070, [HS100] RXCUI:378070 Testosterone Topical Gel
-370420, [HS100] RXCUI:370420 Testosterone Topical Gel
 376538, [HS100] RXCUI:376538 Testosterone Topical Ointment
 378692, [HS100] RXCUI:378692 Testosterone Topical Solution
 367444, [HS100] RXCUI:367444 Testosterone Transdermal Patch
@@ -239,10 +267,12 @@
 373122, [HS200] RXCUI:373122 Ethinyl Estradiol / Norgestrel Oral Tablet
 372115, [HS200] RXCUI:372115 Ethinyl Estradiol / ethynodiol Oral Tablet
 367471, [HS200] RXCUI:367471 Ethinyl Estradiol / norelgestromin Transdermal Patch
+379205, [HS200] RXCUI:379205 Ethinyl Estradiol / norelgestromin Transdermal Patch
 393401, [HS200] RXCUI:393401 Etonogestrel Drug Implant
 378923, [HS200] RXCUI:378923 Levonorgestrel Drug Implant
 797650, [HS200] RXCUI:797650 Levonorgestrel Drug Implant
 372591, [HS200] RXCUI:372591 Levonorgestrel Oral Tablet
+858078, [HS200] RXCUI:858078 Levonorgestrel Oral Tablet [Plan B One-Step]
 373113, [HS200] RXCUI:373113 Mestranol / Norethindrone Oral Tablet
 373117, [HS200] RXCUI:373117 Mestranol / Norethynodrel Oral Tablet
 374644, [HS200] RXCUI:374644 Mifepristone Oral Tablet
@@ -258,20 +288,20 @@
 142249, [HS300] RXCUI:142249 Estradiol Injectable Solution
 372078, [HS300] RXCUI:372078 Estradiol Oral Tablet
 727738, [HS300] RXCUI:727738 Estradiol Prefilled Syringe
-581548, [HS300] RXCUI:581548 Estradiol Topical Gel
 379699, [HS300] RXCUI:379699 Estradiol Topical Gel
+581548, [HS300] RXCUI:581548 Estradiol Topical Gel
 706466, [HS300] RXCUI:706466 Estradiol Topical Gel
 402382, [HS300] RXCUI:402382 Estradiol Topical Lotion
 728117, [HS300] RXCUI:728117 Estradiol Topical Spray
+284732, [HS300] RXCUI:284732 Estradiol Transdermal Patch
 367470, [HS300] RXCUI:367470 Estradiol Transdermal Patch
+367473, [HS300] RXCUI:367473 Estradiol Transdermal Patch
 367474, [HS300] RXCUI:367474 Estradiol Transdermal Patch
 367475, [HS300] RXCUI:367475 Estradiol Transdermal Patch
-284732, [HS300] RXCUI:284732 Estradiol Transdermal Patch
-721626, [HS300] RXCUI:721626 Estradiol Transdermal Patch
-1356976, [HS300] RXCUI:1356976 Estradiol Transdermal Patch
-367473, [HS300] RXCUI:367473 Estradiol Transdermal Patch
 367477, [HS300] RXCUI:367477 Estradiol Transdermal Patch
 545275, [HS300] RXCUI:545275 Estradiol Transdermal Patch
+721626, [HS300] RXCUI:721626 Estradiol Transdermal Patch
+1356976, [HS300] RXCUI:1356976 Estradiol Transdermal Patch
 848327, [HS300] RXCUI:848327 Estradiol Vaginal Ring
 375814, [HS300] RXCUI:375814 Estrogens Injectable Solution
 375815, [HS300] RXCUI:375815 Estrogens Injectable Suspension
@@ -295,6 +325,7 @@
 371571, [HS400] RXCUI:371571 Clomiphene Oral Tablet
 375827, [HS400] RXCUI:375827 Follicle Stimulating Hormone / Luteinizing Hormone Injectable Solution
 402741, [HS400] RXCUI:402741 Follitropin Alfa Injectable Solution
+1654170, [HS400] RXCUI:1654170 Follitropin Alfa Pen Injector
 847952, [HS400] RXCUI:847952 Follitropin Alfa Prefilled Syringe
 847955, [HS400] RXCUI:847955 Follitropin Alfa Prefilled Syringe
 376688, [HS400] RXCUI:376688 Gonadorelin Injectable Solution
@@ -304,19 +335,29 @@
 854748, [HS400] RXCUI:854748 follitropin beta Prefilled Syringe
 746562, [HS400] RXCUI:746562 ganirelix Prefilled Syringe
 1242962, [HS500] RXCUI:1242962 exenatide Injectable Suspension
+1653611, [HS500] RXCUI:1653611 exenatide Injection
+1653616, [HS500] RXCUI:1653616 exenatide Pen Injector
 847909, [HS500] RXCUI:847909 exenatide Prefilled Syringe
 378864, [HS501] RXCUI:378864 Insulin Glargine Injectable Solution
+1653497, [HS501] RXCUI:1653497 Insulin Glargine Pen Injector
 847229, [HS501] RXCUI:847229 Insulin Glargine Prefilled Syringe
 731280, [HS501] RXCUI:731280 Insulin Lispro / Insulin, Protamine Lispro, Human Injectable Suspension
+1653104, [HS501] RXCUI:1653104 Insulin Lispro / Insulin, Protamine Lispro, Human Pen Injector
 847210, [HS501] RXCUI:847210 Insulin Lispro / Insulin, Protamine Lispro, Human Prefilled Syringe
+1652643, [HS501] RXCUI:1652643 Insulin Lispro Cartridge
 865097, [HS501] RXCUI:865097 Insulin Lispro Injectable Solution
+1652238, [HS501] RXCUI:1652238 Insulin Lispro Pen Injector
 847206, [HS501] RXCUI:847206 Insulin Lispro Prefilled Syringe
 977841, [HS501] RXCUI:977841 Insulin, Aspart Protamine, Human / Insulin, Aspart, Human Injectable Suspension
+1653209, [HS501] RXCUI:1653209 Insulin, Aspart Protamine, Human / Insulin, Aspart, Human Pen Injector [NovoLog Mix]
 977839, [HS501] RXCUI:977839 Insulin, Aspart Protamine, Human / Insulin, Aspart, Human Prefilled Syringe
+1653195, [HS501] RXCUI:1653195 Insulin, Aspart, Human Cartridge
 378914, [HS501] RXCUI:378914 Insulin, Aspart, Human Injectable Solution
+1653201, [HS501] RXCUI:1653201 Insulin, Aspart, Human Pen Injector
 847262, [HS501] RXCUI:847262 Insulin, Aspart, Human Prefilled Syringe
 847264, [HS501] RXCUI:847264 Insulin, Aspart, Human Prefilled Syringe
 485209, [HS501] RXCUI:485209 Insulin, Glulisine, Human Injectable Solution
+1651313, [HS501] RXCUI:1651313 Insulin, Glulisine, Human Pen Injector
 847258, [HS501] RXCUI:847258 Insulin, Glulisine, Human Prefilled Syringe
 379006, [HS501] RXCUI:379006 Insulin, Prompt Zinc, Beef Injectable Suspension
 435184, [HS501] RXCUI:435184 Insulin, Prompt Zinc, Beef-Pork Injectable Suspension
@@ -330,42 +371,48 @@
 365669, [HS501] RXCUI:365669 Insulin, Zinc, Human Injectable Suspension
 365694, [HS501] RXCUI:365694 Insulin, Zinc, Human Injectable Suspension
 378860, [HS501] RXCUI:378860 Insulin, Zinc, Human Injectable Suspension
-378950, [HS501] RXCUI:378950 Insulin, Zinc, Pork Injectable Suspension
 365583, [HS501] RXCUI:365583 Insulin, Zinc, Pork Injectable Suspension
+378950, [HS501] RXCUI:378950 Insulin, Zinc, Pork Injectable Suspension
 378967, [HS501] RXCUI:378967 Lente Insulin, Beef Injectable Suspension
 378919, [HS501] RXCUI:378919 Lente Insulin, Beef-Pork Injectable Suspension
 378928, [HS501] RXCUI:378928 NPH Insulin, Beef Injectable Suspension
 378931, [HS501] RXCUI:378931 NPH Insulin, Beef-Pork Injectable Suspension
-378857, [HS501] RXCUI:378857 NPH Insulin, Human / Regular Insulin, Human Injectable Suspension
 365672, [HS501] RXCUI:365672 NPH Insulin, Human / Regular Insulin, Human Injectable Suspension
 365679, [HS501] RXCUI:365679 NPH Insulin, Human / Regular Insulin, Human Injectable Suspension
-847194, [HS501] RXCUI:847194 NPH Insulin, Human / Regular Insulin, Human Prefilled Syringe
+378857, [HS501] RXCUI:378857 NPH Insulin, Human / Regular Insulin, Human Injectable Suspension
 847188, [HS501] RXCUI:847188 NPH Insulin, Human / Regular Insulin, Human Prefilled Syringe
-378861, [HS501] RXCUI:378861 NPH Insulin, Human Injectable Suspension
+847194, [HS501] RXCUI:847194 NPH Insulin, Human / Regular Insulin, Human Prefilled Syringe
 365573, [HS501] RXCUI:365573 NPH Insulin, Human Injectable Suspension
 365677, [HS501] RXCUI:365677 NPH Insulin, Human Injectable Suspension
-847200, [HS501] RXCUI:847200 NPH Insulin, Human Prefilled Syringe
+378861, [HS501] RXCUI:378861 NPH Insulin, Human Injectable Suspension
 847196, [HS501] RXCUI:847196 NPH Insulin, Human Prefilled Syringe
 847198, [HS501] RXCUI:847198 NPH Insulin, Human Prefilled Syringe
+847200, [HS501] RXCUI:847200 NPH Insulin, Human Prefilled Syringe
 365670, [HS501] RXCUI:365670 NPH Insulin, Pork Injectable Suspension
 378859, [HS501] RXCUI:378859 NPH Insulin, Pork Injectable Suspension
-363120, [HS501] RXCUI:363120 Regular Insulin, Human Injectable Solution
-376915, [HS501] RXCUI:376915 Regular Insulin, Human Injectable Solution
-363221, [HS501] RXCUI:363221 Regular Insulin, Human Injectable Solution
+1543201, [HS501] RXCUI:1543201 Regular Insulin, Human Inhalant Powder
 362622, [HS501] RXCUI:362622 Regular Insulin, Human Injectable Solution
-847204, [HS501] RXCUI:847204 Regular Insulin, Human Prefilled Syringe
+363120, [HS501] RXCUI:363120 Regular Insulin, Human Injectable Solution
+363221, [HS501] RXCUI:363221 Regular Insulin, Human Injectable Solution
+376915, [HS501] RXCUI:376915 Regular Insulin, Human Injectable Solution
 847202, [HS501] RXCUI:847202 Regular Insulin, Human Prefilled Syringe
+847204, [HS501] RXCUI:847204 Regular Insulin, Human Prefilled Syringe
 378970, [HS501] RXCUI:378970 Ultralente Insulin, Beef Injectable Suspension
 435180, [HS501] RXCUI:435180 Ultralente Insulin, Beef-Pork Injectable Suspension
 365678, [HS501] RXCUI:365678 Ultralente Insulin, Human Injectable Suspension
 378862, [HS501] RXCUI:378862 Ultralente Insulin, Human Injectable Suspension
+1670010, [HS501] RXCUI:1670010 insulin degludec Pen Injector
 484321, [HS501] RXCUI:484321 insulin detemir Injectable Solution
+1654190, [HS501] RXCUI:1654190 insulin detemir Pen Injector
 847238, [HS501] RXCUI:847238 insulin detemir Prefilled Syringe
 763012, [HS501] RXCUI:763012 insulin human, rDNA origin Inhalant Powder
+1654855, [HS501] RXCUI:1654855 insulin, isophane / Regular Insulin, Human Pen Injector [Humulin]
+1654861, [HS501] RXCUI:1654861 insulin, isophane Pen Injector
+1654863, [HS501] RXCUI:1654863 insulin, isophane Pen Injector [Humulin N]
 379008, [HS501] RXCUI:379008 insulin, protamine zinc, beef Injectable Suspension
 485262, [HS501] RXCUI:485262 insulin, regular, beef-pork Inhalant Solution
-376942, [HS501] RXCUI:376942 insulin, regular, beef-pork Injectable Solution
 362777, [HS501] RXCUI:362777 insulin, regular, beef-pork Injectable Solution
+376942, [HS501] RXCUI:376942 insulin, regular, beef-pork Injectable Solution
 370504, [HS502] RXCUI:370504 Acarbose Oral Tablet
 370529, [HS502] RXCUI:370529 Acetohexamide Oral Tablet
 371465, [HS502] RXCUI:371465 Chlorpropamide Oral Tablet
@@ -384,8 +431,8 @@
 1043561, [HS502] RXCUI:1043561 Metformin / saxagliptin Extended Release Oral Tablet
 1243826, [HS502] RXCUI:1243826 Metformin / sitagliptin Extended Release Oral Tablet
 700516, [HS502] RXCUI:700516 Metformin / sitagliptin Oral Tablet
-541768, [HS502] RXCUI:541768 Metformin Extended Release Oral Tablet
 372804, [HS502] RXCUI:372804 Metformin Extended Release Oral Tablet
+541768, [HS502] RXCUI:541768 Metformin Extended Release Oral Tablet
 647241, [HS502] RXCUI:647241 Metformin Extended Release Oral Tablet
 406082, [HS502] RXCUI:406082 Metformin Oral Solution
 372803, [HS502] RXCUI:372803 Metformin Oral Tablet
@@ -398,7 +445,9 @@
 1368005, [HS502] RXCUI:1368005 alogliptin Oral Tablet
 1545148, [HS502] RXCUI:1545148 canagliflozin / Metformin Oral Tablet
 1373462, [HS502] RXCUI:1373462 canagliflozin Oral Tablet
+1593057, [HS502] RXCUI:1593057 dapagliflozin / Metformin Extended Release Oral Tablet
 1488568, [HS502] RXCUI:1488568 dapagliflozin Oral Tablet
+1602108, [HS502] RXCUI:1602108 empagliflozin / Linagliptin Oral Tablet
 1545657, [HS502] RXCUI:1545657 empagliflozin Oral Tablet
 647236, [HS502] RXCUI:647236 glimepiride / pioglitazone Oral Tablet
 602543, [HS502] RXCUI:602543 glimepiride / rosiglitazone Oral Tablet
@@ -416,30 +465,38 @@
 371788, [HS503] RXCUI:371788 Diazoxide Oral Capsule
 371789, [HS503] RXCUI:371789 Diazoxide Oral Suspension
 375975, [HS503] RXCUI:375975 Glucagon Injectable Solution
+1653345, [HS503] RXCUI:1653345 Glucagon Injection
 372326, [HS503] RXCUI:372326 Glucose Chewable Tablet
 239166, [HS503] RXCUI:239166 Glucose Oral Solution
 486505, [HS509] RXCUI:486505 Pramlintide Injectable Solution
+1657563, [HS509] RXCUI:1657563 Pramlintide Pen Injector
 848103, [HS509] RXCUI:848103 Pramlintide Prefilled Syringe
+1659115, [HS509] RXCUI:1659115 albiglutide Pen Injector
 1534799, [HS509] RXCUI:1534799 albiglutide Prefilled Syringe
+1649584, [HS509] RXCUI:1649584 dulaglutide Auto-Injector
+1653594, [HS509] RXCUI:1653594 liraglutide Pen Injector
 897121, [HS509] RXCUI:897121 liraglutide Prefilled Syringe
+1650456, [HS600] RXCUI:1650456 Parathyroid Hormone Cartridge
+1659758, [HS600] RXCUI:1659758 Teriparatide Pen Injector
 727696, [HS600] RXCUI:727696 Teriparatide Prefilled Syringe
 375723, [HS701] RXCUI:375723 Corticotropin / zinc hydroxide Injectable Suspension
 371633, [HS701] RXCUI:371633 Corticotropin Injectable Solution
+362629, [HS701] RXCUI:362629 Somatropin Injectable Solution
+362744, [HS701] RXCUI:362744 Somatropin Injectable Solution
+362818, [HS701] RXCUI:362818 Somatropin Injectable Solution
 363297, [HS701] RXCUI:363297 Somatropin Injectable Solution
+373935, [HS701] RXCUI:373935 Somatropin Injectable Solution
 541143, [HS701] RXCUI:541143 Somatropin Injectable Solution
 582983, [HS701] RXCUI:582983 Somatropin Injectable Solution
 645883, [HS701] RXCUI:645883 Somatropin Injectable Solution
 746600, [HS701] RXCUI:746600 Somatropin Injectable Solution
-362744, [HS701] RXCUI:362744 Somatropin Injectable Solution
-373935, [HS701] RXCUI:373935 Somatropin Injectable Solution
-362629, [HS701] RXCUI:362629 Somatropin Injectable Solution
-362818, [HS701] RXCUI:362818 Somatropin Injectable Solution
+1648158, [HS701] RXCUI:1648158 Somatropin Injectable Solution [Zomacton]
 378972, [HS701] RXCUI:378972 Somatropin Injectable Suspension
-897043, [HS701] RXCUI:897043 Somatropin Prefilled Syringe
-864112, [HS701] RXCUI:864112 Somatropin Prefilled Syringe
-847244, [HS701] RXCUI:847244 Somatropin Prefilled Syringe
 727641, [HS701] RXCUI:727641 Somatropin Prefilled Syringe
 762832, [HS701] RXCUI:762832 Somatropin Prefilled Syringe
+847244, [HS701] RXCUI:847244 Somatropin Prefilled Syringe
+864112, [HS701] RXCUI:864112 Somatropin Prefilled Syringe
+897043, [HS701] RXCUI:897043 Somatropin Prefilled Syringe
 377075, [HS701] RXCUI:377075 cetrorelix Injectable Solution
 749806, [HS701] RXCUI:749806 lanreotide Prefilled Syringe
 406302, [HS701] RXCUI:406302 pegvisomant Injectable Solution
@@ -511,6 +568,7 @@
 372199, [HS900] RXCUI:372199 Finasteride Oral Tablet
 377086, [HS900] RXCUI:377086 Human calcitonin Injectable Solution
 617512, [HS900] RXCUI:617512 Ibandronate Injectable Solution
+1659716, [HS900] RXCUI:1659716 Ibandronate Injection
 452852, [HS900] RXCUI:452852 Ibandronate Oral Tablet
 727807, [HS900] RXCUI:727807 Ibandronate Prefilled Syringe
 406117, [HS900] RXCUI:406117 Laronidase Injectable Solution
@@ -525,12 +583,13 @@
 373747, [HS900] RXCUI:373747 Raloxifene Oral Tablet
 617278, [HS900] RXCUI:617278 Risedronate Oral Tablet
 827579, [HS900] RXCUI:827579 Sapropterin Oral Solution
+1653216, [HS900] RXCUI:1653216 Sapropterin Powder for Oral Solution
 373864, [HS900] RXCUI:373864 Sermorelin Injectable Solution
 393315, [HS900] RXCUI:393315 agalsidase beta Injectable Solution
 452247, [HS900] RXCUI:452247 alfuzosin Extended Release Oral Capsule
+629567, [HS900] RXCUI:629567 alglucosidase alfa Injectable Solution
 630678, [HS900] RXCUI:630678 alglucosidase alfa Injectable Solution
 993071, [HS900] RXCUI:993071 alglucosidase alfa Injectable Solution
-629567, [HS900] RXCUI:629567 alglucosidase alfa Injectable Solution
 1441390, [HS900] RXCUI:1441390 bazedoxifene / Estrogens, Conjugated (USP) Oral Tablet
 438654, [HS900] RXCUI:438654 cinacalcet Oral Tablet
 616610, [HS900] RXCUI:616610 conivaptan Injectable Solution
@@ -543,6 +602,7 @@
 378717, [HS900] RXCUI:378717 nitisinone Oral Capsule
 376641, [HS900] RXCUI:376641 pamidronate Injectable Solution
 1364108, [HS900] RXCUI:1364108 pasireotide Injectable Solution
+1655405, [HS900] RXCUI:1655405 pasireotide Injection
 371188, [HS900] RXCUI:371188 salmon calcitonin Injectable Solution
 374899, [HS900] RXCUI:374899 salmon calcitonin Nasal Spray
 1044586, [HS900] RXCUI:1044586 tesamorelin Injectable Solution
