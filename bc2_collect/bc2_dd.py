@@ -279,7 +279,8 @@ rx1.head()
 
 # In[ ]:
 
-rx1['label'] = ['[{vc}] RXCUI:{cui} {drug}'.format(vc=drug.va_class_code, cui=rxcui, drug=drug.c_name)
+rx1['label'] = ['[{vc}] RXCUI:{cui} {drug}'.format(vc=drug.va_class_code, cui=rxcui,
+                                                    drug=strip_counts(drug.c_name))
                 for (rxcui, drug) in rx1.iterrows()]
 rx1.sort_values(['va_class_code', 'c_name'], inplace=True)
 rx1.head(20)[['va_class_code', 'c_name', 'label']]
@@ -309,3 +310,6 @@ med_ddict.set_value('rxcui', u'Choices, Calculations, OR Slider Labels', choices
 med_ddict.to_csv('med_exposure_ddict.csv')
 med_ddict
 
+with (cwd / 'rx_choices.txt').open('wb') as out:
+    for code, label in rx1.label.iteritems():
+        print >>out, '{code}, {label}'.format(code=code, label=label)
