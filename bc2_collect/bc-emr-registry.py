@@ -424,7 +424,7 @@ show(dict(
 # In[ ]:
 
 data = pd.DataFrame(tumor, columns=import_template.columns)
-data['redcap_data_access_group'] = site_access_group
+# data['redcap_data_access_group'] = site_access_group
 
 data['admin_complete'] = 2
 
