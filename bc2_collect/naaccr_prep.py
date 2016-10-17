@@ -1,113 +1,88 @@
+#!/usr/bin/env python
+'''naaccr_prep -- prepare NAACCR data for submission to GPC BC datamart
 
-# coding: utf-8
+Usage:
+  naaccr_prep.py [options] <naaccr_file> <crosswalk> <output>
 
-# In[1]:
-
-import pandas as pd
-
-
-# In[2]:
+Options:
+  --fields FILE  field metadata [default: naaccr_item_bc_field.csv]
+  --debug        verbose logging
+'''
 
 import logging
 
+from docopt import docopt
+import pandas as pd
+
+
 log = logging.getLogger()
 
-def show(x, label=None):
-    return x
+PATIENT_ID_NUMBER = 20
 
 
-# In[18]:
+def main(argv, cwd):
+    opts = docopt(__doc__, argv=argv[1:])
 
-def file_access():
-    from pathlib import Path
-    return Path('.')
-cwd = file_access()
+    naaccr_fixed = (cwd / opts['<naaccr_file>']).open().readlines()
+    log.info('found %d NAACCR records in %s',
+             len(naaccr_fixed), opts['<naaccr_file>'])
 
+    fields = pd.read_csv((cwd / opts['--fields']).open(), index_col=0)
+    log.info('Using metadata on %d NAACCR fields from REDCap data dictionary',
+             len(fields))
 
-# In[34]:
+    data = fixed_items(naaccr_fixed, fields, key_ix=PATIENT_ID_NUMBER)
 
-bc_tumor_fields = pd.read_csv((cwd / 'bc_codebook_ddict.csv').open()).set_index('field_name')
+    log.info('Writing %d records to %s.',
+             len(data), opts['<output>'])
+    with (cwd / opts['<output>']).open('wb') as out:
+        data.to_csv(out)
 
-naaccr_fields = (bc_tumor_fields[['field_label', 'text_validation_type_or_show_slider_number']]
-                 .rename(columns=dict(text_validation_type_or_show_slider_number='validation')))
-naaccr_fields['naaccr_item'] = naaccr_fields.index.str.extract(r'v\d{2,3}_(\d{3,4})_').astype('float32')
-naaccr_fields = naaccr_fields[~pd.isnull(naaccr_fields.naaccr_item)]
-naaccr_fields = naaccr_fields.reset_index().set_index('naaccr_item')
-naaccr_fields.head()
-
-
-# In[3]:
-
-# Babel DB Access
-def db_access(key='BABEL_DB'):
-    from os import getenv, environ
-    from sqlalchemy import create_engine
-
-    url = getenv(key)
-    if not url:
-        raise IOError(key)
-    return create_engine(url)
-
-babel_db = db_access()
-babel_db.execute('select 1+1').fetchone()
-
-
-# In[4]:
-
-t_item = pd.read_sql('''
-select *
-from naaccr.t_item
-''', babel_db)
-t_item.columns
-
-
-# In[5]:
-
-t_item = pd.read_sql('''
-select cast("ItemNbr" as integer) itemnbr, "ItemName"
-     , cast("ColumnStart" as integer) columnstart
-     , cast("ColumnEnd" as integer) columnend
-     , "Description"
-from naaccr.t_item
-where "ColumnStart" > ''
-and "ColumnEnd" > ''
-''', babel_db, index_col='itemnbr')
-t_item.head()
-
-
-# In[38]:
-
-mrn_field = pd.DataFrame([dict(field_name='mrn')], index=[20])
-mrn_field
-
-
-# In[40]:
-
-fields = naaccr_fields.append(mrn_field).join(t_item)
-fields.head()
-
-
-# In[32]:
-
-naaccr_fixed = (cwd / 'site-data/naaccr_some.dat').open().readlines()
-len(naaccr_fixed)
-
-
-# In[51]:
 
 def fixed_items(lines, fields, key_ix):
-    def record(s, key, item_num, field_name, ty):
-        val = None if s.replace(' ', '') == '' else s
-        val = '%s-%s-%s' % (s[:4], s[4:6], s[6:]) if val and ty == 'date_ymd' else val
-        return dict(key=key, item_num=item_num, value=val, field_name=field_name)
-
+    '''
+    @param lines: an iterable of fixed-width lines
+    @param fields: a DataFrame of field descriptions with
+                   .columnstart, .columnend, .field_name, .validation
+                   indexed by NAACCR item numbers
+    @param key_ix: NAACCR item number of the patient identifier field
+    '''
     key_field = fields.loc[key_ix]
-    eav = pd.DataFrame([record(line[f.columnstart - 1:f.columnend],
-                               line[key_field.columnstart - 1:key_field.columnend],
-                               item_num, f.field_name, f.validation)
-                        for line in lines
-                        for item_num, f in fields.iterrows()])
+    eav = pd.DataFrame(
+        [fmt_field(line[f.columnstart - 1:f.columnend],
+                   line[key_field.columnstart - 1:key_field.columnend],
+                   item_num, f.field_name, f.validation)
+         for line in lines
+         for item_num, f in fields.iterrows()])
     return eav.pivot(index='key', columns='field_name', values='value')
 
-fixed_items(naaccr_fixed, fields, 20).head()
 
+def fmt_field(s, key, item_num, field_name, ty):
+    '''Format one field value: None, date, or string.
+
+    @param key: EAV entity key
+    @param item_num: EAV attribute number
+    @param field_name: REDCap field name
+    @param ty: REDCap validation: date_ymd or other
+    '''
+    val = None if s.replace(' ', '') == '' else s
+    val = ('%s-%s-%s' % (s[:4], s[4:6], s[6:])
+           if val and ty == 'date_ymd'
+           else val)
+    return dict(key=key, item_num=item_num, value=val,
+                field_name=field_name)
+
+
+if __name__ == '__main__':
+    def _script(format='%(levelname)s %(asctime)s %(message)s',
+                datefmt='%H:%M:%S'):
+        from sys import argv
+        from pathlib import Path
+
+        logging.basicConfig(level=logging.DEBUG if '--debug' in argv
+                            else logging.INFO,
+                            format=format,
+                            datefmt=datefmt)
+        main(argv, cwd=Path('.'))
+
+    _script()
