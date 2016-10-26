@@ -75,7 +75,7 @@ def main(argv, environ, cwd, create_engine):
     elif cli['patient-map']:
         pmap = PatientMapping(db=create_engine(environ[cli['--id-key']]),
                               schema=cli['--id-schema'])
-        cohort_mrns = (cwd / cli['<mrns>']).read_csv()
+        cohort_mrns = (cwd / cli['<cohort_mrns>']).read_csv()
         log.info('Mapping %s MRNs (source: %s) to patient_num',
                  len(cohort_mrns), cli['--mrn-source'])
         patient_nums = pmap.by_mrn(cohort_mrns,
