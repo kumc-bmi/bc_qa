@@ -10,6 +10,8 @@ v14_0400_primary_site,clinical,,text,0400 Primary Site,,Primary site source: reg
 v15_0380_sequence_numbercentral,clinical,,dropdown,0380 Sequence Number-Central,"00, 00-One primary in the patient's lifetime
 01, 01-First of two or more primaries
 02, 02-Second of two or more primaries
+03, 03-Third of two or more primaries
+04, 04-Fourth of two or more primaries
 59, 59-Fifty-ninth or higher of fifty-nine or more primaries
 99, 99-Unspecified or unknown sequence number of Federally required in situ or malignant tumors. Sequence number 99 can be used if there is a malignant tumor and its sequence number is unknown. If there is known to be more than one malignant tumor* then the tumors must be sequenced.)
 60, 60-One non-malignant tumor or central registry-defined neoplasm
@@ -20,6 +22,8 @@ v15_0380_sequence_numbercentral,clinical,,dropdown,0380 Sequence Number-Central,
 v16_0560_sequence_numberhospital,clinical,,dropdown,0560 Sequence Number-Hospital,"00, 00-One primary in the patient's lifetime
 01, 01-First of two or more primaries
 02, 02-Second of two or more primaries
+03, 03-Third of two or more primaries
+04, 04-Fourth of two or more primaries
 59, 59-Fifty-ninth or higher of fifty-nine or more primaries
 99, 99-Unspecified or unknown sequence number of Federally required in situ or malignant tumors. Sequence number 99 can be used if there is a malignant tumor and its sequence number is unknown. If there is known to be more than one malignant tumor* then the tumors must be sequenced.)
 60, 60-One non-malignant tumor or central registry-defined neoplasm
