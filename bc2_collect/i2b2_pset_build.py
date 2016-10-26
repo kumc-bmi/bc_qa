@@ -235,7 +235,8 @@ class PandasPath(object):
     '''pathlib API mixed with pandas I/O
     '''
     def __init__(self, path, ops):
-        pathjoin, read_csv = ops
+        io_open, pathjoin, read_csv = ops
+        self.open = lambda mode='r': io_open(path, mode=mode)
         self.read_csv = lambda: read_csv(path)
         self.pathjoin = lambda other: self.__class__(
             pathjoin(path, other), ops)
@@ -246,15 +247,16 @@ class PandasPath(object):
 
 if __name__ == '__main__':
     def _script():
-        from sys import argv
+        from io import open as io_open
         from os import environ
         from os.path import join as pathjoin
+        from sys import argv
         from pandas import read_csv
         from sqlalchemy import create_engine
 
         logging.basicConfig(level=logging.DEBUG if '--debug' in argv
                             else logging.INFO)
-        main(argv, cwd=PandasPath('.', (pathjoin, read_csv)),
+        main(argv, cwd=PandasPath('.', (io_open, pathjoin, read_csv)),
              environ=environ, create_engine=create_engine)
 
     _script()
