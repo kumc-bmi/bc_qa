@@ -172,13 +172,16 @@ class Workplace(object):
         self.save_data = save_data
 
     def lookup_query(self, query_name):
-        return self.execute('''
+        detail = self.execute('''
         select qm.query_master_id, qi.query_instance_id
         from {schema}.qt_query_master qm
         join {schema}.qt_query_instance qi
           on qi.query_master_id = qm.query_master_id
         where qm.name = :query_name
-        ''', query_name=query_name).fetchone()
+        ''', query_name=query_name).first()
+        if not detail:
+            raise KeyError(query_name)
+        return detail
 
     def add_pset_result(self, query_name, pat):
         qi = self.lookup_query(query_name)
