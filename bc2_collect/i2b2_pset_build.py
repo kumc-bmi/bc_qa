@@ -66,7 +66,8 @@ def main(argv, environ, cwd, create_engine):
         log.info('Mapping %s MRNs (source: %s) to patient_num',
                  len(consented_mrn), cli['--mrn-source'])
         consented_crosswalk = pmap.by_mrn(consented_mrn,
-                                          mrn_source=cli['--mrn-source'])
+                                          mrn_source=cli['--mrn-source'],
+                                          aux_cols=['study_id', 'date_shift'])
         log.info('saving crosswalk (%s subjects) to %s',
                  len(consented_crosswalk), cli['<crosswalk>'])
         with (cwd / cli['<crosswalk>']).open('w') as out:
@@ -123,7 +124,7 @@ class PatientMapping(object):
             return read_sql(q.format(schema=schema), db, params=params)
         self.query = query
 
-    def by_mrn(self, pat, mrn_source,
+    def by_mrn(self, pat, mrn_source, aux_cols=[],
                max_list_size=256):
         '''
         @param max_list_size: maximum size of in (...) expression.
@@ -148,7 +149,7 @@ class PatientMapping(object):
         log.debug('%s', pat.columns)
         log.debug('%s', crosswalk.columns)
         consented_crosswalk = pat.merge(crosswalk)[[
-            'patient_num', 'study_id', 'date_shift']]
+            'patient_num'] + aux_cols]
         log.info('len(consented_crosswalk): %s', len(consented_crosswalk))
         return consented_crosswalk
 
