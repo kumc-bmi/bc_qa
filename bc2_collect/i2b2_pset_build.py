@@ -2,7 +2,7 @@
 
 Usage:
   i2b2_pset_build [options] crosswalk <consented> <survey_order> <crosswalk>
-  i2b2_pset_build [options] add-result <patients> <query>
+  i2b2_pset_build [options] add-result <patients> <dummy_query>
 
 Options:
   crosswalk             map study_id to current patient_num via MRN
