@@ -40,7 +40,7 @@ Options:
 import logging
 
 from docopt import docopt
-from pandas import read_sql
+from pandas import read_sql, concat as df_concat
 
 log = logging.getLogger(__name__)
 
@@ -123,18 +123,28 @@ class PatientMapping(object):
             return read_sql(q.format(schema=schema), db, params=params)
         self.query = query
 
-    def by_mrn(self, pat, mrn_source):
-        mrn_list_expr = ', '.join("'%d'" % n for n in pat.mrn)
-        crosswalk = self.query('''
-            select distinct patient_num, to_number(patient_ide) mrn
-                 , (select date_shift
-                    from {schema}.patient_dimension pd
-                    where pd.patient_num = pm.patient_num) date_shift
-            from nightherondata.patient_mapping pm
-            where pm.patient_ide_source = :mrn_source
-            and pm.patient_ide in ({mrn_list})
-            '''.replace('{mrn_list}', mrn_list_expr),
-                               params=dict(mrn_source=mrn_source))
+    def by_mrn(self, pat, mrn_source,
+               max_list_size=256):
+        '''
+        @param max_list_size: maximum size of in (...) expression.
+
+        ORA-01795: maximum number of expressions in a list is 1000
+        '''
+        cw_chunks = []
+        for lo in range(0, len(pat), max_list_size):
+            mrn_list_expr = ', '.join("'%d'" % n
+                                      for n in pat.mrn[lo:lo + max_list_size])
+            cw_chunks.append(self.query('''
+                select distinct patient_num, to_number(patient_ide) mrn
+                     , (select date_shift
+                        from {schema}.patient_dimension pd
+                        where pd.patient_num = pm.patient_num) date_shift
+                from nightherondata.patient_mapping pm
+                where pm.patient_ide_source = :mrn_source
+                and pm.patient_ide in ({mrn_list})
+                '''.replace('{mrn_list}', mrn_list_expr),
+                                   params=dict(mrn_source=mrn_source)))
+        crosswalk = df_concat(cw_chunks)
         log.debug('%s', pat.columns)
         log.debug('%s', crosswalk.columns)
         consented_crosswalk = pat.merge(crosswalk)[[
