@@ -168,7 +168,7 @@ class Workplace(object):
 
         def save_data(df):
             log.info('creating %s', scratch)
-            df.to_sql(scratch, if_exists='replace')
+            df.to_sql(scratch, db, if_exists='replace')
         self.save_data = save_data
 
     def lookup_query(self, query_name):
