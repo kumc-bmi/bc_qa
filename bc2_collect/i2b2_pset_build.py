@@ -133,7 +133,7 @@ class PatientMapping(object):
             from nightherondata.patient_mapping pm
             where pm.patient_ide_source = :mrn_source
             and pm.patient_ide in ({mrn_list})
-            '''.format(mrn_list=mrn_list_expr),
+            '''.replace('{mrn_list}', mrn_list_expr),
                                params=dict(mrn_source=mrn_source))
         log.debug('%s', pat.columns)
         log.debug('%s', crosswalk.columns)
