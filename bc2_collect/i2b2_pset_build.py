@@ -70,7 +70,7 @@ def main(argv, environ, cwd, create_engine):
                                           aux_cols=['study_id', 'date_shift'])
         log.info('saving crosswalk (%s subjects) to %s',
                  len(consented_crosswalk), cli['<crosswalk>'])
-        with (cwd / cli['<crosswalk>']).open('w') as out:
+        with (cwd / cli['<crosswalk>']).open('wb') as out:
             consented_crosswalk.to_csv(out, index=False)
 
     elif cli['patient-map']:
@@ -83,7 +83,7 @@ def main(argv, environ, cwd, create_engine):
                                    mrn_source=cli['--mrn-source'])
         log.info('saving %s patient_num results to %s',
                  len(patient_nums), cli['<patient_nums>'])
-        with (cwd / cli['<patient_nums>']).open('w') as out:
+        with (cwd / cli['<patient_nums>']).open('wb') as out:
             patient_nums.to_csv(out, index=False)
 
     elif cli['add-result']:
