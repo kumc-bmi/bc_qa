@@ -2,6 +2,7 @@
 
 Usage:
   i2b2_pset_build [options] crosswalk <consented> <survey_order> <crosswalk>
+  i2b2_pset_build [options] patient-map <cohort_mrns> <patient_nums>
   i2b2_pset_build [options] add-result <patients> <dummy_query>
 
 Options:
@@ -9,6 +10,9 @@ Options:
   <consented>           CSV file with study_id, order_id columns
   <survey_order>        CSV file with order_id, mrn columns
   <crosswalk>           CSV file to save study_id,patient_num,date_shift
+  patient-map           map mrns to patient_num
+  <cohort_mrns>         CSV file with mrn column
+  <patient_nums>        CSV file to save mapped patient_num results
   --id-schema=SCHEMA    schema for identified patient_mapping table
                         [default: NIGHTHERONDATA]
   --mrn-source CODE     i2b2 patient_ide_source used for MRNs
@@ -59,11 +63,27 @@ def main(argv, environ, cwd, create_engine):
         consented_mrn = mix_mrn(cwd / cli['<survey_order>'], consented)
         pmap = PatientMapping(db=create_engine(environ[cli['--id-key']]),
                               schema=cli['--id-schema'])
+        log.info('Mapping %s MRNs (source: %s) to patient_num',
+                 len(consented_mrn), cli['--mrn-source'])
         consented_crosswalk = pmap.by_mrn(consented_mrn,
                                           mrn_source=cli['--mrn-source'])
-        log.info('saving crosswalk to %s', cli['<crosswalk>'])
+        log.info('saving crosswalk (%s subjects) to %s',
+                 len(consented_crosswalk), cli['<crosswalk>'])
         with (cwd / cli['<crosswalk>']).open('w') as out:
             consented_crosswalk.to_csv(out, index=False)
+
+    elif cli['patient-map']:
+        pmap = PatientMapping(db=create_engine(environ[cli['--id-key']]),
+                              schema=cli['--id-schema'])
+        cohort_mrns = (cwd / cli['<mrns>']).read_csv()
+        log.info('Mapping %s MRNs (source: %s) to patient_num',
+                 len(cohort_mrns), cli['--mrn-source'])
+        patient_nums = pmap.by_mrn(cohort_mrns,
+                                   mrn_source=cli['--mrn-source'])
+        log.info('saving %s patient_num results to %s',
+                 len(patient_nums), cli['<patient_nums>'])
+        with (cwd / cli['<patient_nums>']).open('w') as out:
+            patient_nums.to_csv(out, index=False)
 
     elif cli['add-result']:
         pat = (cwd / cli['<patients>']).read_csv()
