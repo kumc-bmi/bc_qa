@@ -182,6 +182,31 @@ log.info("coded data on %s tumors (top)", len(naaccr_coded))
 show(naaccr_coded.head())
 
 
+# In[ ]:
+
+numeric_items = ['NAACCR|2800:']
+def list_expr(codes):
+    return ', '.join(repr(cd) for cd in codes)
+naaccr_numeric_eav = pd.read_sql('''
+   select distinct patient_num, encounter_num, concept_cd
+        , 0 + substr(concept_cd, length('NAACCR|_')) item
+        , nval_num
+   from observation_fact
+   where concept_cd in ({numeric_items})
+'''.format(numeric_items=list_expr(numeric_items)),
+           bc_data)
+show(naaccr_numeric_eav.head(), 'NAACCR numeric EAV (top)')
+
+
+# In[ ]:
+
+naaccr_numeric = (naaccr_numeric_eav
+                .merge(naaccr_field, left_on='item', right_index=True)
+                .pivot(index='encounter_num', columns='field_name', values='nval_num'))
+log.info("coded data on %s tumors (top)", len(naaccr_numeric))
+show(naaccr_numeric.head())
+
+
 # ## NAACCR Date fields, unshifted
 
 # In[ ]:
@@ -196,7 +221,9 @@ naaccr_dated_eav = pd.read_sql('''
         , 0 + substr(concept_cd, length('NAACCR|_')) item
    from observation_fact
    where concept_cd like 'NAACCR|%:'
-''', bc_data, parse_dates=['date_deid'])
+   and concept_cd not in ({numeric_items})
+'''.format(numeric_items=list_expr(numeric_items)),
+                               bc_data, parse_dates=['date_deid'])
 naaccr_dated_eav = naaccr_dated_eav.merge(consented_crosswalk[['patient_num', 'date_shift']], how='left')
 naaccr_dated_eav['date'] = naaccr_dated_eav.date_deid - naaccr_dated_eav.date_shift
 show(naaccr_dated_eav.head(), 'NAACCR dated EAV (top)')
@@ -208,16 +235,16 @@ naaccr_dated = (naaccr_dated_eav
                 .merge(naaccr_field, left_on='item', right_index=True)
                 .pivot(index='encounter_num', columns='field_name', values='date'))
 log.info("date fields for %s tumors", len(naaccr_dated))
-show(naaccr_dated.head(), "top")
+show(naaccr_dated.head().T, "top")
 
 
 # ## All NAACCR fields: coded fields + date fields
 
 # In[ ]:
 
-naaccr_records = naaccr_coded.join(naaccr_dated)
+naaccr_records = naaccr_coded.join(naaccr_dated).join(naaccr_numeric)
 
-show(naaccr_records.head(), "%s NAACCR records with coded and date fields (top)" % len(naaccr_records))
+show(naaccr_records.head().T, "%s NAACCR records with coded and date fields (top)" % len(naaccr_records))
 
 
 # ## Per-patient fields: language, consent, SSA vital status
