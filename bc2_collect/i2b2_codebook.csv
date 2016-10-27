@@ -376,7 +376,7 @@ registry,clinical,1,29,1,3430 Derived AJCC-7 Stage Grp,AJCC 7th ed group stage,i
 ,,9,29, ,,,,700,Stage IV ,,
 ,,10,29, ,,,,888,Not applicable ,,
 ,,11,29, ,,,,999,Stage Unknown ,,
-registry,clinical,1,30,1,2800 CS Tumor Size,Collaborative stage - tumor size,,,,http://web2.facs.org/cstage0205/breast/Breastschema.html,
+registry,clinical,1,30,1,2800 CS Tumor Size,Collaborative stage - tumor size,integer,,,http://web2.facs.org/cstage0205/breast/Breastschema.html,
 registry,clinical,1,31,1,2830 CS Lymph Nodes,Collaborative stage - number of positive lymph nodes,integer,0,,http://web2.facs.org/cstage0205/breast/Breastschema.html,
 ,,2,31,,,,,999,,,
 registry,clinical,1,32,1,2840 CS Lymph Nodes Eval,Collaborative stage - number of lymph nodes evaluated,integer,0,,http://web2.facs.org/cstage0205/breast/Breastschema.html,
