@@ -384,6 +384,8 @@ v130_2092_date_case_completedcoc_,registry,,text,2092 Date Case Completed--CoC ,
 v131_2100_date_case_last_changed_,registry,,text,2100 Date Case Last Changed ,,source: registry,date_ymd,,,y,,,,,
 v132_2110_date_case_report_exported_,registry,,text,2110 Date Case Report Exported ,,source: registry,date_ymd,,,y,,,,,
 v133_2111_date_case_report_received_,registry,,text,2111 Date Case Report Received ,,source: registry,date_ymd,,,y,,,,,
+v134_0540_reporting_facility,registry,,text,0540 Reporting Facility,,source: registry,integer,,,,,,,,
+v135_0545_npireporting_facility,registry,,text,0545 NPI--Reporting Facility,,source: registry,integer,,,,,,,,
 v20_0490_diagnostic_confirmation,test,,dropdown,0490 Diagnostic Confirmation,"1, 1-Positive histology
 2, 2-Positive cytology
 3, 3-Positive histology PLUS - positive immunophenotyping AND/OR positive genetic studies (Used only for hematopoietic and lymphoid neoplasms M-9590/3-9992/3)
