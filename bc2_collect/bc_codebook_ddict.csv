@@ -104,6 +104,7 @@ v26_3400_derived_ajcc7_t,clinical,,dropdown,3400 Derived AJCC-7 T,"999, 999-TX
 150, 150-T1b 
 180, 180-T1c 
 200, 200-T2 
+211, 211-T2a1 
 300, 300-T3 
 400, 400-T4 
 410, 410-T4a 
@@ -116,6 +117,7 @@ v28_3420_derived_ajcc7_m,clinical,,dropdown,3420 Derived AJCC-7 M,"999, 999-MX
 000, 000-M0 
 010, 010-M0(i+) 
 100, 100-M1 
+110, 110-M1a 
 888, 888-Not applicable ",AJCC 7th ed distance metastasis stage source: registry,,,,,,,,,
 v29_3430_derived_ajcc7_stage_grp,clinical,,text,3430 Derived AJCC-7 Stage Grp,,"AJCC 7th ed group stage source: registry This is the AJCC “Stage Group” component that is derived from CS detailed site-specific codes, using the CS algorithm, effective for 2010+ diagnosis. For list of codes see http://www.ccrcal.org/PAQC_Pubs/V3_2010_Forward/Data_Items/Derived_AJCC-7_Stage_Grp.htm TODO: all 53 codes",integer,000,999,,,,,,
 v30_2800_cs_tumor_size,clinical,,text,2800 CS Tumor Size,,Collaborative stage - tumor size source: registry http://web2.facs.org/cstage0205/breast/Breastschema.html,integer,,,,,,,,
